@@ -3,11 +3,9 @@ name: Server CD
 on:
   push:
     branches: [ main ]
-  release:
-    types: [ published ]
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,19 +19,5 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build JAR
-        run: mvn clean package -DskipTests
-
-      - name: Create Release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            target/*.jar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Docker Image
-        run: |
-          docker build -t labyrinth-server:${{ github.sha }} .
-          docker tag labyrinth-server:${{ github.sha }} labyrinth-server:latest
+      - name: Validate and compile
+        run: mvn clean compile
