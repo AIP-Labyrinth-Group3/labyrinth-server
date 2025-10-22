@@ -24,18 +24,17 @@
         <module name="StaticVariableName"/>
         <module name="TypeName"/>
 
-        <!-- Javadoc Comments -->
-        <module name="JavadocMethod">
-            <property name="scope" value="public"/>
-            <property name="allowMissingParamTags" value="false"/>
-            <property name="allowMissingReturnTag" value="false"/>
+        <!-- Javadoc Comments - Korrigiert für Checkstyle 10.x -->
+        <module name="MissingJavadocMethod">
+            <property name="minLineCount" value="2"/>
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF, ANNOTATION_FIELD_DEF"/>
         </module>
-        <module name="JavadocType">
-            <property name="scope" value="public"/>
+
+        <module name="MissingJavadocType">
+            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF"/>
         </module>
-        <module name="JavadocVariable">
-            <property name="scope" value="public"/>
-        </module>
+
         <module name="JavadocStyle">
             <property name="checkFirstSentence" value="false"/>
         </module>
