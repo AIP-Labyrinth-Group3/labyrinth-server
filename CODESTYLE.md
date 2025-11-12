@@ -27,7 +27,8 @@ Formatierung:
     -   Bei vielen Imports und Variablendeklarationen können diese thematisch gruppiert und mit Leerzeilen getrennt werden
     -   Innerhalb von Funktionen den Code auch sinnvoll mit Leerzeilen strukturieren
     -   Zwischen Annotationen und Klassen/Funktionen keine Leerzeilen
--   Jedes File mit dem Auto Formatter von IntelliJ in der Default Einstellung formatieren (Strg+Alt+Shift+L oder Rechtsklick auf File -> Reformat Code)  
+-   Jedes File mit dem Auto Formatter von IntelliJ in der Default Einstellung formatieren (Strg+Alt+Shift+L oder Rechtsklick auf File -> Reformat Code)
+![alt text](images/auto_formatter.png "Auto Formatter")
 
 Error Handling:
 -   Error Handling sinnvoll einsetzen (zu viel Error Handling macht den Code auch wieder komplex und unübersichtlich)
