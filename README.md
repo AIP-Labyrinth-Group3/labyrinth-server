@@ -37,6 +37,10 @@ labyrinth-server/
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
+## Codestyle
+
+See [CODESTYLE.md](CODESTYLE.md) for codestyle guidelines.
+
 ## Team
 
 Gruppe 3 - Clemens Siebers, Rene Stockinger, Andreas Rofner, Mario Gottwald, Simon Raass, Manuel Kirchebner, David Strauß
