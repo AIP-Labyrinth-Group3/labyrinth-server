@@ -1,0 +1,2 @@
+Link zur Anleitung für Spring Boot WebSockets
+https://www.geeksforgeeks.org/springboot/spring-boot-web-socket/
