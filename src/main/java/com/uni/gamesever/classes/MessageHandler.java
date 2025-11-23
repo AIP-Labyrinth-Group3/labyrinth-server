@@ -34,6 +34,9 @@ public class MessageHandler {
         } catch (JsonMappingException e) {
             System.err.println("Failed to parse message from user " + userId + ": " + e.getMessage());
             return -1;
+        } catch (JsonProcessingException e) {
+            System.err.println("Failed to process message from user " + userId + ": " + e.getMessage());
+            return -1;
         }
 
        switch (request.getType()) {

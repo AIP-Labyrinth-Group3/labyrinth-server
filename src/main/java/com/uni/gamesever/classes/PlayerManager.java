@@ -1,5 +1,9 @@
 package com.uni.gamesever.classes;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.uni.gamesever.models.Coordinates;
@@ -14,6 +18,7 @@ public class PlayerManager {
     private PlayerInfo[] players = new PlayerInfo[MAX_PLAYERS];
     private PlayerState[] playerStates = new PlayerState[MAX_PLAYERS];
     private boolean hasAdministrator = false;
+    private List<String> currentAvailableColors = new ArrayList<>(Arrays.asList("RED", "BLUE", "GREEN", "YELLOW"));
 
     public int getAmountOfPlayers() {
         int count = 0;
@@ -29,20 +34,22 @@ public class PlayerManager {
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] == null) {
                 players[i] = newPlayer;
-                if(i == 0 && !hasAdministrator){ //first player is admin
+                if(i == 0 && !hasAdministrator){
                     newPlayer.setAdmin(true);
                     hasAdministrator = true;
                 }
+                newPlayer.setColor(currentAvailableColors.remove(0));
+                newPlayer.setReady(true);
                 return true;
             }
         }
-        return false; // Game is full
+        return false;
     }
 
     public boolean removePlayer(String username) {
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] != null && players[i].getName().equals(username)) {
-                if(players[i].isAdmin()){ //if admin leaves, assign new admin
+                if(players[i].getIsAdmin()){
                     for (int j = 0; j < MAX_PLAYERS; j++) {
                         if (players[j] != null && j != i) {
                             players[j].setAdmin(true);
@@ -51,15 +58,17 @@ public class PlayerManager {
                         }
                     }
                 }
+                currentAvailableColors.add(players[i].getColor());
                 players[i] = null;
                 playerStates[i] = null;
                 if(this.getAmountOfPlayers() == 0){
                     hasAdministrator = false;
                 }
+                
                 return true;
             }
         }
-        return false; // Player not found
+        return false;
     }
 
     public PlayerInfo[] getPlayers() {
@@ -75,7 +84,6 @@ public class PlayerManager {
         int rows = board.getSize().getRows();
         int cols = board.getSize().getCols();
 
-        //koordinaten der ecken festlegen
         Coordinates[] startingPositions = new Coordinates[] {
             new Coordinates(0, 0),
             new Coordinates(0, cols - 1),

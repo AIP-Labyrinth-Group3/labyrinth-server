@@ -36,7 +36,7 @@ public class ConnectionHandler {
                 ObjectMapper mapper = new ObjectMapper();
                 socketMessageService.sendMessageToSession(userId, mapper.writeValueAsString(connectionAck));         
 
-                LobbyState lobbyState = new LobbyState("LOBBY_State", playerManager.getPlayers());
+                LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
                 String lobbyStateMessageToBroadcast = mapper.writeValueAsString(lobbyState);
                 socketMessageService.broadcastMessage(lobbyStateMessageToBroadcast);
             } else {
@@ -49,7 +49,7 @@ public class ConnectionHandler {
     public int handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
         if (playerManager.removePlayer(request.getUsername())){
              System.out.println("User " + userId + " disconnected" + request.getUsername());
-             LobbyState lobbyState = new LobbyState("LOBBY_State", playerManager.getPlayers());
+             LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
              ObjectMapper mapper = new ObjectMapper();
              String lobbyStateMessageToBroadcast = mapper.writeValueAsString(lobbyState);
              socketMessageService.broadcastMessage(lobbyStateMessageToBroadcast);
