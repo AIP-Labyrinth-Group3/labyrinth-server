@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.models.messages.ConnectRequest;
 import com.uni.gamesever.models.messages.Message;
 import com.uni.gamesever.models.messages.StartGameAction;
-import com.uni.gamesever.services.SocketBroadcastService;
+import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class MessageHandler {
@@ -18,7 +18,7 @@ public class MessageHandler {
     private final ConnectionHandler connectionHandler;
     private final GameInitialitionController gameBoardHandler;
 
-    public MessageHandler(SocketBroadcastService socketBroadcastService, PlayerManager playerManager, GameInitialitionController gameBoardHandler, ConnectionHandler connectionHandler) {
+    public MessageHandler(SocketMessageService socketBroadcastService, PlayerManager playerManager, GameInitialitionController gameBoardHandler, ConnectionHandler connectionHandler) {
         this.connectionHandler = connectionHandler;
         this.gameBoardHandler = gameBoardHandler;
         this.playerManager = playerManager;

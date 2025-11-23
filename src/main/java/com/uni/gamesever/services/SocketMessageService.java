@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
 @Service
-public class SocketBroadcastService {
+public class SocketMessageService {
     // In this list all the connections will be stored
     // Then it will be used to broadcast the message
     private final List<WebSocketSession> webSocketSessions = Collections.synchronizedList(new ArrayList<>());
@@ -19,6 +19,23 @@ public class SocketBroadcastService {
 
     public void removeDisconnectedSession(WebSocketSession session) {
         webSocketSessions.remove(session);
+    }
+
+    public void sendMessageToSession(String sessionId, String message) {
+        WebSocketSession session = null;
+        for (WebSocketSession s : webSocketSessions) {
+            if (s.getId().equals(sessionId)) {
+                session = s;
+                break;
+            }
+        }
+        try {
+            if (session != null && session.isOpen()) {
+                session.sendMessage(new org.springframework.web.socket.TextMessage(message));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void broadcastMessage(String message) {

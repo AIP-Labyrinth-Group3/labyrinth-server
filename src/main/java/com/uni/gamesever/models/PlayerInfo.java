@@ -9,9 +9,8 @@ public class PlayerInfo {
     private boolean isAdmin;
 
     public PlayerInfo() {}
-    public PlayerInfo(String id, String name) {
+    public PlayerInfo(String id) {
         this.id = id;
-        this.name = name;
     }
 
     public String getId() {
@@ -29,7 +28,11 @@ public class PlayerInfo {
         this.isAdmin = isAdmin;
     }
 
-    public void setName(String name) {
+    public int setName(String name) {
+        if(name.length() < 1 || name.length() > 50){
+            return -1;
+        }
         this.name = name;
+        return 1;
     }
 }
