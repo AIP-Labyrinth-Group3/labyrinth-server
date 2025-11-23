@@ -1,11 +1,10 @@
 package com.uni.gamesever.models;
 
 public class LobbyState {
-    private String type;
+    private String type = "LOBBY_STATE";
     private PlayerInfo[] players;
 
-    public LobbyState(String type, PlayerInfo[] players) {
-        this.type = type;
+    public LobbyState(PlayerInfo[] players) {
         this.players = players;
     }
 

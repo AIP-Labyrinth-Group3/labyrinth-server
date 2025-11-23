@@ -8,15 +8,15 @@ import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStarted;
 import com.uni.gamesever.models.GameStateUpdate;
-import com.uni.gamesever.services.SocketBroadcastService;
+import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class GameInitialitionController {
     //hier kommt die ganze Gameboard generierung hin
     PlayerManager playerManager;
-    SocketBroadcastService socketBroadcastService;
+    SocketMessageService socketBroadcastService;
 
-    public GameInitialitionController(PlayerManager playerManager, SocketBroadcastService socketBroadcastService) {
+    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
     }

@@ -6,14 +6,14 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.uni.gamesever.classes.MessageHandler;
-import com.uni.gamesever.services.SocketBroadcastService;
+import com.uni.gamesever.services.SocketMessageService;
 
 // Socket-Connection Configuration class
 public class SocketConnectionHandler extends TextWebSocketHandler {
-    private final SocketBroadcastService socketBroadcastService;
+    private final SocketMessageService socketBroadcastService;
     private final MessageHandler messageHandler;
 
-    public SocketConnectionHandler(SocketBroadcastService socketBroadcastService, MessageHandler messageHandler) {
+    public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
     }
