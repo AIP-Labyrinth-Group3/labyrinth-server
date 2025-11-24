@@ -1,7 +1,7 @@
 package com.uni.gamesever.controller;
 
 import com.uni.gamesever.classes.MessageHandler;
-import com.uni.gamesever.services.SocketBroadcastService;
+import com.uni.gamesever.services.SocketMessageService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,7 +32,7 @@ class SocketConnectionHandlerTest {
 
     // Abhängigkeiten, die gemockt werden
     @Mock
-    private SocketBroadcastService socketBroadcastService;
+    private SocketMessageService socketMessageService;
     @Mock
     private MessageHandler messageHandler;
     @Mock
@@ -62,14 +62,14 @@ class SocketConnectionHandlerTest {
             socketConnectionHandler.afterConnectionEstablished(mockSession);
 
             // THEN
-            verify(socketBroadcastService, times(1)).addIncomingSession(eq(mockSession));
+            verify(socketMessageService, times(1)).addIncomingSession(eq(mockSession));
             assertEquals(SESSION_ID + " Connected" + System.lineSeparator(), OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte die korrekte 'Connected' Meldung enthalten.");
         }
 
         @Test
         void afterConnectionEstablished_shouldThrowException() {
             // GIVEN
-            doThrow(new RuntimeException("Simulated Service Error")).when(socketBroadcastService).addIncomingSession(any());
+            doThrow(new RuntimeException("Simulated Service Error")).when(socketMessageService).addIncomingSession(any());
 
             // WHEN / THEN
             assertThrows(RuntimeException.class, () -> socketConnectionHandler.afterConnectionEstablished(mockSession));
@@ -89,14 +89,14 @@ class SocketConnectionHandlerTest {
             socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus);
 
             // THEN
-            verify(socketBroadcastService, times(1)).removeDisconnectedSession(eq(mockSession));
+            verify(socketMessageService, times(1)).removeDisconnectedSession(eq(mockSession));
             assertEquals(SESSION_ID + " DisConnected" + System.lineSeparator(), OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte die korrekte 'Disconnected' Meldung enthalten.");
         }
 
         @Test
         void afterConnectionClosed_shouldThrowException() {
             // GIVEN
-            doThrow(new RuntimeException("Simulated Removal Error")).when(socketBroadcastService).removeDisconnectedSession(any());
+            doThrow(new RuntimeException("Simulated Removal Error")).when(socketMessageService).removeDisconnectedSession(any());
 
             // WHEN / THEN
             assertThrows(RuntimeException.class, () -> socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus));

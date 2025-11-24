@@ -27,11 +27,12 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     {
 
         super.afterConnectionEstablished(session);
-        // Logging the connection ID with Connected Message
-        System.out.println(session.getId() + " Connected");
-
-        // Adding the session into the list
-        socketBroadcastService.addIncomingSession(session);
+        try {
+            socketBroadcastService.addIncomingSession(session);
+            System.out.println(session.getId() + " Connected");
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     // When client disconnect from WebSocket then this
@@ -41,11 +42,12 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                           CloseStatus status)throws Exception
     {
         super.afterConnectionClosed(session, status);
-        System.out.println(session.getId()
-                           + " DisConnected");
-
-        // Removing the connection info from the list
-        socketBroadcastService.removeDisconnectedSession(session);
+        try {
+            socketBroadcastService.removeDisconnectedSession(session);
+            System.out.println(session.getId() + " DisConnected");
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
     // It will handle exchanging of message in the network

@@ -15,7 +15,8 @@ class PlayerInfoTest {
     @BeforeEach
     void setUp() {
         // Für Tests, die eine initialisierte Instanz benötigen
-        playerInfo = new PlayerInfo(TEST_ID, TEST_NAME);
+        playerInfo = new PlayerInfo(TEST_ID);
+        playerInfo.setName(TEST_NAME);
     }
 
     @Nested
@@ -29,18 +30,19 @@ class PlayerInfoTest {
             // THEN
             assertNull(p.getId(), "ID sollte null sein.");
             assertNull(p.getName(), "Name sollte null sein.");
-            assertFalse(p.isAdmin(), "isAdmin sollte standardmäßig auf false gesetzt sein.");
+            assertFalse(p.getIsAdmin(), "isAdmin sollte standardmäßig auf false gesetzt sein.");
         }
 
         @Test
         void PlayerInfo_shouldInitializeFields() {
             // WHEN
-            PlayerInfo p = new PlayerInfo(TEST_ID, TEST_NAME);
+            PlayerInfo p = new PlayerInfo(TEST_ID);
+            p.setName(TEST_NAME);
 
             // THEN
             assertEquals(TEST_ID, p.getId(), "Der ID sollte korrekt gesetzt sein.");
             assertEquals(TEST_NAME, p.getName(), "Der Name sollte korrekt gesetzt sein.");
-            assertFalse(p.isAdmin(), "isAdmin sollte standardmäßig auf false gesetzt sein.");
+            assertFalse(p.getIsAdmin(), "isAdmin sollte standardmäßig auf false gesetzt sein.");
         }
     }
 
@@ -68,7 +70,7 @@ class PlayerInfoTest {
         @Test
         void isAdmin_shouldReturnFalseByDefault() {
             // WHEN
-            boolean result = playerInfo.isAdmin();
+            boolean result = playerInfo.getIsAdmin();
 
             // THEN
             assertFalse(result, "isAdmin sollte nach Initialisierung false sein.");
@@ -94,26 +96,26 @@ class PlayerInfoTest {
         @Test
         void setAdmin_shouldSetTrue() {
             // GIVEN
-            assertFalse(playerInfo.isAdmin());
+            assertFalse(playerInfo.getIsAdmin());
 
             // WHEN
             playerInfo.setAdmin(true);
 
             // THEN
-            assertTrue(playerInfo.isAdmin(), "setAdmin(true) sollte isAdmin auf true setzen.");
+            assertTrue(playerInfo.getIsAdmin(), "setAdmin(true) sollte isAdmin auf true setzen.");
         }
 
         @Test
         void setAdmin_shouldSetFalse() {
             // GIVEN
             playerInfo.setAdmin(true);
-            assertTrue(playerInfo.isAdmin());
+            assertTrue(playerInfo.getIsAdmin());
 
             // WHEN
             playerInfo.setAdmin(false);
 
             // THEN
-            assertFalse(playerInfo.isAdmin(), "setAdmin(false) sollte isAdmin auf false setzen.");
+            assertFalse(playerInfo.getIsAdmin(), "setAdmin(false) sollte isAdmin auf false setzen.");
         }
     }
 }

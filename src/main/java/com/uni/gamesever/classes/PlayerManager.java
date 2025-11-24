@@ -31,6 +31,9 @@ public class PlayerManager {
     }
 
     public boolean addPlayer(PlayerInfo newPlayer) {
+        if(newPlayer == null){
+            return false;
+        }
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] == null) {
                 players[i] = newPlayer;
@@ -47,6 +50,9 @@ public class PlayerManager {
     }
 
     public boolean removePlayer(String username) {
+        if(username == null){
+            return false;
+        }
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] != null && players[i].getName().equals(username)) {
                 if(players[i].getIsAdmin()){

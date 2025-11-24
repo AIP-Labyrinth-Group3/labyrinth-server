@@ -24,7 +24,7 @@ class SocketBroadcastServiceTest {
 
     // Die zu testende Klasse
     @InjectMocks
-    private SocketBroadcastService service;
+    private SocketMessageService service;
 
     // Hilfsmethode zur Erstellung einer gemockten Session
     private WebSocketSession mockSession(boolean isOpen) {

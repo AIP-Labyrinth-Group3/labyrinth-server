@@ -152,11 +152,12 @@ class PlayerManagerTest {
 
         @Test
         void addPlayer_shouldAddNewPlayerAsAdmin() {
+            PlayerInfo adminPlayer = new PlayerInfo("testAdmin");
             // WHEN
-            playerManager.addPlayer(mockPlayer1);
+            playerManager.addPlayer(adminPlayer);
 
             // THEN
-            assertTrue(playerManager.getPlayers()[0].isAdmin(), "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
+            assertTrue(playerManager.getPlayers()[0].getIsAdmin(), "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
         }
     }
 
@@ -206,16 +207,20 @@ class PlayerManagerTest {
         @Test
         void removePlayer_shouldRemoveAdminSuccessfully() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
-            playerManager.addPlayer(mockPlayer2);
+            PlayerInfo adminPlayer = new PlayerInfo("id1");
+            adminPlayer.setName("testAdmin");
+            PlayerInfo player2 = new PlayerInfo("id2");
+            player2.setName("testPlayer2");
+            playerManager.addPlayer(adminPlayer);
+            playerManager.addPlayer(player2);
 
             // WHEN
-            boolean result = playerManager.removePlayer(mockPlayer1.getName());
+            boolean result = playerManager.removePlayer(adminPlayer.getName());
 
             // THEN
             assertTrue(result, "Das Entfernen des Spielers sollte erfolgreich sein.");
             assertEquals(1, playerManager.getAmountOfPlayers(), "Nach dem Entfernen sollte die Anzahl 1 sein.");
-            assertTrue(playerManager.getPlayers()[1].isAdmin(), "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein.");
+            assertTrue(playerManager.getPlayers()[1].getIsAdmin(), "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein.");
         }
     }
 
