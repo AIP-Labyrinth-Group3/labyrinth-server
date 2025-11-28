@@ -24,7 +24,7 @@ public class MessageHandler {
         this.playerManager = playerManager;
     }
 
-    public int handleClientMessage(String message, String userId) throws JsonMappingException, JsonProcessingException {
+    public boolean handleClientMessage(String message, String userId) throws JsonMappingException, JsonProcessingException {
         //parsing the client message into a connectRequest object
         System.out.println("Received message from user " + userId + ": " + message);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -33,10 +33,10 @@ public class MessageHandler {
              request = objectMapper.readValue(message, Message.class);
         } catch (JsonMappingException e) {
             System.err.println("Failed to parse message from user " + userId + ": " + e.getMessage());
-            return -1;
+            return false;
         } catch (JsonProcessingException e) {
             System.err.println("Failed to process message from user " + userId + ": " + e.getMessage());
-            return -1;
+            return false;
         }
 
        switch (request.getType()) {
@@ -55,10 +55,10 @@ public class MessageHandler {
                    return gameBoardHandler.handleStartGameMessage(startGameReq.getBoardSize());
                 } else {
                    System.err.println("User " + userId + " is not authorized to start the game.");
-                   return -1;
+                   return false;
                 }
            default:
-               return -1;
+               return false;
          }
     }
 

@@ -30,9 +30,14 @@ public class PlayerManager {
         return count;
     }
 
-    public boolean addPlayer(PlayerInfo newPlayer) {
+    public boolean addPlayer(PlayerInfo newPlayer) throws IllegalArgumentException {
         if(newPlayer == null){
             return false;
+        }
+        for (PlayerInfo player : players) {
+            if (player != null && player.getName().equals(newPlayer.getName())) {
+                throw new IllegalArgumentException("Username already taken.");
+            }
         }
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] == null) {

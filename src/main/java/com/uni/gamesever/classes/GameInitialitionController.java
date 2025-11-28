@@ -21,12 +21,12 @@ public class GameInitialitionController {
         this.socketBroadcastService = socketBroadcastService;
     }
 
-    public int handleStartGameMessage(BoardSize size) throws JsonProcessingException {
+    public boolean handleStartGameMessage(BoardSize size) throws JsonProcessingException {
         //implementierung der Gameboard generierung
         
         if(playerManager.getAmountOfPlayers() <2) {
             System.out.println("Not enough players to start the game.");
-            return -1;
+            return false;
         }
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 
@@ -51,7 +51,7 @@ public class GameInitialitionController {
         String gameStateMessageToBroadcast = mapper.writeValueAsString(gameState);
         socketBroadcastService.broadcastMessage(gameStateMessageToBroadcast);
 
-        return 1;
+        return true;
     }
 
     
