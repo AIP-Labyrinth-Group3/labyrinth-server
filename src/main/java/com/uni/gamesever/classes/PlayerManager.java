@@ -78,11 +78,12 @@ public class PlayerManager {
     }
 
     public PlayerInfo[] getPlayers() {
-        return players;
+        return players.clone();
     }
 
+
     public PlayerState[] getPlayerStates() {
-        return playerStates;
+        return playerStates.clone();
     }
 
 
