@@ -81,6 +81,12 @@ public class PlayerManager {
         return players.clone();
     }
 
+    public PlayerInfo[] getNonNullPlayers(){
+        return Arrays.stream(players)
+                     .filter(player -> player != null)
+                     .toArray(PlayerInfo[]::new);
+    }
+
 
     public PlayerState[] getPlayerStates() {
         return playerStates.clone();

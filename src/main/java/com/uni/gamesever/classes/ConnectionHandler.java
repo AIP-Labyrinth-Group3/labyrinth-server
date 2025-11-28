@@ -35,7 +35,7 @@ public class ConnectionHandler {
                 ConnectionAck connectionAck = new ConnectionAck(newPlayer.getId());
                 socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));         
 
-                LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
+                LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
                 socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
             } else {
                 System.err.println("Game is full. User " + userId + " cannot join.");
