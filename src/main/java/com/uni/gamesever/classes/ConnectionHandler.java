@@ -46,9 +46,9 @@ public class ConnectionHandler {
     }
 
     public boolean handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
-        if (playerManager.removePlayer(request.getUsername())){
+        if (playerManager.removePlayer(userId)){
              System.out.println("User " + userId + " disconnected" + request.getUsername());
-             LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
+             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
              socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
          } else {
              System.err.println("User " + userId + " not found in player list.");

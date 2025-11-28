@@ -54,12 +54,12 @@ public class PlayerManager {
         return false;
     }
 
-    public boolean removePlayer(String username) {
-        if(username == null){
+    public boolean removePlayer(String userID) {
+        if(userID == null){
             return false;
         }
         for (int i = 0; i < MAX_PLAYERS; i++) {
-            if (players[i] != null && players[i].getName().equals(username)) {
+            if (players[i] != null && players[i].getId().equals(userID)) {
                 if(players[i].getIsAdmin()){
                     for (int j = 0; j < MAX_PLAYERS; j++) {
                         if (players[j] != null && j != i) {
