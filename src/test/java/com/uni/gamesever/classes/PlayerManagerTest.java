@@ -174,6 +174,23 @@ class PlayerManagerTest {
             // THEN
             assertTrue(playerManager.getPlayers()[0].getIsAdmin(), "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
         }
+
+        //add a test to check if a player can not gave the same username - exception
+        @Test
+        void addPlayer_shouldFailWhenUsernameAlreadyExists() {
+            // GIVEN
+            playerManager.addPlayer(player1);
+            PlayerInfo duplicatePlayer = new PlayerInfo("idDuplicate");
+            duplicatePlayer.setName(player1.getName()); // Gleicher Username wie player1
+            // WHEN & THEN
+            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+                playerManager.addPlayer(duplicatePlayer);
+            });
+            String expectedMessage = "Username already taken.";
+            String actualMessage = exception.getMessage();
+            assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
+
+        }
     }
 
     @Nested
@@ -361,7 +378,7 @@ class PlayerManagerTest {
             // GIVEN
             playerManager.addPlayer(player1);
 
-            // WHENƒ
+            // WHEN
             playerManager.initializePlayerStates(mockBoard);
 
             // THEN

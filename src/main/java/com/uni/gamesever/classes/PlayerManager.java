@@ -58,6 +58,7 @@ public class PlayerManager {
         if(userID == null){
             return false;
         }
+        hasAdministrator = false;
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] != null && players[i].getId().equals(userID)) {
                 if(players[i].getIsAdmin()){
