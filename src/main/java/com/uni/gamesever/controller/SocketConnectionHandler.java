@@ -64,7 +64,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         System.out.println("Message Received from user " + session.getId() + ": " + message.getPayload());
 
         //the whole game logic goes here
-        if(messageHandler.handleClientMessage(message.getPayload().toString(), session.getId()) != 1) {
+        if(!messageHandler.handleClientMessage(message.getPayload().toString(), session.getId())) {
             // we return a error message to the client
             
         }

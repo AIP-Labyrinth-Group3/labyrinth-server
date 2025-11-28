@@ -20,11 +20,11 @@ public class ConnectionHandler {
         this.socketMessageService = socketMessageService;
     }
 
-    public int handleConnectMessage(ConnectRequest request, String userId) throws JsonProcessingException {
+    public boolean handleConnectMessage(ConnectRequest request, String userId) throws JsonProcessingException {
             PlayerInfo newPlayer = new PlayerInfo(userId);
             if(newPlayer.setName(request.getUsername()) == -1){
                 System.err.println("Invalid username length for user " + userId + ": " + request.getUsername());
-                return -1;
+                return false;
             }
             newPlayer.setName(request.getUsername());
            if (playerManager.addPlayer(newPlayer)){
@@ -41,12 +41,12 @@ public class ConnectionHandler {
                 socketMessageService.broadcastMessage(lobbyStateMessageToBroadcast);
             } else {
                 System.err.println("Game is full. User " + userId + " cannot join.");
-                return -1;
+                return false;
            }
-              return 1; 
+              return true; 
     }
 
-    public int handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
+    public boolean handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
         if (playerManager.removePlayer(request.getUsername())){
              System.out.println("User " + userId + " disconnected" + request.getUsername());
              LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
@@ -55,9 +55,9 @@ public class ConnectionHandler {
              socketMessageService.broadcastMessage(lobbyStateMessageToBroadcast);
          } else {
              System.err.println("User " + userId + " not found in player list.");
-             return -1;
+             return false;
         }
-           return 1;
+           return true;
     }
 
     public void processGameAction(String action, String userId) {

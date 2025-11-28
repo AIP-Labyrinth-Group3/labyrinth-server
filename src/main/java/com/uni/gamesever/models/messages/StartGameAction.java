@@ -5,12 +5,16 @@ import com.uni.gamesever.models.BoardSize;
 public class StartGameAction extends Message {
     private int gameDurationInSeconds;
     private BoardSize boardSize;
+    private int treasureCardCount;
+    private int totalBonusCount;
 
     public StartGameAction() {}
     public StartGameAction(String action, int gameDurationInSeconds, BoardSize boardSize) {
         super(action);
         this.gameDurationInSeconds = gameDurationInSeconds;
         this.boardSize = boardSize;
+        this.treasureCardCount = 24;
+        this.totalBonusCount = 0;
     }
     public int getGameDurationInSeconds() {
         return gameDurationInSeconds;
@@ -18,4 +22,19 @@ public class StartGameAction extends Message {
     public BoardSize getBoardSize() {
         return boardSize;
     }
+    public int getTreasureCardCount() {
+        return treasureCardCount;
+    }
+    public int getTotalBonusCount() {
+        return totalBonusCount;
+    }
+
+    public void setTreasureCardCount(int treasureCardCount) throws IllegalArgumentException {
+        if(treasureCardCount < 2 || treasureCardCount > 24) {
+            throw new IllegalArgumentException("Treasure card count must be between 2 and 24.");
+        }
+        this.treasureCardCount = treasureCardCount;
+    }
+
 }
+

@@ -30,6 +30,15 @@ public class PlayerManager {
         return count;
     }
 
+    public String getAdminID() {
+        for (PlayerInfo player : players) {
+            if (player != null && player.getIsAdmin()) {
+                return player.getId();
+            }
+        }
+        return null;
+    }
+
     public boolean addPlayer(PlayerInfo newPlayer) {
         if(newPlayer == null){
             return false;

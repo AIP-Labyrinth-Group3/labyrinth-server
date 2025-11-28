@@ -24,7 +24,7 @@ public class MessageHandler {
         this.playerManager = playerManager;
     }
 
-    public int handleClientMessage(String message, String userId) throws JsonMappingException, JsonProcessingException {
+    public boolean handleClientMessage(String message, String userId) throws JsonMappingException, JsonProcessingException {
         //parsing the client message into a connectRequest object
         System.out.println("Received message from user " + userId + ": " + message);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -33,10 +33,10 @@ public class MessageHandler {
              request = objectMapper.readValue(message, Message.class);
         } catch (JsonMappingException e) {
             System.err.println("Failed to parse message from user " + userId + ": " + e.getMessage());
-            return -1;
+            return false;
         } catch (JsonProcessingException e) {
             System.err.println("Failed to process message from user " + userId + ": " + e.getMessage());
-            return -1;
+            return false;
         }
 
        switch (request.getType()) {
@@ -50,15 +50,20 @@ public class MessageHandler {
                 return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
             case "START_GAME":
                 StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
-                //check if the message sender is the administrator
-               if(userId.equals(playerManager.getPlayers()[0].getId())){
-                   return gameBoardHandler.handleStartGameMessage(startGameReq.getBoardSize());
-                } else {
+                if(userId.equals(playerManager.getAdminID())){
+                    try {
+                        return gameBoardHandler.handleStartGameMessage(startGameReq.getBoardSize());
+                    } catch (Exception e) {
+                        System.err.println("Error starting game: " + e.getMessage());
+                        return false;
+                    }
+                }
+                else {
                    System.err.println("User " + userId + " is not authorized to start the game.");
-                   return -1;
+                   return false;
                 }
            default:
-               return -1;
+               return false;
          }
     }
 
