@@ -14,7 +14,7 @@ import com.uni.gamesever.services.SocketMessageService;
 public class ConnectionHandler {
     private final PlayerManager playerManager;
     private final SocketMessageService socketMessageService;
-    ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ConnectionHandler(PlayerManager playerManager, SocketMessageService socketMessageService) {
         this.playerManager = playerManager;
