@@ -30,9 +30,14 @@ public class PlayerManager {
         return count;
     }
 
-    public boolean addPlayer(PlayerInfo newPlayer) {
+    public boolean addPlayer(PlayerInfo newPlayer) throws IllegalArgumentException {
         if(newPlayer == null){
             return false;
+        }
+        for (PlayerInfo player : players) {
+            if (player != null && player.getName().equals(newPlayer.getName())) {
+                throw new IllegalArgumentException("Username already taken.");
+            }
         }
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] == null) {
@@ -49,12 +54,13 @@ public class PlayerManager {
         return false;
     }
 
-    public boolean removePlayer(String username) {
-        if(username == null){
+    public boolean removePlayer(String userID) {
+        if(userID == null){
             return false;
         }
+        hasAdministrator = false;
         for (int i = 0; i < MAX_PLAYERS; i++) {
-            if (players[i] != null && players[i].getName().equals(username)) {
+            if (players[i] != null && players[i].getId().equals(userID)) {
                 if(players[i].getIsAdmin()){
                     for (int j = 0; j < MAX_PLAYERS; j++) {
                         if (players[j] != null && j != i) {
@@ -78,11 +84,18 @@ public class PlayerManager {
     }
 
     public PlayerInfo[] getPlayers() {
-        return players;
+        return players.clone();
     }
 
+    public PlayerInfo[] getNonNullPlayers(){
+        return Arrays.stream(players)
+                     .filter(player -> player != null)
+                     .toArray(PlayerInfo[]::new);
+    }
+
+
     public PlayerState[] getPlayerStates() {
-        return playerStates;
+        return playerStates.clone();
     }
 
 

@@ -44,6 +44,53 @@ class PlayerInfoTest {
             assertEquals(TEST_NAME, p.getName(), "Der Name sollte korrekt gesetzt sein.");
             assertFalse(p.getIsAdmin(), "isAdmin sollte standardmäßig auf false gesetzt sein.");
         }
+
+        @Test
+        void PlayerInfo_shouldThrowExceptionIfUsernameIsEmpty() {
+            // GIVEN
+            String invalidName1 = "";
+
+            // WHEN & THEN
+            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+                PlayerInfo p = new PlayerInfo(TEST_ID);
+                p.setName(invalidName1);
+            });
+
+            String expectedMessage = "Name must be between 1 and 50 characters.";
+            String actualMessage = exception.getMessage();
+
+            assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
+        }
+
+        @Test
+        void PlayerInfo_shouldThrowExceptionIfUsernameIsTooLong() {
+            // GIVEN
+            String invalidName2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            // WHEN & THEN
+            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+                PlayerInfo p = new PlayerInfo(TEST_ID);
+                p.setName(invalidName2);
+            });
+            String expectedMessage = "Name must be between 1 and 50 characters.";
+            String actualMessage = exception.getMessage();
+            assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
+
+        }
+
+        @Test
+        void PlayerInfo_setColor_shouldThrowExceptionForInvalidColor() {
+            // GIVEN
+            PlayerInfo p = new PlayerInfo(TEST_ID);
+            String invalidColor = "purple";
+            // WHEN & THEN
+            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+                p.setColor(invalidColor);
+            });
+            String expectedMessage = "Invalid color. Available colors are: RED, BLUE, GREEN, YELLOW.";
+            String actualMessage = exception.getMessage();
+            assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
+
+        }
     }
 
     @Nested

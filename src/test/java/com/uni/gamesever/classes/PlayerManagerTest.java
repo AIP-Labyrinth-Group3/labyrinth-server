@@ -36,6 +36,21 @@ class PlayerManagerTest {
     @Mock
     private PlayerInfo mockPlayer5; // Für den Test der Kapazitätsgrenze
 
+    //non Mock Players
+    private PlayerInfo player1 = new PlayerInfo("id1");
+    private PlayerInfo player2 = new PlayerInfo("id2");
+    private PlayerInfo player3 = new PlayerInfo("id3");
+    private PlayerInfo player4 = new PlayerInfo("id4");
+    private PlayerInfo player5 = new PlayerInfo("id5");
+    {
+        player1.setName("Player1");
+        player2.setName("Player2");
+        player3.setName("Player3");
+        player4.setName("Player4");
+        player5.setName("Player5");
+    }
+
+
     // Gemocktes GameBoard Objekt für initializePlayerStates
     @Mock
     private GameBoard mockBoard;
@@ -70,8 +85,8 @@ class PlayerManagerTest {
         @Test
         void getAmountOfPlayers_shouldReturnCorrectCount() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
-            playerManager.addPlayer(mockPlayer2);
+            playerManager.addPlayer(player1);
+            playerManager.addPlayer(player2);
 
             // WHEN
             int amount = playerManager.getAmountOfPlayers();
@@ -83,10 +98,10 @@ class PlayerManagerTest {
         @Test
         void getAmountOfPlayers_shouldReturnCorrectCountWhenNewPlayerIsNull() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
+            playerManager.addPlayer(player1);
             playerManager.addPlayer(null);
-            playerManager.addPlayer(mockPlayer2);
-            playerManager.addPlayer(mockPlayer3);
+            playerManager.addPlayer(player2);
+            playerManager.addPlayer(player3);
 
             // WHEN
             int amount = playerManager.getAmountOfPlayers();
@@ -102,7 +117,7 @@ class PlayerManagerTest {
         @Test
         void addPlayer_shouldAddNewPlayerSuccessfully() {
             // WHEN
-            boolean result = playerManager.addPlayer(mockPlayer1);
+            boolean result = playerManager.addPlayer(player1);
 
             // THEN
             assertTrue(result, "Das Hinzufügen des Spielers sollte erfolgreich sein.");
@@ -112,12 +127,12 @@ class PlayerManagerTest {
         @Test
         void addPlayer_shouldAddPlayersUpToMaxCapacity() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
-            playerManager.addPlayer(mockPlayer2);
-            playerManager.addPlayer(mockPlayer3);
+            playerManager.addPlayer(player1);
+            playerManager.addPlayer(player2);
+            playerManager.addPlayer(player3);
 
             // WHEN
-            boolean result = playerManager.addPlayer(mockPlayer4);
+            boolean result = playerManager.addPlayer(player4);
 
             // THEN
             assertTrue(result, "Der vierte Spieler sollte erfolgreich hinzugefügt werden.");
@@ -127,13 +142,13 @@ class PlayerManagerTest {
         @Test
         void addPlayer_shouldFailWhenGameIsFull() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
-            playerManager.addPlayer(mockPlayer2);
-            playerManager.addPlayer(mockPlayer3);
-            playerManager.addPlayer(mockPlayer4);
+            playerManager.addPlayer(player1);
+            playerManager.addPlayer(player2);
+            playerManager.addPlayer(player3);
+            playerManager.addPlayer(player4);
 
             // WHEN
-            boolean result = playerManager.addPlayer(mockPlayer5);
+            boolean result = playerManager.addPlayer(player5);
 
             // THEN
             assertFalse(result, "Das Hinzufügen des fünften Spielers sollte fehlschlagen.");
@@ -159,6 +174,23 @@ class PlayerManagerTest {
             // THEN
             assertTrue(playerManager.getPlayers()[0].getIsAdmin(), "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
         }
+
+        //add a test to check if a player can not gave the same username - exception
+        @Test
+        void addPlayer_shouldFailWhenUsernameAlreadyExists() {
+            // GIVEN
+            playerManager.addPlayer(player1);
+            PlayerInfo duplicatePlayer = new PlayerInfo("idDuplicate");
+            duplicatePlayer.setName(player1.getName()); // Gleicher Username wie player1
+            // WHEN & THEN
+            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+                playerManager.addPlayer(duplicatePlayer);
+            });
+            String expectedMessage = "Username already taken.";
+            String actualMessage = exception.getMessage();
+            assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
+
+        }
     }
 
     @Nested
@@ -167,10 +199,10 @@ class PlayerManagerTest {
         @Test
         void removePlayer_shouldRemovePlayerSuccessfully() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
+            playerManager.addPlayer(player1);
 
             // WHEN
-            boolean result = playerManager.removePlayer(mockPlayer1.getName());
+            boolean result = playerManager.removePlayer(player1.getId());
 
             // THEN
             assertTrue(result, "Das Entfernen des Spielers sollte erfolgreich sein.");
@@ -180,11 +212,11 @@ class PlayerManagerTest {
         @Test
         void removePlayer_shouldFailWhenRemovePlayerTwice() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
-            playerManager.removePlayer(mockPlayer1.getName());
+            playerManager.addPlayer(player1);
+            playerManager.removePlayer(player1.getId());
 
             // WHEN
-            boolean result = playerManager.removePlayer(mockPlayer1.getName());
+            boolean result = playerManager.removePlayer(player1.getId());
 
             // THEN
             assertFalse(result, "Das zweimalige Entfernen des Spielers sollte fehlschlagen.");
@@ -194,7 +226,7 @@ class PlayerManagerTest {
         @Test
         void removePlayer_shouldFailWhenRemovePlayerWithNull() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
+            playerManager.addPlayer(player1);
 
             // WHEN
             boolean result = playerManager.removePlayer(null);
@@ -215,7 +247,7 @@ class PlayerManagerTest {
             playerManager.addPlayer(player2);
 
             // WHEN
-            boolean result = playerManager.removePlayer(adminPlayer.getName());
+            boolean result = playerManager.removePlayer(adminPlayer.getId());
 
             // THEN
             assertTrue(result, "Das Entfernen des Spielers sollte erfolgreich sein.");
@@ -242,7 +274,7 @@ class PlayerManagerTest {
         @Test
         void getPlayers_shouldReturnArrayOfPlayerInfos() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
+            playerManager.addPlayer(player1);
 
             // WHEN
             PlayerInfo[] players = playerManager.getPlayers();
@@ -250,7 +282,7 @@ class PlayerManagerTest {
             // THEN
             assertNotNull(players, "Das zurückgegebene Array sollte nicht null sein.");
             assertEquals(4, players.length, "Das Array sollte die maximale Größe von 4 haben.");
-            assertEquals(mockPlayer1, players[0], "Der erste Platz sollte den hinzugefügten Spieler enthalten.");
+            assertEquals(player1, players[0], "Der erste Platz sollte den hinzugefügten Spieler enthalten.");
             assertNull(players[1], "Der zweite Platz sollte null sein.");
         }
     }
@@ -277,8 +309,8 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeStatesForExistingPlayers() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1); // Index 0 (0, 0)
-            playerManager.addPlayer(mockPlayer3); // Index 1 (0, cols-1)
+            playerManager.addPlayer(player1); // Index 0 (0, 0)
+            playerManager.addPlayer(player3); // Index 1 (0, cols-1)
 
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
@@ -292,13 +324,13 @@ class PlayerManagerTest {
 
             // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
-            assertEquals(mockPlayer1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
+            assertEquals(player1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
             assertEquals(expectedPos1.getX(), states[0].getPosition().getX(), "Die X Koordinate sollte 0 sein.");
             assertEquals(expectedPos1.getY(), states[0].getPosition().getY(), "Die Y Koordinate sollte 0 sein.");
 
             // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
-            assertEquals(mockPlayer3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
+            assertEquals(player3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
             assertEquals(expectedPos2.getX(), states[1].getPosition().getX(), "Die X Koordinate sollte 0 sein.");
             assertEquals(expectedPos2.getY(), states[1].getPosition().getY(), "Die Y Koordinate sollte 8 sein.");
 
@@ -310,10 +342,10 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldAssignCorrectCornerCoordinates() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1); // Index 0 (0, 0)
-            playerManager.addPlayer(mockPlayer2); // Index 1 (0, cols-1)
-            playerManager.addPlayer(mockPlayer3); // Index 2 (rows-1, 0)
-            playerManager.addPlayer(mockPlayer4); // Index 3 (rows-1, cols-1)
+            playerManager.addPlayer(player1); // Index 0 (0, 0)
+            playerManager.addPlayer(player2); // Index 1 (0, cols-1)
+            playerManager.addPlayer(player3); // Index 2 (rows-1, 0)
+            playerManager.addPlayer(player4); // Index 3 (rows-1, cols-1)
 
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
@@ -344,7 +376,7 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1);
+            playerManager.addPlayer(player1);
 
             // WHEN
             playerManager.initializePlayerStates(mockBoard);
