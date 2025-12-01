@@ -9,8 +9,8 @@ public class StartGameAction extends Message {
     private int totalBonusCount;
 
     public StartGameAction() {}
-    public StartGameAction(String action, int gameDurationInSeconds, BoardSize boardSize) {
-        super(action);
+    public StartGameAction(int gameDurationInSeconds, BoardSize boardSize) {
+        super("START_GAME");
         this.gameDurationInSeconds = gameDurationInSeconds;
         this.boardSize = boardSize;
         this.treasureCardCount = 24;

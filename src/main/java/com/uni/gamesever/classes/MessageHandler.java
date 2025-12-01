@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NotEnoughPlayerException;
+import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.messages.ConnectRequest;
 import com.uni.gamesever.models.messages.Message;
 import com.uni.gamesever.models.messages.StartGameAction;
@@ -50,18 +53,16 @@ public class MessageHandler {
                 return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
             case "START_GAME":
                 StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
-                if(userId.equals(playerManager.getAdminID())){
-                    try {
-                        return gameBoardHandler.handleStartGameMessage(startGameReq.getBoardSize());
-                    } catch (Exception e) {
-                        System.err.println("Error starting game: " + e.getMessage());
-                        return false;
-                    }
+                try {
+                    return gameBoardHandler.handleStartGameMessage(userId, startGameReq.getBoardSize());
+                } catch (PlayerNotAdminException e) {
+                    System.err.println(e.getMessage());
+                    return false;
+                } catch (NotEnoughPlayerException e) {
+                    System.err.println(e.getMessage());
+                    return false;
                 }
-                else {
-                   System.err.println("User " + userId + " is not authorized to start the game.");
-                   return false;
-                }
+
            default:
                return false;
          }

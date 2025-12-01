@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NotEnoughPlayerException;
+import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStarted;
@@ -23,11 +25,15 @@ public class GameInitialitionController {
         this.socketBroadcastService = socketBroadcastService;
     }
 
-    public boolean handleStartGameMessage(BoardSize size) throws JsonProcessingException, GameNotValidException {
+    public boolean handleStartGameMessage(String userID, BoardSize size) throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException {
         //implementierung der Gameboard generierung
+
+        if(playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
+            throw new PlayerNotAdminException("Only the admin can start the game.");
+        }
         
         if(playerManager.getAmountOfPlayers() <2) {
-            throw new GameNotValidException("Not enough players to start the game.");
+            throw new NotEnoughPlayerException("Not enough players to start the game.");
         }
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 

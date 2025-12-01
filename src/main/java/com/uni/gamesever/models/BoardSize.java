@@ -4,7 +4,10 @@ public class BoardSize {
     private int rows;
     private int cols;
 
-    public BoardSize() {}
+    public BoardSize() {
+        this.rows = 7;
+        this.cols = 7;
+    }
 
 
     public int getRows() {
