@@ -52,10 +52,10 @@ public class GameBoard {
         board.cols = size.getCols();
 
         //ecken generieren
-        board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER"));
-        board.setTile(0, board.cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER"));
-        board.setTile(board.rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER"));
-        board.setTile(board.rows - 1, board.cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER"));
+        board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER", true));
+        board.setTile(0, board.cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER", true));
+        board.setTile(board.rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER", true));
+        board.setTile(board.rows - 1, board.cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER", true));
 
 
         //Randkreuzungen generieren
@@ -65,7 +65,7 @@ public class GameBoard {
                     boolean isEdge = (i == 0 || j == 0 || i == board.rows -1 || j == board.cols -1);
                     if(isEdge && board.getTiles()[i][j] == null){
                         List<String> entrances = generateEdgeCrossEntrances(i, j, board.rows, board.cols);
-                        Tile t = new Tile(entrances, "CROSS");
+                        Tile t = new Tile(entrances, "CROSS", true);
                         board.setTile(i, j, t);
                     }
                 }
