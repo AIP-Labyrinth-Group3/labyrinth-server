@@ -1,13 +1,24 @@
 package com.uni.gamesever.models;
 
 public class GameStarted {
-    private String eventType;
+    private String type;
+    private GameBoard initialBoard;
+    private PlayerInfo[] players;
 
-    public GameStarted() {
-        this.eventType = "GAME_STARTED";
+    public GameStarted(GameBoard initialBoard, PlayerInfo[] players) {
+         this.type = "GAME_STARTED";
+         this.initialBoard = initialBoard;
+         this.players = players;
     }
-    public String getEventType() {
-        return eventType;
+
+    public String getType() {
+        return type;
     }
-    
+    public GameBoard getInitialBoard() {
+        return initialBoard;
+    }
+    public PlayerInfo[] getPlayers() {
+        return players.clone();
+
+    }
 }

@@ -4,6 +4,8 @@ public class GameStateUpdate {
     private String eventType = "GAME_STATE_UPDATE";
     private GameBoard gameBoard;
     private PlayerState[] playerState;
+    private String currentPlayerId;
+    private String turnState;
 
     public GameStateUpdate(GameBoard gameBoard, PlayerState[] playerState) {
         this.gameBoard = gameBoard;
@@ -17,6 +19,25 @@ public class GameStateUpdate {
     }
     public PlayerState[] getPlayerState() {
         return playerState;
+    }
+
+    public String getCurrentPlayerId() {
+        return currentPlayerId;
+    }
+    public void setCurrentPlayerId(String currentPlayerId) {
+        this.currentPlayerId = currentPlayerId;
+    }
+
+    public String getTurnState() {
+        return turnState;
+    }
+    public void setTurnState(String turnState) {
+        try {
+            TurnState.valueOf(turnState);
+            this.turnState = turnState;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid turn state: " + turnState);
+        }
     }
 
     

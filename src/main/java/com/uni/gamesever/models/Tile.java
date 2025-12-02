@@ -10,9 +10,12 @@ public class Tile {
     private String type;
     private Treasure treasure;
     private Bonus bonus;
+    private boolean isFixed;
 
     public Tile(List<String> entrances, String type) {
         this.entrances = entrances;
+        this.type = type;
+        this.isFixed = false;
     }
 
     public List<String> getEntrances() {
@@ -44,5 +47,12 @@ public class Tile {
     }
     public void setType(String type) {
         this.type = type;
+    }
+
+    public void setFixed(boolean isFixed) {
+        this.isFixed = isFixed;
+    }
+    public boolean isFixed() {
+        return isFixed;
     }
 }

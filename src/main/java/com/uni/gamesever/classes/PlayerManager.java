@@ -108,13 +108,17 @@ public class PlayerManager {
 
         for (int i=0; i< players.length; i++){
             if(players[i] != null){
-                playerStates[i] = new PlayerState(
+                Coordinates startPos = startingPositions[i];
+                PlayerState state = new PlayerState(
                     players[i],
-                    startingPositions[i],
-                    new Treasure[0], 
+                    startPos,
+                    startPos,
+                    new Treasure[0],
+                    null,
                     0,
-                    new String[0]
+                    0
                 );
+                playerStates[i] = state;
             }
         }
     }

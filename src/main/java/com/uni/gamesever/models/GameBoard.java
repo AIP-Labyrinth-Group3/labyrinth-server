@@ -5,9 +5,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class GameBoard {
-    private BoardSize size;
+    private int rows;
+    private int cols;
     private Tile[][] tiles;
+    private PushActionInfo lastPush;
+    @JsonIgnore
+    private BoardSize size;
+    
 
     private GameBoard(BoardSize size) {
         this.size = size;
@@ -23,26 +30,41 @@ public class GameBoard {
         this.tiles[row][col] = tile;
     }
 
+    public int getRows() {
+        return rows;
+    }
+    public int getCols() {
+        return cols;
+    }
+
+    public PushActionInfo getLastPush() {
+        return lastPush;
+    }
+
+    public void setLastPush(PushActionInfo lastPush) {
+        this.lastPush = lastPush;
+    }
+
     // Tile generation and assignment
     public static GameBoard generateBoard(BoardSize size) {
         GameBoard board = new GameBoard(size);
-        int rows = size.getRows();
-        int cols = size.getCols();
+        board.rows = size.getRows();
+        board.cols = size.getCols();
 
         //ecken generieren
         board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER"));
-        board.setTile(0, cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER"));
-        board.setTile(rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER"));
-        board.setTile(rows - 1, cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER"));
+        board.setTile(0, board.cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER"));
+        board.setTile(board.rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER"));
+        board.setTile(board.rows - 1, board.cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER"));
 
 
         //Randkreuzungen generieren
-        for(int i = 0; i < rows; i++){
-            for (int j = 0; j < cols; j++){
+        for(int i = 0; i < board.rows; i++){
+            for (int j = 0; j < board.cols; j++){
                 if(i%2 == 0 && j % 2 == 0){
-                    boolean isEdge = (i == 0 || j == 0 || i == rows -1 || j == cols -1);
+                    boolean isEdge = (i == 0 || j == 0 || i == board.rows -1 || j == board.cols -1);
                     if(isEdge && board.getTiles()[i][j] == null){
-                        List<String> entrances = generateEdgeCrossEntrances(i, j, rows, cols);
+                        List<String> entrances = generateEdgeCrossEntrances(i, j, board.rows, board.cols);
                         Tile t = new Tile(entrances, "CROSS");
                         board.setTile(i, j, t);
                     }
@@ -51,8 +73,8 @@ public class GameBoard {
         }
 
         // Innenkreuzungen generieren
-        for (int i = 2; i < rows - 1; i += 2) {
-            for (int j = 2; j < cols - 1; j += 2) {
+        for (int i = 2; i < board.rows - 1; i += 2) {
+            for (int j = 2; j < board.cols - 1; j += 2) {
                 if (board.getTiles()[i][j] == null) {
                     Tile t = new Tile(generateEntrancesForTypeWithRandomRotation("CROSS"), "CROSS");
                     board.setTile(i, j, t);
@@ -69,26 +91,22 @@ public class GameBoard {
         int rows = board.getSize().getRows();
         int cols = board.getSize().getCols();
         int totalTiles = rows * cols;
-        int totalCards = totalTiles + 1; // +1 for the spare tile
+        int totalCards = totalTiles + 1;
 
-        //basiswerte aus 7x7 Board
         int baseRows = 7;
         int baseCols = 7;
         int baseCorners = 20;
         int baseCrosses = 18;
         int baseStraights = 12;
 
-        // Skalierungsfaktoren
         int corners = totalCards * baseCorners / (baseRows * baseCols + 1);
         int crosses = totalCards * baseCrosses / (baseRows * baseCols + 1);
         int straights = totalCards * baseStraights / (baseRows * baseCols + 1);
 
-        // rundungsfehler ausgleichen
         int sum = corners + crosses + straights;
         int diff = totalCards - sum;
         if (diff > 0) straights += diff;
 
-        // bereits gesetzte tiles zählen und die anzahl reduzieren
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 Tile t = board.getTiles()[i][j];
@@ -108,7 +126,6 @@ public class GameBoard {
             }
         }
 
-        //Restkarten in eine Liste packen
         List<String> remainingTiles = new ArrayList<>();
         for (int i = 0; i < corners; i++) remainingTiles.add("CORNER");
         for (int i = 0; i < crosses; i++) remainingTiles.add("CROSS");
@@ -116,7 +133,6 @@ public class GameBoard {
 
         Collections.shuffle(remainingTiles);
 
-        //Restkarten zuweisen
         int index = 0;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {

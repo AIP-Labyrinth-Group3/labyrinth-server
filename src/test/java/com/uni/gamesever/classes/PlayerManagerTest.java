@@ -293,14 +293,14 @@ class PlayerManagerTest {
             // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
             assertEquals(mockPlayer1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
-            assertEquals(expectedPos1.getX(), states[0].getPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos1.getY(), states[0].getPosition().getY(), "Die Y Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY(), "Die Y Koordinate sollte 0 sein.");
 
             // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
             assertEquals(mockPlayer3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
-            assertEquals(expectedPos2.getX(), states[1].getPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos2.getY(), states[1].getPosition().getY(), "Die Y Koordinate sollte 8 sein.");
+            assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 8 sein.");
 
             // Überprüfung von leeren Plätzen
             assertNull(states[2], "Der leere Platz 2 sollte null bleiben.");
@@ -328,17 +328,16 @@ class PlayerManagerTest {
             PlayerState[] states = playerManager.getPlayerStates();
 
             // Überprüfung der erwarteten Startpositionen
-            assertEquals(expectedPos1.getX(), states[0].getPosition().getX());
-            assertEquals(expectedPos1.getY(), states[0].getPosition().getY());
+            assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX());
+            assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY());
 
-            assertEquals(expectedPos2.getX(), states[1].getPosition().getX());
-            assertEquals(expectedPos2.getY(), states[1].getPosition().getY());
+            assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX());
+            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY());
+            assertEquals(expectedPos3.getX(), states[2].getCurrentPosition().getX());
+            assertEquals(expectedPos3.getY(), states[2].getCurrentPosition().getY());
 
-            assertEquals(expectedPos3.getX(), states[2].getPosition().getX());
-            assertEquals(expectedPos3.getY(), states[2].getPosition().getY());
-
-            assertEquals(expectedPos4.getX(), states[3].getPosition().getX());
-            assertEquals(expectedPos4.getY(), states[3].getPosition().getY());
+            assertEquals(expectedPos4.getX(), states[3].getCurrentPosition().getX());
+            assertEquals(expectedPos4.getY(), states[3].getCurrentPosition().getY());
         }
 
         @Test
