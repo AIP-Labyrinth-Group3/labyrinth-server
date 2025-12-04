@@ -1,5 +1,9 @@
 package com.uni.gamesever.models;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class PlayerState {
     private PlayerInfo player;
     private Coordinates currentPosition;
@@ -10,6 +14,8 @@ public class PlayerState {
     private int points;
     private String[] achievements;
     private String[] availableBonuses;
+    @JsonIgnore
+    private List<Treasure> treasuresAssigned;
 
     public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homeCoordinates, Treasure[] treasuresFound, Treasure currentTreasure, int remainingTreasureCount, int points) {
         this.player = player;
@@ -50,6 +56,9 @@ public class PlayerState {
     public String[] getAvailableBonuses() {
         return availableBonuses;
     }
+    public List<Treasure> getRemainingTreasureCards() {
+        return treasuresAssigned;
+    }
 
     public void setCurrentPosition(Coordinates currentPosition) {
         this.currentPosition = currentPosition;
@@ -86,6 +95,10 @@ public class PlayerState {
     }
     public void setRemainingTreasureCount(int remainingTreasureCount) {
         this.remainingTreasureCount = remainingTreasureCount;
+    }
+
+    public void setRemainingTreasureCards(List<Treasure> assignedTreasures) {
+        this.treasuresAssigned = assignedTreasures;
     }
 
     public void setAvailableBonuses(String[] availableBonuses) {

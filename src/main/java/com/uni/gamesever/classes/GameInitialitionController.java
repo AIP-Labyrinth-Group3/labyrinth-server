@@ -77,6 +77,7 @@ public class GameInitialitionController {
     public void distributeTreasuresOnPlayers(List<Treasure> treasures) {
         int playersCount = playerManager.getAmountOfPlayers();
         int index = 0;
+        Collections.shuffle(treasures);
 
         for (PlayerState state : playerManager.getPlayerStates()) {
             if (state == null) continue;
@@ -91,6 +92,7 @@ public class GameInitialitionController {
             state.setTreasuresFound(new Treasure[0]);
             state.setRemainingTreasureCount(assigned.size());
             state.setCurrentTreasure(assigned.get(0));
+            state.setRemainingTreasureCards(assigned);
         }
 
     
