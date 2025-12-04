@@ -25,6 +25,8 @@ public class PlayerState {
         this.currentTreasure = currentTreasure;
         this.remainingTreasureCount = remainingTreasureCount;
         this.points = points;
+        this.achievements = new String[0];
+        this.availableBonuses = new String[0];
     }
     public Coordinates getCurrentPosition() {
         return currentPosition;

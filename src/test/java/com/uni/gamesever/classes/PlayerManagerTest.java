@@ -343,6 +343,8 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() {
             // GIVEN
+            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0, 0);
+            player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
             // WHEN
