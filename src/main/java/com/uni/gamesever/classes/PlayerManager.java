@@ -30,6 +30,15 @@ public class PlayerManager {
         return count;
     }
 
+    public String getAdminID() {
+        for (PlayerInfo player : players) {
+            if (player != null && player.getIsAdmin()) {
+                return player.getId();
+            }
+        }
+        return null;
+    }
+
     public boolean addPlayer(PlayerInfo newPlayer) throws IllegalArgumentException {
         if(newPlayer == null){
             return false;
@@ -97,6 +106,11 @@ public class PlayerManager {
     public PlayerState[] getPlayerStates() {
         return playerStates.clone();
     }
+    public PlayerState[] getNonNullPlayerStates(){
+        return Arrays.stream(playerStates)
+                     .filter(state -> state != null)
+                     .toArray(PlayerState[]::new);
+    }
 
 
     public void initializePlayerStates(GameBoard board) {
@@ -112,13 +126,16 @@ public class PlayerManager {
 
         for (int i=0; i< players.length; i++){
             if(players[i] != null){
-                playerStates[i] = new PlayerState(
+                Coordinates startPos = startingPositions[i];
+                PlayerState state = new PlayerState(
                     players[i],
-                    startingPositions[i],
-                    new Treasure[0], 
-                    0,
-                    new String[0]
+                    startPos,
+                    startPos,
+                    new Treasure[0],
+                    null,
+                    0
                 );
+                playerStates[i] = state;
             }
         }
     }

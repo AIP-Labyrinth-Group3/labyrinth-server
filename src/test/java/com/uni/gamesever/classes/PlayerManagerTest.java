@@ -309,8 +309,8 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeStatesForExistingPlayers() {
             // GIVEN
-            playerManager.addPlayer(player1); // Index 0 (0, 0)
-            playerManager.addPlayer(player3); // Index 1 (0, cols-1)
+            playerManager.addPlayer(mockPlayer1); // Index 0 (0, 0)
+            playerManager.addPlayer(mockPlayer3); // Index 1 (0, cols-1)
 
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
@@ -324,15 +324,15 @@ class PlayerManagerTest {
 
             // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
-            assertEquals(player1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
-            assertEquals(expectedPos1.getX(), states[0].getPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos1.getY(), states[0].getPosition().getY(), "Die Y Koordinate sollte 0 sein.");
+            assertEquals(mockPlayer1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
+            assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY(), "Die Y Koordinate sollte 0 sein.");
 
             // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
-            assertEquals(player3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
-            assertEquals(expectedPos2.getX(), states[1].getPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos2.getY(), states[1].getPosition().getY(), "Die Y Koordinate sollte 8 sein.");
+            assertEquals(mockPlayer3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
+            assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 8 sein.");
 
             // Überprüfung von leeren Plätzen
             assertNull(states[2], "Der leere Platz 2 sollte null bleiben.");
@@ -357,39 +357,39 @@ class PlayerManagerTest {
             playerManager.initializePlayerStates(mockBoard);
 
             // THEN
-            PlayerState[] states = playerManager.getPlayerStates();
+            PlayerState[] states = playerManager.getNonNullPlayerStates();
 
             // Überprüfung der erwarteten Startpositionen
-            assertEquals(expectedPos1.getX(), states[0].getPosition().getX());
-            assertEquals(expectedPos1.getY(), states[0].getPosition().getY());
+            assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX());
+            assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY());
 
-            assertEquals(expectedPos2.getX(), states[1].getPosition().getX());
-            assertEquals(expectedPos2.getY(), states[1].getPosition().getY());
+            assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX());
+            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY());
+            assertEquals(expectedPos3.getX(), states[2].getCurrentPosition().getX());
+            assertEquals(expectedPos3.getY(), states[2].getCurrentPosition().getY());
 
-            assertEquals(expectedPos3.getX(), states[2].getPosition().getX());
-            assertEquals(expectedPos3.getY(), states[2].getPosition().getY());
-
-            assertEquals(expectedPos4.getX(), states[3].getPosition().getX());
-            assertEquals(expectedPos4.getY(), states[3].getPosition().getY());
+            assertEquals(expectedPos4.getX(), states[3].getCurrentPosition().getX());
+            assertEquals(expectedPos4.getY(), states[3].getCurrentPosition().getY());
         }
 
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() {
             // GIVEN
-            playerManager.addPlayer(player1);
+            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0);
+            player1.setAchievements(null);
+            playerManager.addPlayer(mockPlayer1);
 
             // WHEN
             playerManager.initializePlayerStates(mockBoard);
 
             // THEN
-            PlayerState state = playerManager.getPlayerStates()[0];
+            PlayerState state = playerManager.getNonNullPlayerStates()[0];
             assertNotNull(state.getTreasuresFound(), "Die gesammelten Schätze sollten nicht null sein.");
             assertEquals(0, state.getTreasuresFound().length, "Die gesammelten Schätze sollten leer sein.");
 
             assertNotNull(state.getAchievements(), "Die Achievements sollten nicht null sein.");
             assertEquals(0, state.getAchievements().length, "Die Achievements sollten leer sein.");
 
-            assertEquals(0, state.getPoints(), "Die Punkte sollten 0 sein.");
         }
     }
 }

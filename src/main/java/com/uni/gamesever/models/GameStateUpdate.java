@@ -1,30 +1,53 @@
 package com.uni.gamesever.models;
 
 public class GameStateUpdate {
-    private String eventType = "GAME_STATE_UPDATE";
-    private GameBoard gameBoard;
-    private PlayerState[] playerState;
+    private String type = "GAME_STATE_UPDATE";
+    private GameBoard board;
+    private PlayerState[] players;
+    private String currentPlayerId;
+    private String currentTurnState;
 
-    public GameStateUpdate(GameBoard gameBoard, PlayerState[] playerState) {
-        this.gameBoard = gameBoard;
-        this.playerState = playerState;
+    public GameStateUpdate(GameBoard board, PlayerState[] players) {
+         this.board = board;
+         this.players = players;
+         this.currentPlayerId = players[0].getPlayer().getId();
+        this.currentTurnState = TurnState.WAITING_FOR_PUSH.name();
     }
-    public String getEventType() {
-        return eventType;
+    public String getType() {
+        return type;
     }
-    public GameBoard getGameBoard() {
-        return gameBoard;
+    public GameBoard getBoard() {
+        return board;
     }
-    public PlayerState[] getPlayerState() {
-        return playerState;
+    public PlayerState[] getPlayers() {
+        return players;
+    }
+
+    public String getCurrentPlayerId() {
+        return currentPlayerId;
+    }
+    public void setCurrentPlayerId(String currentPlayerId) {
+        this.currentPlayerId = currentPlayerId;
+    }
+
+    public String getCurrentTurnState() {
+        return currentTurnState;
+    }
+    public void setCurrentTurnState(String currentTurnState) {
+        try {
+            TurnState.valueOf(currentTurnState);
+            this.currentTurnState = currentTurnState;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid turn state: " + currentTurnState);
+        }
     }
 
     
-    public void setGameBoard(GameBoard gameBoard) {
-        this.gameBoard = gameBoard;
+    public void setBoard(GameBoard board) {
+        this.board = board;
     }
-    public void setPlayerState(PlayerState[] playerState) {
-        this.playerState = playerState;
+    public void setPlayerState(PlayerState[] players) {
+        this.players = players;
     }
 
 }
