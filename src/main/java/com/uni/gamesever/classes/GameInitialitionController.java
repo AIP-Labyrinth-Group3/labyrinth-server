@@ -94,7 +94,6 @@ public class GameInitialitionController {
             state.setAssignedTreasures(assigned);
         }
 
-    
     }
 
     public void placeTreasuresOnBoard(GameBoard board, List<Treasure> treasures) {
