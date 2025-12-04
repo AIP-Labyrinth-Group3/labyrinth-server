@@ -309,8 +309,8 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeStatesForExistingPlayers() {
             // GIVEN
-            playerManager.addPlayer(player1); // Index 0 (0, 0)
-            playerManager.addPlayer(player3); // Index 1 (0, cols-1)
+            playerManager.addPlayer(mockPlayer1); // Index 0 (0, 0)
+            playerManager.addPlayer(mockPlayer3); // Index 1 (0, cols-1)
 
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
