@@ -32,22 +32,21 @@ public class PlayerInfo {
     public void setAdmin(boolean isAdmin) {
         this.isAdmin = isAdmin;
     }
-    public int setName(String name) {
+    public void setName(String name) throws IllegalArgumentException{
         if(name.length() < 1 || name.length() > 50){
-            return -1;
+            throw new IllegalArgumentException("Name must be between 1 and 50 characters.");
         }
         this.name = name;
-        return 1;
     }
 
-    public int setColor(String color) {
+    public void setColor(String color) throws IllegalArgumentException{
         for (String availableColor : availableColors) {
             if (availableColor.equalsIgnoreCase(color)) {
                 this.color = color.toUpperCase();
-                return 1;
+                return;
             }
         }
-        return -1;
+        throw new IllegalArgumentException("Invalid color. Available colors are: RED, BLUE, GREEN, YELLOW.");
     }
     public void setReady(boolean isReady) {
         this.isReady = isReady;
