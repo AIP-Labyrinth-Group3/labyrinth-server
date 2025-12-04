@@ -14,6 +14,7 @@ import com.uni.gamesever.services.SocketMessageService;
 public class ConnectionHandler {
     private final PlayerManager playerManager;
     private final SocketMessageService socketMessageService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ConnectionHandler(PlayerManager playerManager, SocketMessageService socketMessageService) {
         this.playerManager = playerManager;
@@ -22,37 +23,33 @@ public class ConnectionHandler {
 
     public boolean handleConnectMessage(ConnectRequest request, String userId) throws JsonProcessingException {
             PlayerInfo newPlayer = new PlayerInfo(userId);
-            if(newPlayer.setName(request.getUsername()) == -1){
-                System.err.println("Invalid username length for user " + userId + ": " + request.getUsername());
+            try{
+                newPlayer.setName(request.getUsername());
+                if (playerManager.addPlayer(newPlayer)){
+                    System.out.println("User " + userId + " connected as " + request.getUsername());
+                    ConnectionAck connectionAck = new ConnectionAck(newPlayer.getId());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));         
+
+                    LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+                    socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
+                } else {
+                    System.err.println("Game is full. User " + userId + " cannot join.");
+                    return false;
+                }
+            }
+            catch (IllegalArgumentException e){
+                System.err.println(e.getMessage());
                 return false;
             }
-            newPlayer.setName(request.getUsername());
-           if (playerManager.addPlayer(newPlayer)){
-                System.out.println("User " + userId + " connected as " + request.getUsername());
-
-
-
-                ConnectionAck connectionAck = new ConnectionAck(newPlayer.getId());
-                ObjectMapper mapper = new ObjectMapper();
-                socketMessageService.sendMessageToSession(userId, mapper.writeValueAsString(connectionAck));         
-
-                LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
-                String lobbyStateMessageToBroadcast = mapper.writeValueAsString(lobbyState);
-                socketMessageService.broadcastMessage(lobbyStateMessageToBroadcast);
-            } else {
-                System.err.println("Game is full. User " + userId + " cannot join.");
-                return false;
-           }
-              return true; 
+           
+            return true; 
     }
 
     public boolean handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
-        if (playerManager.removePlayer(request.getUsername())){
-             System.out.println("User " + userId + " disconnected" + request.getUsername());
-             LobbyState lobbyState = new LobbyState(playerManager.getPlayers());
-             ObjectMapper mapper = new ObjectMapper();
-             String lobbyStateMessageToBroadcast = mapper.writeValueAsString(lobbyState);
-             socketMessageService.broadcastMessage(lobbyStateMessageToBroadcast);
+        if (playerManager.removePlayer(userId)){
+             System.out.println("User " + userId + " disconnected " + request.getUsername());
+             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+             socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
          } else {
              System.err.println("User " + userId + " not found in player list.");
              return false;
