@@ -106,6 +106,11 @@ public class PlayerManager {
     public PlayerState[] getPlayerStates() {
         return playerStates.clone();
     }
+    public PlayerState[] getNonNullPlayerStates(){
+        return Arrays.stream(playerStates)
+                     .filter(state -> state != null)
+                     .toArray(PlayerState[]::new);
+    }
 
 
     public void initializePlayerStates(GameBoard board) {
@@ -128,7 +133,6 @@ public class PlayerManager {
                     startPos,
                     new Treasure[0],
                     null,
-                    0,
                     0
                 );
                 playerStates[i] = state;

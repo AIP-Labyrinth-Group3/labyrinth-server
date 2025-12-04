@@ -53,11 +53,11 @@ public class GameInitialitionController {
         distributeTreasuresOnPlayers(treasures);
         placeTreasuresOnBoard(board, treasures);
 
-        GameStarted startedEvent = new GameStarted(board, playerManager.getPlayers());
+        GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
 
         //gameStateUpdate senden
-        GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getPlayerStates());
+        GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
         String gameStateMessageToBroadcast = objectMapper.writeValueAsString(gameState);
         socketBroadcastService.broadcastMessage(gameStateMessageToBroadcast);
 
@@ -79,7 +79,7 @@ public class GameInitialitionController {
         int index = 0;
         Collections.shuffle(treasures);
 
-        for (PlayerState state : playerManager.getPlayerStates()) {
+        for (PlayerState state : playerManager.getNonNullPlayerStates()) {
             if (state == null) continue;
 
             List<Treasure> assigned = new ArrayList<>();
@@ -91,7 +91,7 @@ public class GameInitialitionController {
             state.setTreasuresFound(new Treasure[0]);
             state.setRemainingTreasureCount(assigned.size());
             state.setCurrentTreasure(assigned.get(0));
-            state.setRemainingTreasureCards(assigned);
+            state.setAssignedTreasures(assigned);
         }
 
     

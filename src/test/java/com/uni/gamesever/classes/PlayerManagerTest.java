@@ -357,7 +357,7 @@ class PlayerManagerTest {
             playerManager.initializePlayerStates(mockBoard);
 
             // THEN
-            PlayerState[] states = playerManager.getPlayerStates();
+            PlayerState[] states = playerManager.getNonNullPlayerStates();
 
             // Überprüfung der erwarteten Startpositionen
             assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX());
@@ -375,7 +375,7 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() {
             // GIVEN
-            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0, 0);
+            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0);
             player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
@@ -383,14 +383,13 @@ class PlayerManagerTest {
             playerManager.initializePlayerStates(mockBoard);
 
             // THEN
-            PlayerState state = playerManager.getPlayerStates()[0];
+            PlayerState state = playerManager.getNonNullPlayerStates()[0];
             assertNotNull(state.getTreasuresFound(), "Die gesammelten Schätze sollten nicht null sein.");
             assertEquals(0, state.getTreasuresFound().length, "Die gesammelten Schätze sollten leer sein.");
 
             assertNotNull(state.getAchievements(), "Die Achievements sollten nicht null sein.");
             assertEquals(0, state.getAchievements().length, "Die Achievements sollten leer sein.");
 
-            assertEquals(0, state.getPoints(), "Die Punkte sollten 0 sein.");
         }
     }
 }

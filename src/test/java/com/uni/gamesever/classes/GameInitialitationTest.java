@@ -117,14 +117,14 @@ public class GameInitialitationTest {
         players[1] = new PlayerInfo("user2");
 
         PlayerState[] states = new PlayerState[2];
-        states[0] = new PlayerState(players[0], null, null, null, null, 0, 0);
-        states[1] = new PlayerState(players[1], null, null, null, null, 0, 0);
+        states[0] = new PlayerState(players[0], null, null, null, null, 0);
+        states[1] = new PlayerState(players[1], null, null, null, null, 0);
 
         when(playerManager.getAdminID()).thenReturn(userId);
         when(playerManager.getAmountOfPlayers()).thenReturn(2);
         when(playerManager.getPlayers()).thenReturn(players);
 
-        when(playerManager.getPlayerStates()).thenReturn(states);
+        when(playerManager.getNonNullPlayerStates()).thenReturn(states);
 
         boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
 
@@ -301,13 +301,13 @@ public class GameInitialitationTest {
         PlayerInfo playerInfo1 = new PlayerInfo("player1");
         PlayerInfo playerInfo2 = new PlayerInfo("player2");
 
-        PlayerState player1 = new PlayerState(playerInfo1, null, null, null, null, 0, 0);
-        PlayerState player2 = new PlayerState(playerInfo2, null, null, null, null, 0, 0);
+        PlayerState player1 = new PlayerState(playerInfo1, null, null, null, null, 0);
+        PlayerState player2 = new PlayerState(playerInfo2, null, null, null, null, 0);
         PlayerState players[] = new PlayerState[] {player1, player2};
         
         PlayerManager mockManager = mock(PlayerManager.class);
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
-        when(mockManager.getPlayerStates()).thenReturn(players);
+        when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
         GameInitialitionController controller = new GameInitialitionController(mockManager, null);
 
@@ -318,7 +318,7 @@ public class GameInitialitationTest {
             assertNotNull(p.getCurrentTreasure(), "Current treasure should not be null");
             assertEquals(treasures.size() / players.length, p.getRemainingTreasureCount(),
                 "Each player should have equal number of treasures");
-            assertEquals(treasures.size() / players.length, p.getRemainingTreasureCards().size(),
+            assertEquals(treasures.size() / players.length, p.getAssignedTreasures().size(),
                 "Each player should have correct number of remaining treasure cards");
         }
     }

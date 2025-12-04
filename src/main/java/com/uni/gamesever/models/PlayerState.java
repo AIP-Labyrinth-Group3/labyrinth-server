@@ -7,24 +7,22 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class PlayerState {
     private PlayerInfo player;
     private Coordinates currentPosition;
-    private Coordinates homeCoordinates;
+    private Coordinates homePosition;
     private Treasure[] treasuresFound;
     private Treasure currentTreasure;
     private int remainingTreasureCount;
-    private int points;
     private String[] achievements;
     private String[] availableBonuses;
     @JsonIgnore
-    private List<Treasure> treasuresAssigned;
+    private List<Treasure> assignedTreasures;
 
-    public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homeCoordinates, Treasure[] treasuresFound, Treasure currentTreasure, int remainingTreasureCount, int points) {
+    public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homePosition, Treasure[] treasuresFound, Treasure currentTreasure, int remainingTreasureCount) {
         this.player = player;
         this.currentPosition = currentPosition;
-        this.homeCoordinates = homeCoordinates;
+        this.homePosition = homePosition;
         this.treasuresFound = treasuresFound;
         this.currentTreasure = currentTreasure;
         this.remainingTreasureCount = remainingTreasureCount;
-        this.points = points;
         this.achievements = new String[0];
         this.availableBonuses = new String[0];
     }
@@ -34,9 +32,7 @@ public class PlayerState {
     public Treasure[] getTreasuresFound() {
         return treasuresFound;
     }
-    public int getPoints() {
-        return points;
-    }
+    
     public String[] getAchievements() {
         return achievements;
     }
@@ -45,8 +41,8 @@ public class PlayerState {
         return player;
     }
 
-    public Coordinates getHomeCoordinates() {
-        return homeCoordinates;
+    public Coordinates getHomePosition() {
+        return homePosition;
     }
     public Treasure getCurrentTreasure() {
         return currentTreasure;
@@ -58,8 +54,8 @@ public class PlayerState {
     public String[] getAvailableBonuses() {
         return availableBonuses;
     }
-    public List<Treasure> getRemainingTreasureCards() {
-        return treasuresAssigned;
+    public List<Treasure> getAssignedTreasures() {
+        return assignedTreasures;
     }
 
     public void setCurrentPosition(Coordinates currentPosition) {
@@ -68,9 +64,7 @@ public class PlayerState {
     public void setTreasuresFound(Treasure[] treasuresFound) {
         this.treasuresFound = treasuresFound;
     }
-    public void setPoints(int points) {
-        this.points = points;
-    }
+    
     public void setAchievements(String[] achievements) {
         if(achievements == null) {
             this.achievements = null;
@@ -89,8 +83,8 @@ public class PlayerState {
     public void setPlayer(PlayerInfo player) {
         this.player = player;
     }
-    public void setHomeCoordinates(Coordinates homeCoordinates) {
-        this.homeCoordinates = homeCoordinates;
+    public void setHomePosition(Coordinates homePosition) {
+        this.homePosition = homePosition;
     }
     public void setCurrentTreasure(Treasure currentTreasure) {
         this.currentTreasure = currentTreasure;
@@ -99,8 +93,8 @@ public class PlayerState {
         this.remainingTreasureCount = remainingTreasureCount;
     }
 
-    public void setRemainingTreasureCards(List<Treasure> assignedTreasures) {
-        this.treasuresAssigned = assignedTreasures;
+    public void setAssignedTreasures(List<Treasure> assignedTreasures) {
+        this.assignedTreasures = assignedTreasures;
     }
 
     public void setAvailableBonuses(String[] availableBonuses) {
