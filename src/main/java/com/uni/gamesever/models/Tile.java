@@ -12,7 +12,7 @@ public class Tile {
     private Bonus bonus;
     private boolean isFixed;
 
-    public Tile(List<String> entrances, String type, Boolean isFixed) {
+    public Tile(List<String> entrances, String type, boolean isFixed) {
         this.entrances = entrances;
         this.type = type;
         this.isFixed = isFixed;

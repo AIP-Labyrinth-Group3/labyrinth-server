@@ -18,7 +18,6 @@ public class GameStarted {
         return initialBoard;
     }
     public PlayerInfo[] getPlayers() {
-        return players.clone();
-
+        return players;
     }
 }

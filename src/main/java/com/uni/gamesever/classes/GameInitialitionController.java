@@ -84,7 +84,6 @@ public class GameInitialitionController {
 
             List<Treasure> assigned = new ArrayList<>();
 
-        
             while (index < treasures.size() && assigned.size() < treasures.size() / playersCount) {
                 assigned.add(treasures.get(index++));
         }

@@ -183,31 +183,31 @@ public class GameInitialitationTest {
         }
     }
     @Test
-    void Bonus_shouldThrowExceptionOnInvalidType() {
+    void bonus_shouldThrowExceptionOnInvalidType() {
         assertThrows(IllegalArgumentException.class, () -> {
             BonusType.valueOf("INVALID_BONUS");
         });
     }
     @Test
-    void GameState_shouldThrowExceptionOnInvalidTurnState() {
+    void gameState_shouldThrowExceptionOnInvalidTurnState() {
         assertThrows(IllegalArgumentException.class, () -> {
             TurnState.valueOf("INVALID_STATE");
         });
     }
     @Test
-    void PlayerState_shouldThrowExceptionOnInvalidBonusType() {
+    void playerState_shouldThrowExceptionOnInvalidBonusType() {
         assertThrows(IllegalArgumentException.class, () -> {
             BonusType.valueOf("UNKNOWN_BONUS");
         });
     }
     @Test
-    void PlayerState_shouldThrowExceptionOnInvalidAchievementType() {
+    void playerState_shouldThrowExceptionOnInvalidAchievementType() {
         assertThrows(IllegalArgumentException.class, () -> {
             AchievementType.valueOf("INVALID_ACHIEVEMENT");
         });
     }
     @Test
-    void PushAction_shouldThrowExceptionOnInvalidDirection() {
+    void pushAction_shouldThrowExceptionOnInvalidDirection() {
         assertThrows(IllegalArgumentException.class, () -> {
             DirectionType.valueOf("SIDEWAYS");
         });
