@@ -239,12 +239,12 @@ public class GameInitialitationTest {
                 boolean isEdge = (i == 0 || j == 0 || i == rows - 1 || j == cols - 1);
 
                 if (isCorner) {
-                    assertTrue(t.isFixed(), "Corner tile at (" + i + "," + j + ") must be fixed");
+                    assertTrue(t.getIsFixed(), "Corner tile at (" + i + "," + j + ") must be fixed");
                 } else if (isEvenEven && isEdge) {
-                    assertTrue(t.isFixed(), "Edge even-even tile at (" + i + "," + j + ") must be fixed");
+                    assertTrue(t.getIsFixed(), "Edge even-even tile at (" + i + "," + j + ") must be fixed");
                 } else {
                     if ("CROSS".equals(t.getType()) || "CORNER".equals(t.getType()) || "STRAIGHT".equals(t.getType())) {
-                        assertFalse(t.isFixed(), "Tile at (" + i + "," + j + ") should not be fixed");
+                        assertFalse(t.getIsFixed(), "Tile at (" + i + "," + j + ") should not be fixed");
                     }
                 }
             }
