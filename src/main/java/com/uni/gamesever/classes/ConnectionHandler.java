@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uni.gamesever.models.ConnectionAck;
+import com.uni.gamesever.models.ConnectAck;
 import com.uni.gamesever.models.LobbyState;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.messages.ConnectRequest;
@@ -27,7 +27,7 @@ public class ConnectionHandler {
                 newPlayer.setName(request.getUsername());
                 if (playerManager.addPlayer(newPlayer)){
                     System.out.println("User " + userId + " connected as " + request.getUsername());
-                    ConnectionAck connectionAck = new ConnectionAck(newPlayer.getId());
+                    ConnectAck connectionAck = new ConnectAck(newPlayer.getId());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));         
 
                     LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());

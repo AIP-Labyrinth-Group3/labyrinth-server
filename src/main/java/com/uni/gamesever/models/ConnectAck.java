@@ -1,10 +1,10 @@
 package com.uni.gamesever.models;
 
-public class ConnectionAck {
-    public String type = "CONNECTION_ACK";
+public class ConnectAck {
+    public String type = "CONNECT_ACK";
     public String playerId;
 
-    public ConnectionAck(String playerId) {
+    public ConnectAck(String playerId) {
         this.playerId = playerId;
     }
 
