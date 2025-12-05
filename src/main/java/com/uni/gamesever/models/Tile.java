@@ -54,10 +54,10 @@ public class Tile {
         this.type = type;
     }
 
-    public void setFixed(boolean isFixed) {
+    public void setisFixed(boolean isFixed) {
         this.isFixed = isFixed;
     }
-    public boolean isFixed() {
+    public boolean getIsFixed() {
         return isFixed;
     }
 }
