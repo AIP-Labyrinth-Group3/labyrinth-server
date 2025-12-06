@@ -41,6 +41,7 @@ public class GameInitialitationTest {
 
     @Mock PlayerManager playerManager;
     @Mock SocketMessageService socketBroadcastService;
+    @Mock GameManager gameManager;
 
     @InjectMocks
     GameInitialitionController gameInitialitionController;
@@ -126,11 +127,13 @@ public class GameInitialitationTest {
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(states);
 
+        when(gameManager.getCurrentPlayer()).thenReturn(players[0]);
+
         boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
 
         assertEquals(true, result);
         verify(playerManager).initializePlayerStates(any());
-        verify(socketBroadcastService, times(2)).broadcastMessage(anyString());
+        verify(socketBroadcastService, times(3)).broadcastMessage(anyString());
     }
 
     @Test
@@ -373,7 +376,7 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void generateBoard_shouldHaveAlltIlesAndOneExtraTile() {
+    void generateBoard_shouldHaveAllTilesAndOneExtraTile() {
         BoardSize size = new BoardSize();
         size.setRows(7);
         size.setCols(7);
@@ -386,9 +389,7 @@ public class GameInitialitationTest {
             for (int j = 0; j < size.getCols(); j++) {
                 Tile t = tiles[i][j];
                 assertNotNull(t, "Tile must not be null at (" + i + "," + j + ")");
-                if (t != null) {
                     nonNullCount++;
-                }
             }
         }
 

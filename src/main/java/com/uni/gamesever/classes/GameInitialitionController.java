@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.BoardSize;
@@ -35,7 +36,7 @@ public class GameInitialitionController {
         this.gameManager = gameManager;
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size) throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException {
+    public boolean handleStartGameMessage(String userID, BoardSize size) throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException {
 
         if(playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
             throw new PlayerNotAdminException("Only the admin can start the game.");
@@ -65,6 +66,10 @@ public class GameInitialitionController {
         socketBroadcastService.broadcastMessage(gameStateMessageToBroadcast);
 
         gameManager.setCurrentPlayer(playerManager.getNonNullPlayerStates()[0].getPlayer());
+
+        if(board.getExtraTile() == null){
+            throw new NoExtraTileException("Extra tile was not set on the game board.");
+        }
 
         PlayerTurn turn = new PlayerTurn(gameManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));

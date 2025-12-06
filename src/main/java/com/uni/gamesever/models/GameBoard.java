@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.uni.gamesever.exceptions.NoExtraTileException;
 
 public class GameBoard {
     private int rows;
@@ -55,7 +56,7 @@ public class GameBoard {
     }
 
     // Tile generation and assignment
-    public static GameBoard generateBoard(BoardSize size) {
+    public static GameBoard generateBoard(BoardSize size) throws NoExtraTileException {
         GameBoard board = new GameBoard(size);
         board.rows = size.getRows();
         board.cols = size.getCols();
@@ -96,7 +97,7 @@ public class GameBoard {
         return board;
     }
 
-    private static void fillRandomTiles(GameBoard board) {
+    private static void fillRandomTiles(GameBoard board) throws NoExtraTileException {
         int rows = board.getSize().getRows();
         int cols = board.getSize().getCols();
         int totalTiles = rows * cols;
@@ -142,6 +143,14 @@ public class GameBoard {
 
         Collections.shuffle(remainingTiles);
 
+        if(!remainingTiles.isEmpty()){
+            String extraTileType = remainingTiles.remove(remainingTiles.size() - 1);
+            Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
+            board.setExtraTile(extraTile);
+        } else {
+            throw new NoExtraTileException("No tiles available to assign as extra tile.");
+        }
+
         int index = 0;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -153,11 +162,6 @@ public class GameBoard {
             }
         }
 
-        if(!remainingTiles.isEmpty()){
-            String extraTileType = remainingTiles.get(remainingTiles.size() -1);
-            Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
-            board.extraTile = extraTile;
-        }
     }
 
     private static List<String> generateEdgeCrossEntrances(int row, int col, int rows, int cols) {
