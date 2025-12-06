@@ -14,6 +14,8 @@ public class GameBoard {
     private PushActionInfo lastPush;
     @JsonIgnore
     private BoardSize size;
+    @JsonIgnore
+    private Tile extraTile;
     
 
     private GameBoard(BoardSize size) {
@@ -43,6 +45,13 @@ public class GameBoard {
 
     public void setLastPush(PushActionInfo lastPush) {
         this.lastPush = lastPush;
+    }
+
+    public Tile getExtraTile() {
+        return extraTile;
+    }
+    public void setExtraTile(Tile extraTile) {
+        this.extraTile = extraTile;
     }
 
     // Tile generation and assignment
@@ -142,6 +151,12 @@ public class GameBoard {
                     board.setTile(i, j, t);
                 }
             }
+        }
+
+        if(!remainingTiles.isEmpty()){
+            String extraTileType = remainingTiles.get(remainingTiles.size() -1);
+            Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
+            board.extraTile = extraTile;
         }
     }
 

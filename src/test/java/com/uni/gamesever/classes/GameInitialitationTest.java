@@ -371,4 +371,41 @@ public class GameInitialitationTest {
 
         assertThrows(IllegalArgumentException.class, () -> controller.placeTreasuresOnBoard(board, treasures));
     }
+
+    @Test
+    void generateBoard_shouldHaveAlltIlesAndOneExtraTile() {
+        BoardSize size = new BoardSize();
+        size.setRows(7);
+        size.setCols(7);
+
+        GameBoard board = GameBoard.generateBoard(size);
+
+        Tile[][] tiles = board.getTiles();
+        int nonNullCount = 0;
+        for (int i = 0; i < size.getRows(); i++) {
+            for (int j = 0; j < size.getCols(); j++) {
+                Tile t = tiles[i][j];
+                assertNotNull(t, "Tile must not be null at (" + i + "," + j + ")");
+                if (t != null) {
+                    nonNullCount++;
+                }
+            }
+        }
+
+        assertEquals(size.getRows() * size.getCols(), nonNullCount, "All board tiles should be placed");
+
+        Tile extraTile = board.getExtraTile();
+        assertNotNull(extraTile, "Extra tile must not be null");
+        boolean isOnBoard = false;
+        for (Tile[] row : tiles) {
+            for (Tile t : row) {
+                if (t == extraTile) {
+                    isOnBoard = true;
+                break;
+            }
+        }
+        }
+        assertFalse(isOnBoard, "Extra tile should not be on the board");
+    }
+    
 }
