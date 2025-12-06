@@ -1,5 +1,8 @@
 package com.uni.gamesever.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BoardSize {
     private int rows;
     private int cols;

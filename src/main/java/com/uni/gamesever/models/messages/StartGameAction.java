@@ -1,7 +1,9 @@
 package com.uni.gamesever.models.messages;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.uni.gamesever.models.BoardSize;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StartGameAction extends Message {
     private int gameDurationInSeconds;
     private BoardSize boardSize;
