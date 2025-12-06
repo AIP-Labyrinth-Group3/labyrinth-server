@@ -41,6 +41,7 @@ public class GameInitialitationTest {
 
     @Mock PlayerManager playerManager;
     @Mock SocketMessageService socketBroadcastService;
+    @Mock GameManager gameManager;
 
     @InjectMocks
     GameInitialitionController gameInitialitionController;
@@ -126,11 +127,13 @@ public class GameInitialitationTest {
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(states);
 
+        when(gameManager.getCurrentPlayer()).thenReturn(players[0]);
+
         boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
 
         assertEquals(true, result);
         verify(playerManager).initializePlayerStates(any());
-        verify(socketBroadcastService, times(2)).broadcastMessage(anyString());
+        verify(socketBroadcastService, times(3)).broadcastMessage(anyString());
     }
 
     @Test
@@ -309,7 +312,7 @@ public class GameInitialitationTest {
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
-        GameInitialitionController controller = new GameInitialitionController(mockManager, null);
+        GameInitialitionController controller = new GameInitialitionController(mockManager, null, null);
 
         List<Treasure> treasures = GameInitialitionController.createTreasures();
         controller.distributeTreasuresOnPlayers(treasures);
@@ -330,7 +333,7 @@ public class GameInitialitationTest {
         GameBoard board = GameBoard.generateBoard(size);
 
         List<Treasure> treasures = GameInitialitionController.createTreasures();
-        GameInitialitionController controller = new GameInitialitionController(null, null);
+        GameInitialitionController controller = new GameInitialitionController(null, null, null);
         controller.placeTreasuresOnBoard(board, treasures);
 
         Tile[][] tiles = board.getTiles();
@@ -367,8 +370,43 @@ public class GameInitialitationTest {
         List<Treasure> treasures = new ArrayList<>();
         for (int i = 1; i <= 10; i++) treasures.add(new Treasure(i, "Treasure " + i));
 
-        GameInitialitionController controller = new GameInitialitionController(null, null);
+        GameInitialitionController controller = new GameInitialitionController(null, null, null);
 
         assertThrows(IllegalArgumentException.class, () -> controller.placeTreasuresOnBoard(board, treasures));
     }
+
+    @Test
+    void generateBoard_shouldHaveAllTilesAndOneExtraTile() {
+        BoardSize size = new BoardSize();
+        size.setRows(7);
+        size.setCols(7);
+
+        GameBoard board = GameBoard.generateBoard(size);
+
+        Tile[][] tiles = board.getTiles();
+        int nonNullCount = 0;
+        for (int i = 0; i < size.getRows(); i++) {
+            for (int j = 0; j < size.getCols(); j++) {
+                Tile t = tiles[i][j];
+                assertNotNull(t, "Tile must not be null at (" + i + "," + j + ")");
+                    nonNullCount++;
+            }
+        }
+
+        assertEquals(size.getRows() * size.getCols(), nonNullCount, "All board tiles should be placed");
+
+        Tile extraTile = board.getExtraTile();
+        assertNotNull(extraTile, "Extra tile must not be null");
+        boolean isOnBoard = false;
+        for (Tile[] row : tiles) {
+            for (Tile t : row) {
+                if (t == extraTile) {
+                    isOnBoard = true;
+                break;
+            }
+        }
+        }
+        assertFalse(isOnBoard, "Extra tile should not be on the board");
+    }
+    
 }

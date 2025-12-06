@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.messages.ConnectRequest;
@@ -61,7 +62,11 @@ public class MessageHandler {
                 } catch (NotEnoughPlayerException e) {
                     System.err.println(e.getMessage());
                     return false;
+                } catch (NoExtraTileException e) {
+                    System.err.println(e.getMessage());
+                    return false;
                 }
+
 
            default:
                return false;
