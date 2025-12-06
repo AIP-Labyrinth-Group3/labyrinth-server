@@ -309,7 +309,7 @@ public class GameInitialitationTest {
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
-        GameInitialitionController controller = new GameInitialitionController(mockManager, null);
+        GameInitialitionController controller = new GameInitialitionController(mockManager, null, null);
 
         List<Treasure> treasures = GameInitialitionController.createTreasures();
         controller.distributeTreasuresOnPlayers(treasures);
@@ -330,7 +330,7 @@ public class GameInitialitationTest {
         GameBoard board = GameBoard.generateBoard(size);
 
         List<Treasure> treasures = GameInitialitionController.createTreasures();
-        GameInitialitionController controller = new GameInitialitionController(null, null);
+        GameInitialitionController controller = new GameInitialitionController(null, null, null);
         controller.placeTreasuresOnBoard(board, treasures);
 
         Tile[][] tiles = board.getTiles();
@@ -367,7 +367,7 @@ public class GameInitialitationTest {
         List<Treasure> treasures = new ArrayList<>();
         for (int i = 1; i <= 10; i++) treasures.add(new Treasure(i, "Treasure " + i));
 
-        GameInitialitionController controller = new GameInitialitionController(null, null);
+        GameInitialitionController controller = new GameInitialitionController(null, null, null);
 
         assertThrows(IllegalArgumentException.class, () -> controller.placeTreasuresOnBoard(board, treasures));
     }

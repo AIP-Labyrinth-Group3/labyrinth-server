@@ -16,6 +16,7 @@ import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStarted;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
+import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.services.SocketMessageService;
@@ -24,12 +25,14 @@ import com.uni.gamesever.services.SocketMessageService;
 public class GameInitialitionController {
     //hier kommt die ganze Gameboard generierung hin
     PlayerManager playerManager;
+    GameManager gameManager;
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = new ObjectMapper();
 
-    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
+    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService, GameManager gameManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
+        this.gameManager = gameManager;
     }
 
     public boolean handleStartGameMessage(String userID, BoardSize size) throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException {
@@ -60,6 +63,11 @@ public class GameInitialitionController {
         GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
         String gameStateMessageToBroadcast = objectMapper.writeValueAsString(gameState);
         socketBroadcastService.broadcastMessage(gameStateMessageToBroadcast);
+
+        gameManager.setCurrentPlayer(playerManager.getNonNullPlayerStates()[0].getPlayer());
+
+        PlayerTurn turn = new PlayerTurn(gameManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
     }
