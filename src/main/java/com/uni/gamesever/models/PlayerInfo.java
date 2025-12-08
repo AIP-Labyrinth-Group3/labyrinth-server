@@ -5,13 +5,13 @@ public class PlayerInfo {
     private String name;
     private String color;
     private boolean isAdmin;
-    private boolean isReady;
+    private boolean isAiControlled;
     private String[] availableColors = {"RED", "BLUE", "GREEN", "YELLOW"};
 
     public PlayerInfo() {}
     public PlayerInfo(String id) {
         this.id = id;
-        this.isReady = false;
+        this.isAiControlled = false;
     }
 
     public String getId() {
@@ -23,8 +23,8 @@ public class PlayerInfo {
     public String getColor() {
         return color;
     }
-    public boolean getIsReady() {
-        return isReady;
+    public boolean getIsAiControlled() {
+        return isAiControlled;
     }
     public boolean getIsAdmin() {
         return isAdmin;
@@ -48,7 +48,7 @@ public class PlayerInfo {
         }
         throw new IllegalArgumentException("Invalid color. Available colors are: RED, BLUE, GREEN, YELLOW.");
     }
-    public void setReady(boolean isReady) {
-        this.isReady = isReady;
+    public void setIsAiControlled(boolean isAiControlled) {
+        this.isAiControlled = isAiControlled;
     }
 }

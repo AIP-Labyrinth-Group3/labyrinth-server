@@ -56,7 +56,6 @@ public class PlayerManager {
                     hasAdministrator = true;
                 }
                 newPlayer.setColor(currentAvailableColors.remove(0));
-                newPlayer.setReady(true);
                 return true;
             }
         }
