@@ -66,6 +66,8 @@ public class GameInitialitionController {
         socketBroadcastService.broadcastMessage(gameStateMessageToBroadcast);
 
         gameManager.setCurrentPlayer(playerManager.getNonNullPlayerStates()[0].getPlayer());
+        gameManager.setCurrentBoard(board);
+        gameManager.setGameActive(true);
 
         if(board.getExtraTile() == null){
             throw new NoExtraTileException("Extra tile was not set on the game board.");
