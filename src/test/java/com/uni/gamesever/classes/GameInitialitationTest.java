@@ -21,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.AchievementType;
@@ -137,7 +138,7 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void generateBoard_shouldHaveCorrectSize() {
+    void generateBoard_shouldHaveCorrectSize() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(10);
         size.setCols(10);
@@ -148,7 +149,7 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void generateBoard_shouldSetAllTilesCorrectly() {
+    void generateBoard_shouldSetAllTilesCorrectly() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(7);
         size.setCols(7);
@@ -216,7 +217,7 @@ public class GameInitialitationTest {
         });
     }   
     @Test
-    void generateBoard_shouldSetFixedTilesCorrectly() {
+    void generateBoard_shouldSetFixedTilesCorrectly() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(7);
         size.setCols(7);
@@ -254,7 +255,7 @@ public class GameInitialitationTest {
         }
     }
     @Test
-    void generateBoard_shouldHaveAllTilesNonNull() {
+    void generateBoard_shouldHaveAllTilesNonNull() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(7);
         size.setCols(7);
@@ -269,7 +270,7 @@ public class GameInitialitationTest {
         }
     }
     @Test
-    void generateBoard_shouldAssignEntrancesForEachTile() {
+    void generateBoard_shouldAssignEntrancesForEachTile() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(7);
         size.setCols(7);
@@ -326,7 +327,7 @@ public class GameInitialitationTest {
         }
     }
     @Test
-    void placeTreasuresOnBoard_shouldPlaceTreasuresOnValidTiles() {
+    void placeTreasuresOnBoard_shouldPlaceTreasuresOnValidTiles() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(10);
         size.setCols(10);
@@ -361,7 +362,7 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void placeTreasuresOnBoard_shouldThrowExceptionWhenNotEnoughTiles() {
+    void placeTreasuresOnBoard_shouldThrowExceptionWhenNotEnoughTiles() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(3);
         size.setCols(3);
@@ -376,7 +377,7 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void generateBoard_shouldHaveAllTilesAndOneExtraTile() {
+    void generateBoard_shouldHaveAllTilesAndOneExtraTile() throws NoExtraTileException {
         BoardSize size = new BoardSize();
         size.setRows(7);
         size.setCols(7);
