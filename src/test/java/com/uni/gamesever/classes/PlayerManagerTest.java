@@ -328,7 +328,7 @@ class PlayerManagerTest {
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
             assertEquals(player3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
             assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 8 sein.");
+            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 6 sein.");
 
             // Überprüfung von leeren Plätzen
             assertNull(states[2], "Der leere Platz 2 sollte null bleiben.");
