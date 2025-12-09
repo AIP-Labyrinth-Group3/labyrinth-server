@@ -39,7 +39,7 @@ public class GameManager {
         this.isGameActive = isGameActive;
     }
 
-    public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed) throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,IllegalArgumentException {
+    public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed) throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException, IllegalArgumentException {
         if(!isGameActive) {
             throw new GameNotValidException("Game is not active. Cannot push tile.");
         }
