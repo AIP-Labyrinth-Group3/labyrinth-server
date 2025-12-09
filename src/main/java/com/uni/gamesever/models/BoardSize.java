@@ -12,6 +12,10 @@ public class BoardSize {
         this.cols = 7;
     }
 
+    public BoardSize(int rows, int cols) throws IllegalArgumentException {
+        setRows(rows);
+        setCols(cols);
+    }
 
     public int getRows() {
         return rows;
