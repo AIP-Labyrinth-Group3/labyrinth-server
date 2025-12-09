@@ -9,14 +9,12 @@ import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStateUpdate;
-import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class GameManager {
     PlayerManager playerManager;
-    private PlayerInfo currentPlayer;
     private GameBoard currentBoard;
     private boolean isGameActive = false;
     SocketMessageService socketBroadcastService;
@@ -26,14 +24,6 @@ public class GameManager {
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
-    }
-
-    public PlayerInfo getCurrentPlayer() {
-        return currentPlayer;
-    }
-
-    public void setCurrentPlayer(PlayerInfo currentPlayer) {
-        this.currentPlayer = currentPlayer;
     }
 
     public GameBoard getCurrentBoard() {
@@ -53,7 +43,7 @@ public class GameManager {
         if(!isGameActive) {
             throw new GameNotValidException("Game is not active. Cannot push tile.");
         }
-        if(!playerIdWhoPushed.equals(currentPlayer.getId())) {
+        if(!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException("It's not the turn of player " + playerIdWhoPushed + ". Cannot push tile.");
         }
         if(currentBoard.getLastPush() != null){

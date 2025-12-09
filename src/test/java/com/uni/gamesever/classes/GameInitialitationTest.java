@@ -125,10 +125,11 @@ public class GameInitialitationTest {
         when(playerManager.getAdminID()).thenReturn(userId);
         when(playerManager.getAmountOfPlayers()).thenReturn(2);
         when(playerManager.getPlayers()).thenReturn(players);
+        when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(states);
 
-        when(gameManager.getCurrentPlayer()).thenReturn(players[0]);
+        when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
 
         boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
 

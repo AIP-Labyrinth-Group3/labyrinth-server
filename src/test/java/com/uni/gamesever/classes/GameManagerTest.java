@@ -24,7 +24,7 @@ public class GameManagerTest {
     @Test
     void handlePushTile_shouldThrowException_whenGameNotActive() {
         gameManager.setGameActive(false);
-        gameManager.setCurrentPlayer(new PlayerInfo("player1"));
+        playerManager.setCurrentPlayer(null);
 
         assertThrows(GameNotValidException.class, () ->
             gameManager.handlePushTile(0, "LEFT", "player1")
@@ -34,7 +34,7 @@ public class GameManagerTest {
     @Test
     void handlePushTile_shouldThrowException_whenNotPlayersTurn() {
         PlayerInfo current = new PlayerInfo("currentPlayer");
-        gameManager.setCurrentPlayer(current);
+        playerManager.setCurrentPlayer(current);
         gameManager.setGameActive(true);
 
         assertThrows(NotPlayersTurnException.class, () ->
@@ -45,7 +45,7 @@ public class GameManagerTest {
     @Test
     void handlePushTile_shouldReturnTrue_whenValidPush() throws Exception {
         PlayerInfo current = new PlayerInfo("player1");
-        gameManager.setCurrentPlayer(current);
+        playerManager.setCurrentPlayer(current);
         gameManager.setGameActive(true);
 
         boolean result = gameManager.handlePushTile(2, "RIGHT", "player1");
@@ -56,7 +56,7 @@ public class GameManagerTest {
     @Test
     void handlePushTile_shouldFail_whenCurrentPlayerNull() {
         gameManager.setGameActive(true);
-        gameManager.setCurrentPlayer(null);
+        playerManager.setCurrentPlayer(null);
 
         assertThrows(NullPointerException.class, () ->
             gameManager.handlePushTile(1, "UP", "playerX")

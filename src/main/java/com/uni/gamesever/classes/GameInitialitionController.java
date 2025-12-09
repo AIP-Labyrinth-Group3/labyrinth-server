@@ -64,7 +64,7 @@ public class GameInitialitionController {
         GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
 
-        gameManager.setCurrentPlayer(playerManager.getNonNullPlayerStates()[0].getPlayer());
+        playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
         gameManager.setGameActive(true);
 
@@ -72,7 +72,7 @@ public class GameInitialitionController {
             throw new NoExtraTileException("Extra tile was not set on the game board.");
         }
 
-        PlayerTurn turn = new PlayerTurn(gameManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
