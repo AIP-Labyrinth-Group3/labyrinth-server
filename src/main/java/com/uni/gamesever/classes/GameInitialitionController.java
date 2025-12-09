@@ -28,7 +28,7 @@ public class GameInitialitionController {
     PlayerManager playerManager;
     GameManager gameManager;
     SocketMessageService socketBroadcastService;
-    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
 
     public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService, GameManager gameManager) {
         this.playerManager = playerManager;
@@ -60,18 +60,19 @@ public class GameInitialitionController {
         GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
 
-        //gameStateUpdate senden
+        
         GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
-        String gameStateMessageToBroadcast = objectMapper.writeValueAsString(gameState);
-        socketBroadcastService.broadcastMessage(gameStateMessageToBroadcast);
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
 
-        gameManager.setCurrentPlayer(playerManager.getNonNullPlayerStates()[0].getPlayer());
+        playerManager.setNextPlayerAsCurrent();
+        gameManager.setCurrentBoard(board);
+        gameManager.setGameActive(true);
 
         if(board.getExtraTile() == null){
             throw new NoExtraTileException("Extra tile was not set on the game board.");
         }
 
-        PlayerTurn turn = new PlayerTurn(gameManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;

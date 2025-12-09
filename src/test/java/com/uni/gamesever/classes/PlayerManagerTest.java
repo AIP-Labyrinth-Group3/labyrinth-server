@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PlayerManagerTest {
     // Die zu testende Klasse
-    @InjectMocks
     private PlayerManager playerManager;
 
     // Gemockte PlayerInfo Objekte zur Simulation von Spielern
@@ -61,13 +60,7 @@ class PlayerManagerTest {
     // Da @InjectMocks eine neue Instanz pro Test erstellt, sind die internen Arrays leer (null-initialisiert).
     @BeforeEach
     void setUp() {
-        // Mock-Board-Setup für initializePlayerStates
-        when(mockBoard.getSize()).thenReturn(mockSize);
-        when(mockSize.getRows()).thenReturn(7); // z.B. 7 Reihen
-        when(mockSize.getCols()).thenReturn(9); // z.B. 9 Spalten
-
-        // Username für removePlayer
-        when(mockPlayer1.getName()).thenReturn("TestPlayer1");
+        playerManager = new PlayerManager();
     }
 
     @Nested
@@ -309,13 +302,16 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeStatesForExistingPlayers() {
             // GIVEN
-            playerManager.addPlayer(mockPlayer1); // Index 0 (0, 0)
-            playerManager.addPlayer(mockPlayer3); // Index 1 (0, cols-1)
+            playerManager.addPlayer(player1); // Index 0 (0, 0)
+            playerManager.addPlayer(player3); // Index 1 (0, cols-1)
 
-            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
+            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
-            Coordinates expectedPos2 = new Coordinates(0, 9 - 1); // Oben rechts (0, 8)
-
+            Coordinates expectedPos2 = new Coordinates(0, 7 - 1); // Oben rechts (0, 6)
+            
+            when(mockBoard.getSize()).thenReturn(new BoardSize(7,7));
+            when(mockBoard.getRows()).thenReturn(7);
+            when(mockBoard.getCols()).thenReturn(7);
             // WHEN
             playerManager.initializePlayerStates(mockBoard);
 
@@ -324,15 +320,15 @@ class PlayerManagerTest {
 
             // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
-            assertEquals(mockPlayer1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
+            assertEquals(player1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
             assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
             assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY(), "Die Y Koordinate sollte 0 sein.");
 
             // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
-            assertEquals(mockPlayer3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
+            assertEquals(player3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
             assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 8 sein.");
+            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 6 sein.");
 
             // Überprüfung von leeren Plätzen
             assertNull(states[2], "Der leere Platz 2 sollte null bleiben.");
@@ -347,11 +343,15 @@ class PlayerManagerTest {
             playerManager.addPlayer(player3); // Index 2 (rows-1, 0)
             playerManager.addPlayer(player4); // Index 3 (rows-1, cols-1)
 
-            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
+            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
-            Coordinates expectedPos2 = new Coordinates(0, 9 - 1); // Oben rechts (0, 8)
+            Coordinates expectedPos2 = new Coordinates(0, 7 - 1); // Oben rechts (0, 6)
             Coordinates expectedPos3 = new Coordinates(7 - 1, 0); // Unten links (6, 0)
-            Coordinates expectedPos4 = new Coordinates(7 - 1, 9 - 1); // Unten rechts (6, 8)
+            Coordinates expectedPos4 = new Coordinates(7 - 1, 7 - 1); // Unten rechts (6, 6)
+
+            when(mockBoard.getSize()).thenReturn(new BoardSize(7,7));
+            when(mockBoard.getRows()).thenReturn(7);
+            when(mockBoard.getCols()).thenReturn(7);
 
             // WHEN
             playerManager.initializePlayerStates(mockBoard);
@@ -379,7 +379,10 @@ class PlayerManagerTest {
             player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
-            // WHEN
+            when(mockBoard.getSize()).thenReturn(new BoardSize(7,7));
+            when(mockBoard.getRows()).thenReturn(7);
+            when(mockBoard.getCols()).thenReturn(7);
+
             playerManager.initializePlayerStates(mockBoard);
 
             // THEN

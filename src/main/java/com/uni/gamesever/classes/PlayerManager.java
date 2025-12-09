@@ -19,6 +19,7 @@ public class PlayerManager {
     private PlayerState[] playerStates = new PlayerState[MAX_PLAYERS];
     private boolean hasAdministrator = false;
     private List<String> currentAvailableColors = new ArrayList<>(Arrays.asList("RED", "BLUE", "GREEN", "YELLOW"));
+    private PlayerInfo currentPlayer = null;
 
     public int getAmountOfPlayers() {
         int count = 0;
@@ -109,6 +110,32 @@ public class PlayerManager {
         return Arrays.stream(playerStates)
                      .filter(state -> state != null)
                      .toArray(PlayerState[]::new);
+    }
+
+    public void setCurrentPlayer(PlayerInfo player){
+        this.currentPlayer = player;
+    }
+    public PlayerInfo getCurrentPlayer(){
+        return this.currentPlayer;
+    }
+
+    public void setNextPlayerAsCurrent(){
+        PlayerInfo[] nonNullPlayers = getNonNullPlayers();
+        if(nonNullPlayers.length == 0){
+            this.currentPlayer = null;
+            return;
+        }
+        if(this.currentPlayer == null){
+            this.currentPlayer = nonNullPlayers[0];
+            return;
+        }
+        for(int i = 0; i < nonNullPlayers.length; i++){
+            if(nonNullPlayers[i].getId().equals(this.currentPlayer.getId())){
+                this.currentPlayer = nonNullPlayers[(i + 1) % nonNullPlayers.length];
+                return;
+            }
+        }
+        this.currentPlayer = nonNullPlayers[0];
     }
 
 
