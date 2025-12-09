@@ -21,7 +21,9 @@ public class GameBoard {
 
     private GameBoard(BoardSize size) {
         this.size = size;
-        this.tiles = new Tile[size.getRows()][size.getCols()];
+        this.rows = size.getRows();
+        this.cols = size.getCols();
+        this.tiles = new Tile[rows][cols];
     }
     public BoardSize getSize() {
         return size;
