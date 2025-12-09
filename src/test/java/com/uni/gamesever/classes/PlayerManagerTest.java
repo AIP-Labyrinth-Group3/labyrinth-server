@@ -305,7 +305,7 @@ class PlayerManagerTest {
             playerManager.addPlayer(player1); // Index 0 (0, 0)
             playerManager.addPlayer(player3); // Index 1 (0, cols-1)
 
-            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=9
+            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
             Coordinates expectedPos2 = new Coordinates(0, 7 - 1); // Oben rechts (0, 6)
             
