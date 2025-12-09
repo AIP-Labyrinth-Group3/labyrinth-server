@@ -14,7 +14,7 @@ import com.uni.gamesever.services.SocketMessageService;
 public class ConnectionHandler {
     private final PlayerManager playerManager;
     private final SocketMessageService socketMessageService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
 
     public ConnectionHandler(PlayerManager playerManager, SocketMessageService socketMessageService) {
         this.playerManager = playerManager;
@@ -48,7 +48,7 @@ public class ConnectionHandler {
     public boolean handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
         if (playerManager.removePlayer(userId)){
              System.out.println("User " + userId + " disconnected " + request.getUsername());
-             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+             LobbyState lobbyState =  new LobbyState(playerManager.getNonNullPlayers());
              socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
          } else {
              System.err.println("User " + userId + " not found in player list.");

@@ -55,6 +55,69 @@ public class GameBoard {
         this.extraTile = extraTile;
     }
 
+    public void updateBoard(int rowOrColIndex, String direction) throws NoExtraTileException {
+        if (extraTile == null) {
+            throw new NoExtraTileException("Extra tile is not set.");
+        }
+
+        if (rowOrColIndex < 0 || rowOrColIndex >= (direction.equalsIgnoreCase("LEFT") || direction.equalsIgnoreCase("RIGHT") ? rows : cols)) {
+            throw new IllegalArgumentException("Index out of bounds.");
+        }
+
+        Tile checkTile = null;
+        if (direction.equalsIgnoreCase("UP")) checkTile = tiles[0][rowOrColIndex];
+        else if (direction.equalsIgnoreCase("DOWN")) checkTile = tiles[rows - 1][rowOrColIndex];
+        else if (direction.equalsIgnoreCase("LEFT")) checkTile = tiles[rowOrColIndex][0];
+        else if (direction.equalsIgnoreCase("RIGHT")) checkTile = tiles[rowOrColIndex][cols - 1];
+
+        if (checkTile != null && checkTile.getIsFixed()) {
+            throw new IllegalArgumentException("Cannot push a fixed tile.");
+        }
+
+        Tile tempTile;
+        switch (direction.toUpperCase()) {
+            case "UP":
+                tempTile = tiles[0][rowOrColIndex];
+                for (int i = 0; i < rows - 1; i++) {
+                    tiles[i][rowOrColIndex] = tiles[i + 1][rowOrColIndex];
+                }
+                tiles[rows - 1][rowOrColIndex] = extraTile;
+                extraTile = tempTile;
+                break;
+
+            case "DOWN":
+                tempTile = tiles[rows - 1][rowOrColIndex];
+                for (int i = rows - 1; i > 0; i--) {
+                    tiles[i][rowOrColIndex] = tiles[i - 1][rowOrColIndex];
+                }
+                tiles[0][rowOrColIndex] = extraTile;
+                extraTile = tempTile;
+                break;
+
+            case "LEFT":
+                tempTile = tiles[rowOrColIndex][0];
+                for (int j = 0; j < cols - 1; j++) {
+                    tiles[rowOrColIndex][j] = tiles[rowOrColIndex][j + 1];
+                }
+                tiles[rowOrColIndex][cols - 1] = extraTile;
+                extraTile = tempTile;
+                break;
+
+            case "RIGHT":
+                tempTile = tiles[rowOrColIndex][cols - 1];
+                for (int j = cols - 1; j > 0; j--) {
+                    tiles[rowOrColIndex][j] = tiles[rowOrColIndex][j - 1];
+                }
+                tiles[rowOrColIndex][0] = extraTile;
+                extraTile = tempTile;
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid direction: " + direction);
+        }
+    }
+
+
     // Tile generation and assignment
     public static GameBoard generateBoard(BoardSize size) throws NoExtraTileException {
         GameBoard board = new GameBoard(size);
@@ -223,8 +286,6 @@ public class GameBoard {
         default:
             return new ArrayList<>();
     }
-
-
 }
 
 

@@ -1,10 +1,8 @@
 package com.uni.gamesever.models;
 
-import java.util.List;
-
 public class PushActionInfo {
     private int rowOrColIndex;
-    private List<String> directions;
+    private String direction;
 
     public PushActionInfo(int rowOrColIndex) {
         this.rowOrColIndex = rowOrColIndex;
@@ -16,17 +14,15 @@ public class PushActionInfo {
     public void setRowOrColIndex(int rowOrColIndex) {
         this.rowOrColIndex = rowOrColIndex;
     }
-    public List<String> getDirections() {
-        return directions;
+    public String getDirection() {
+        return direction;
     }
-    public void setDirections(List<String> directions) {
-            for (String dir : directions) {
-                try {
-                    DirectionType.valueOf(dir);
-                } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException("Invalid direction type: " + dir + ". Valid types are: UP, DOWN, LEFT, RIGHT");
-                }
+    public void setDirections(String direction) {
+            try {
+                DirectionType.valueOf(direction.toUpperCase());
+                this.direction = direction;
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid direction type: " + direction + ". Valid types are: UP, DOWN, LEFT, RIGHT");
             }
-            this.directions = directions;
     }
 }

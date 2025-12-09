@@ -18,7 +18,7 @@ public class GameManagerTest {
     @BeforeEach
     public void setUp() {
         playerManager = Mockito.mock(PlayerManager.class);
-        gameManager = new GameManager(playerManager);
+        gameManager = new GameManager(playerManager, null);
     }
 
     @Test
