@@ -57,6 +57,10 @@ public class GameBoard {
         this.extraTile = extraTile;
     }
 
+    public Tile getTileAtCoordinate(Coordinates coord) {
+        return tiles[coord.getX()][coord.getY()];
+    }
+
     public void updateBoard(int rowOrColIndex, String direction) throws NoExtraTileException {
         if (extraTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");

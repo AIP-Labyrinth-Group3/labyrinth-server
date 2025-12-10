@@ -1,15 +1,21 @@
 package com.uni.gamesever.classes;
 
+import java.util.Map;
+import java.util.Queue;
+
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
+import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PushActionInfo;
+import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
@@ -19,6 +25,12 @@ public class GameManager {
     private boolean isGameActive = false;
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
+    private final Map<String, Coordinates> DIRECTION_OFFSETS = Map.of(
+        "UP", new Coordinates(-1, 0),
+        "DOWN", new Coordinates(1, 0),
+        "LEFT", new Coordinates(0, -1),
+        "RIGHT", new Coordinates(0, 1)
+    );
 
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
@@ -73,5 +85,56 @@ public class GameManager {
                (dir1.equals("DOWN") && dir2.equals("UP")) ||
                (dir1.equals("LEFT") && dir2.equals("RIGHT")) ||
                (dir1.equals("RIGHT") && dir2.equals("LEFT"));
+    }
+
+    public void canPlayerMove(GameBoard board, Coordinates start, Coordinates target) throws NoValidActionException {
+        if(start.getX() == target.getX() && start.getY() == target.getY()) {
+            return;
+        }
+
+        int rows = board.getRows();
+        int cols = board.getCols();
+
+        boolean[][] visited = new boolean[rows][cols];
+        Queue<Coordinates> queue = new java.util.LinkedList<>();
+        queue.add(start);
+        visited[start.getX()][start.getY()] = true;
+
+        while(!queue.isEmpty()) {
+            Coordinates current = queue.poll();
+            int x = current.getX();
+            int y = current.getY();
+
+            Tile tile = board.getTileAtCoordinate(current);
+            if(tile == null) {
+                continue;
+            }
+
+            for (String dir : tile.getEntrances()){
+                Coordinates offset = DIRECTION_OFFSETS.get(dir);
+                int newX = x + offset.getX();
+                int newY = y + offset.getY();
+
+                if(newX < 0 || newX >= rows || newY < 0 || newY >= cols) {
+                    continue;
+                }
+
+                Coordinates neighbor = new Coordinates(newX, newY);
+                Tile neighborTile = board.getTileAtCoordinate(neighbor);
+                if (neighborTile == null || visited[newX][newY]){
+                     continue;
+                }
+                boolean hasOppositeEntrance = neighborTile.getEntrances().stream().anyMatch(d -> isOppositeDirection(dir, d));
+                if (!hasOppositeEntrance){
+                    continue;
+                }
+                if (neighbor.getX() == target.getX() && neighbor.getY() == target.getY()) {
+                    return;
+                }
+                queue.add(neighbor);
+                visited[newX][newY] = true;
+            }  
+        }
+        throw new NoValidActionException("No valid path from " + start + " to " + target);
     }
 }

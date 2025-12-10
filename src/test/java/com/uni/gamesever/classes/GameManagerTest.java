@@ -7,9 +7,11 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.BoardSize;
+import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.PlayerInfo;
@@ -158,4 +160,65 @@ public class GameManagerTest {
         assertThrows(IllegalArgumentException.class, () -> board.updateBoard(-1, "UP"));
         assertThrows(IllegalArgumentException.class, () -> board.updateBoard(100, "LEFT"));
     }
+    @Test
+    void GameManagerTest_canPlayerMove_shouldReturnTrueIfStartEqualsTarget() {
+        Coordinates pos = new Coordinates(0, 0);
+        assertDoesNotThrow(() -> gameManager.canPlayerMove(board, pos, pos), "It should not throw an exception when start equals target");
+    }
+
+
+    @Test
+    void GameManagerTest_canPlayerMove_shouldReturnTrueIfPathExists() {
+        Tile t0 = new Tile(List.of("RIGHT", "UP"), "CORNER");
+        Tile t1 = new Tile(List.of("LEFT", "DOWN"), "CORNER");
+        
+        board.setTile(0, 0, t0);
+        board.setTile(0, 1, t1);
+        Coordinates start = new Coordinates(0, 0);
+        Coordinates target = new Coordinates(0, 1);
+
+        assertDoesNotThrow(() -> gameManager.canPlayerMove(board, start, target), "It should not throw an exception when a valid path exists");
+    }
+
+    @Test
+    void GameManagerTest_canPlayerMove_shouldReturnFalseIfPathBlocked() {
+        Tile t0 = new Tile(List.of("RIGHT", "LEFT"), "STRAIGHT");
+        Tile t1 = new Tile(List.of("UP", "RIGHT"), "CORNER"); 
+        
+        board.setTile(0, 0, t1);
+        board.setTile(1, 0, t0);
+
+        Coordinates start = new Coordinates(0, 0);
+        Coordinates target = new Coordinates(1, 0);
+
+        assertThrows(NoValidActionException.class, () -> gameManager.canPlayerMove(board, start, target), "It should throw NoValidActionException when no valid path exists");
+    }
+
+    @Test
+    void GameManagerTest_canPlayerMove_shouldHandleMultipleSteps() {
+        Tile t1 = new Tile(List.of("LEFT", "RIGHT"), "STRAIGHT");
+        Tile t2 = new Tile(List.of("LEFT", "DOWN"), "CORNER");
+        Tile t3 = new Tile(List.of("UP", "DOWN"), "STRAIGHT");
+
+        board.setTile(0, 0, t1);
+        board.setTile(0, 1, t2);
+        board.setTile(1, 1, t3);
+
+        Coordinates start = new Coordinates(0, 0);
+        Coordinates target = new Coordinates(1, 1);
+
+        assertDoesNotThrow(() -> gameManager.canPlayerMove(board, start, target), "It should not throw an exception when a valid path exists");
+    }
+
+    @Test
+    void GameManagerTest_canPlayerMove_shouldReturnFalseIfTileNull() {
+        
+        board.setTile(0, 0, null);
+
+        Coordinates start = new Coordinates(0, 0);
+        Coordinates target = new Coordinates(0, 1);
+
+        assertThrows(NoValidActionException.class, () -> gameManager.canPlayerMove(board, start, target), "It should throw NoValidActionException when no valid path exists");
+    }
+
 }
