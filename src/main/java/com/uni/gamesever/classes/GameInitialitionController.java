@@ -50,28 +50,25 @@ public class GameInitialitionController {
 
         GameBoard board = GameBoard.generateBoard(size);
 
-        GameBoard.printBoard(board);
-
         playerManager.initializePlayerStates(board);
 
         List<Treasure> treasures = createTreasures();
         distributeTreasuresOnPlayers(treasures);
         placeTreasuresOnBoard(board, treasures);
+        
+        if(board.getExtraTile() == null){
+            throw new NoExtraTileException("Extra tile was not set on the game board.");
+        }
 
         GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
 
-        
-        GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
-
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
         gameManager.setGameState(GameState.WAITING_FOR_TILE_PUSH);
-
-        if(board.getExtraTile() == null){
-            throw new NoExtraTileException("Extra tile was not set on the game board.");
-        }
+        
+        GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));

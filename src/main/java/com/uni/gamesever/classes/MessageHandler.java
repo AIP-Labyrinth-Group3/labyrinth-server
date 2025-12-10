@@ -75,7 +75,7 @@ public class MessageHandler {
             case "PUSH_TILE":
                 try {
                     PushTileCommand pushTileCommand = objectMapper.readValue(message, PushTileCommand.class);
-                    gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(), pushTileCommand.getDirection(), userId);
+                    return gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(), pushTileCommand.getDirection(), userId);
                 } catch( PushNotValidException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     return false;
@@ -95,7 +95,7 @@ public class MessageHandler {
             case "MOVE_PAWN":
                 try{
                     MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
-                    gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId);
+                    return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId);
                 }catch ( NotPlayersTurnException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
