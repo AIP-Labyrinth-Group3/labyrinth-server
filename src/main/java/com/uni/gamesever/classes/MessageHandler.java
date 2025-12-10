@@ -7,12 +7,14 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.exceptions.GameNotValidException;
 import com.uni.gamesever.exceptions.NoExtraTileException;
+import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.messages.ConnectRequest;
 import com.uni.gamesever.models.messages.Message;
+import com.uni.gamesever.models.messages.MovePawnRequest;
 import com.uni.gamesever.models.messages.PushTileCommand;
 import com.uni.gamesever.models.messages.StartGameAction;
 import com.uni.gamesever.services.SocketMessageService;
@@ -90,11 +92,23 @@ public class MessageHandler {
                     System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
                     return false;
                 }
-                
-                catch (JsonProcessingException e) {
-                    System.err.println("Failed to process push tile command from user " + userId + ": " + e.getMessage());
+            case "MOVE_PAWN":
+                try{
+                    MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
+                    gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId);
+                }catch ( NotPlayersTurnException e) {
+                    System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
-                }
+                } catch( GameNotValidException e) {
+                    System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
+                    return false;
+                } catch( NoValidActionException e) {
+                    System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
+                    return false;
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
+                    return false;
+                } 
            default:
                return false;
          }

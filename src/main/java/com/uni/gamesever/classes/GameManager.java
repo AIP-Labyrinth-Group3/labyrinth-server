@@ -13,7 +13,9 @@ import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
+import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.GameStateUpdate;
+import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.services.SocketMessageService;
@@ -22,7 +24,7 @@ import com.uni.gamesever.services.SocketMessageService;
 public class GameManager {
     PlayerManager playerManager;
     private GameBoard currentBoard;
-    private boolean isGameActive = false;
+    private GameState gameState = GameState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private final Map<String, Coordinates> DIRECTION_OFFSETS = Map.of(
@@ -44,15 +46,15 @@ public class GameManager {
     public void setCurrentBoard(GameBoard currentBoard) {
         this.currentBoard = currentBoard;
     }
-    public boolean isGameActive() {
-        return isGameActive;
+    public GameState getGameState() {
+        return gameState;
     }
-    public void setGameActive(boolean isGameActive) {
-        this.isGameActive = isGameActive;
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
     public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed) throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException, IllegalArgumentException {
-        if(!isGameActive) {
+        if(gameState != GameState.WAITING_FOR_TILE_PUSH) {
             throw new GameNotValidException("Game is not active. Cannot push tile.");
         }
         if(!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
@@ -77,6 +79,33 @@ public class GameManager {
         GameStateUpdate gameState = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
 
+        setGameState(GameState.WAITING_FOR_PLAYER_MOVE);
+
+        return true;
+    }
+
+    public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException, NotPlayersTurnException, NoValidActionException, JsonProcessingException, IllegalArgumentException {
+        if(gameState != GameState.WAITING_FOR_PLAYER_MOVE) {
+            throw new GameNotValidException("Game is not in a state to move pawn.");
+        }
+        if(!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException("It's not the turn of player " + playerIdWhoMoved + ". Cannot move pawn.");
+        }
+
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+        Coordinates currentCoordinates = currentPlayerState.getCurrentPosition();
+
+        if(!canPlayerMove(currentBoard, currentCoordinates, targetCoordinates)) {
+            throw new NoValidActionException("Player cannot move to the target coordinates.");
+        }
+
+        currentPlayerState.setCurrentPosition(targetCoordinates);
+        GameStateUpdate gameState = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
+
+        setGameState(GameState.WAITING_FOR_TILE_PUSH);
+        playerManager.setNextPlayerAsCurrent();
+
         return true;
     }
 
@@ -87,9 +116,12 @@ public class GameManager {
                (dir1.equals("RIGHT") && dir2.equals("LEFT"));
     }
 
-    public void canPlayerMove(GameBoard board, Coordinates start, Coordinates target) throws NoValidActionException {
+    public boolean canPlayerMove(GameBoard board, Coordinates start, Coordinates target) throws IllegalArgumentException {
+        if (start == null || target == null) {
+            throw new IllegalArgumentException("Start or target coordinates cannot be null");
+        }
         if(start.getX() == target.getX() && start.getY() == target.getY()) {
-            return;
+            return true;
         }
 
         int rows = board.getRows();
@@ -129,12 +161,12 @@ public class GameManager {
                     continue;
                 }
                 if (neighbor.getX() == target.getX() && neighbor.getY() == target.getY()) {
-                    return;
+                    return true;
                 }
                 queue.add(neighbor);
                 visited[newX][newY] = true;
             }  
         }
-        throw new NoValidActionException("No valid path from " + start + " to " + target);
+        return false;
     }
 }

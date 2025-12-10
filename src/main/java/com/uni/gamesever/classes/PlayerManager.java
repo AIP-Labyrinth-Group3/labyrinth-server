@@ -112,6 +112,18 @@ public class PlayerManager {
                      .toArray(PlayerState[]::new);
     }
 
+    public PlayerState getCurrentPlayerState(){
+        if(this.currentPlayer == null){
+            return null;
+        }
+        for(PlayerState state : playerStates){
+            if(state != null && state.getPlayer().getId().equals(this.currentPlayer.getId())){
+                return state;
+            }
+        }
+        return null;
+    }
+
     public void setCurrentPlayer(PlayerInfo player){
         this.currentPlayer = player;
     }

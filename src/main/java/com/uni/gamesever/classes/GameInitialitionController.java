@@ -15,6 +15,7 @@ import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStarted;
+import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PlayerTurn;
@@ -66,7 +67,7 @@ public class GameInitialitionController {
 
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
-        gameManager.setGameActive(true);
+        gameManager.setGameState(GameState.WAITING_FOR_TILE_PUSH);
 
         if(board.getExtraTile() == null){
             throw new NoExtraTileException("Extra tile was not set on the game board.");

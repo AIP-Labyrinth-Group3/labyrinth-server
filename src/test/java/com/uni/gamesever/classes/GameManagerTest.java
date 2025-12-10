@@ -13,6 +13,7 @@ import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
+import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
@@ -57,7 +58,7 @@ public class GameManagerTest {
 
         board = GameBoard.generateBoard(new BoardSize());
         gameManager.setCurrentBoard(board);
-        gameManager.setGameActive(true);
+        gameManager.setGameState(GameState.WAITING_FOR_TILE_PUSH);
     }
 
     @Test
@@ -78,7 +79,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfGameInactive() {
-        gameManager.setGameActive(false);
+        gameManager.setGameState(GameState.NOT_STARTED);
 
         assertThrows(GameNotValidException.class, () -> {
             gameManager.handlePushTile(1, "UP", player1.getId());
@@ -163,7 +164,7 @@ public class GameManagerTest {
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnTrueIfStartEqualsTarget() {
         Coordinates pos = new Coordinates(0, 0);
-        assertDoesNotThrow(() -> gameManager.canPlayerMove(board, pos, pos), "It should not throw an exception when start equals target");
+        assertTrue(gameManager.canPlayerMove(board, pos, pos), "It should return true when start and target are the same");
     }
 
 
@@ -177,7 +178,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
-        assertDoesNotThrow(() -> gameManager.canPlayerMove(board, start, target), "It should not throw an exception when a valid path exists");
+        assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
 
     @Test
@@ -191,7 +192,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 0);
 
-        assertThrows(NoValidActionException.class, () -> gameManager.canPlayerMove(board, start, target), "It should throw NoValidActionException when no valid path exists");
+        assertFalse(gameManager.canPlayerMove(board, start, target), "It should return false when no valid path exists");
     }
 
     @Test
@@ -207,7 +208,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 1);
 
-        assertDoesNotThrow(() -> gameManager.canPlayerMove(board, start, target), "It should not throw an exception when a valid path exists");
+        assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
 
     @Test
@@ -218,7 +219,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
-        assertThrows(NoValidActionException.class, () -> gameManager.canPlayerMove(board, start, target), "It should throw NoValidActionException when no valid path exists");
+        assertFalse(gameManager.canPlayerMove(board, start, target), "It should return false when no valid path exists");
     }
 
 }
