@@ -191,6 +191,11 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnFalseIfPathBlocked() {
+        for (int r = 0; r < board.getRows(); r++) {
+            for (int c = 0; c < board.getCols(); c++) {
+                board.setTile(r, c, null);
+            }
+        }
         Tile t0 = new Tile(List.of("RIGHT", "LEFT"), "STRAIGHT");
         Tile t1 = new Tile(List.of("UP", "RIGHT"), "CORNER");
 
