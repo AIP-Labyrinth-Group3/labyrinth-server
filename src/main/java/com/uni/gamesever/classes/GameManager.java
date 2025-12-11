@@ -16,6 +16,7 @@ import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
+import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.services.SocketMessageService;
@@ -28,12 +29,10 @@ public class GameManager {
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private final Map<String, Coordinates> DIRECTION_OFFSETS = Map.of(
-        "UP", new Coordinates(-1, 0),
-        "DOWN", new Coordinates(1, 0),
-        "LEFT", new Coordinates(0, -1),
-        "RIGHT", new Coordinates(0, 1)
-    );
-
+            "UP", new Coordinates(-1, 0),
+            "DOWN", new Coordinates(1, 0),
+            "LEFT", new Coordinates(0, -1),
+            "RIGHT", new Coordinates(0, 1));
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
         this.playerManager = playerManager;
@@ -43,28 +42,34 @@ public class GameManager {
     public GameBoard getCurrentBoard() {
         return currentBoard;
     }
+
     public void setCurrentBoard(GameBoard currentBoard) {
         this.currentBoard = currentBoard;
     }
+
     public GameState getGameState() {
         return gameState;
     }
+
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
     }
 
-    public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed) throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException, IllegalArgumentException {
-        if(gameState != GameState.WAITING_FOR_TILE_PUSH) {
+    public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed)
+            throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
+            IllegalArgumentException {
+        if (gameState != GameState.WAITING_FOR_TILE_PUSH) {
             throw new GameNotValidException("Game is not active. Cannot push tile.");
         }
-        if(!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
-            throw new NotPlayersTurnException("It's not the turn of player " + playerIdWhoPushed + ". Cannot push tile.");
+        if (!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It's not the turn of player " + playerIdWhoPushed + ". Cannot push tile.");
         }
-        if(currentBoard.getLastPush() != null){
+        if (currentBoard.getLastPush() != null) {
             int lastIndex = currentBoard.getLastPush().getRowOrColIndex();
             String lastDirection = currentBoard.getLastPush().getDirection();
 
-            if(lastIndex == rowOrColIndex && isOppositeDirection(lastDirection, direction)) {
+            if (lastIndex == rowOrColIndex && isOppositeDirection(lastDirection, direction)) {
                 throw new PushNotValidException("Invalid push: same index and opposite direction");
             }
         }
@@ -84,24 +89,29 @@ public class GameManager {
         return true;
     }
 
-    public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException, NotPlayersTurnException, NoValidActionException, JsonProcessingException, IllegalArgumentException {
-        if(gameState != GameState.WAITING_FOR_PLAYER_MOVE) {
+    public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException,
+            NotPlayersTurnException, NoValidActionException, JsonProcessingException, IllegalArgumentException {
+        if (gameState != GameState.WAITING_FOR_PLAYER_MOVE) {
             throw new GameNotValidException("Game is not in a state to move pawn.");
         }
-        if(!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
-            throw new NotPlayersTurnException("It's not the turn of player " + playerIdWhoMoved + ". Cannot move pawn.");
+        if (!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It's not the turn of player " + playerIdWhoMoved + ". Cannot move pawn.");
         }
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         Coordinates currentCoordinates = currentPlayerState.getCurrentPosition();
 
-        if(!canPlayerMove(currentBoard, currentCoordinates, targetCoordinates)) {
+        if (!canPlayerMove(currentBoard, currentCoordinates, targetCoordinates)) {
             throw new NoValidActionException("Player cannot move to the target coordinates.");
         }
 
         currentPlayerState.setCurrentPosition(targetCoordinates);
         GameStateUpdate gameState = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
+
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         setGameState(GameState.WAITING_FOR_TILE_PUSH);
         playerManager.setNextPlayerAsCurrent();
@@ -111,16 +121,17 @@ public class GameManager {
 
     public boolean isOppositeDirection(String dir1, String dir2) {
         return (dir1.equals("UP") && dir2.equals("DOWN")) ||
-               (dir1.equals("DOWN") && dir2.equals("UP")) ||
-               (dir1.equals("LEFT") && dir2.equals("RIGHT")) ||
-               (dir1.equals("RIGHT") && dir2.equals("LEFT"));
+                (dir1.equals("DOWN") && dir2.equals("UP")) ||
+                (dir1.equals("LEFT") && dir2.equals("RIGHT")) ||
+                (dir1.equals("RIGHT") && dir2.equals("LEFT"));
     }
 
-    public boolean canPlayerMove(GameBoard board, Coordinates start, Coordinates target) throws IllegalArgumentException {
+    public boolean canPlayerMove(GameBoard board, Coordinates start, Coordinates target)
+            throws IllegalArgumentException {
         if (start == null || target == null) {
             throw new IllegalArgumentException("Start or target coordinates cannot be null");
         }
-        if(start.getX() == target.getX() && start.getY() == target.getY()) {
+        if (start.getX() == target.getX() && start.getY() == target.getY()) {
             return true;
         }
 
@@ -132,32 +143,33 @@ public class GameManager {
         queue.add(start);
         visited[start.getX()][start.getY()] = true;
 
-        while(!queue.isEmpty()) {
+        while (!queue.isEmpty()) {
             Coordinates current = queue.poll();
             int x = current.getX();
             int y = current.getY();
 
             Tile tile = board.getTileAtCoordinate(current);
-            if(tile == null) {
+            if (tile == null) {
                 continue;
             }
 
-            for (String dir : tile.getEntrances()){
+            for (String dir : tile.getEntrances()) {
                 Coordinates offset = DIRECTION_OFFSETS.get(dir);
                 int newX = x + offset.getX();
                 int newY = y + offset.getY();
 
-                if(newX < 0 || newX >= rows || newY < 0 || newY >= cols) {
+                if (newX < 0 || newX >= rows || newY < 0 || newY >= cols) {
                     continue;
                 }
 
                 Coordinates neighbor = new Coordinates(newX, newY);
                 Tile neighborTile = board.getTileAtCoordinate(neighbor);
-                if (neighborTile == null || visited[newX][newY]){
-                     continue;
+                if (neighborTile == null || visited[newX][newY]) {
+                    continue;
                 }
-                boolean hasOppositeEntrance = neighborTile.getEntrances().stream().anyMatch(d -> isOppositeDirection(dir, d));
-                if (!hasOppositeEntrance){
+                boolean hasOppositeEntrance = neighborTile.getEntrances().stream()
+                        .anyMatch(d -> isOppositeDirection(dir, d));
+                if (!hasOppositeEntrance) {
                     continue;
                 }
                 if (neighbor.getX() == target.getX() && neighbor.getY() == target.getY()) {
@@ -165,7 +177,7 @@ public class GameManager {
                 }
                 queue.add(neighbor);
                 visited[newX][newY] = true;
-            }  
+            }
         }
         return false;
     }
