@@ -92,7 +92,8 @@ public class GameManager {
     public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException,
             NotPlayersTurnException, NoValidActionException, JsonProcessingException, IllegalArgumentException {
         if (gameState != GameState.WAITING_FOR_PLAYER_MOVE) {
-            throw new GameNotValidException("Game is not in a state to move pawn.");
+            throw new GameNotValidException(
+                    "Game is not in the WAITING_FOR_PLAYER_MOVE state. Current state: " + gameState);
         }
         if (!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
@@ -107,8 +108,8 @@ public class GameManager {
         }
 
         currentPlayerState.setCurrentPosition(targetCoordinates);
-        GameStateUpdate gameState = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
+        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));

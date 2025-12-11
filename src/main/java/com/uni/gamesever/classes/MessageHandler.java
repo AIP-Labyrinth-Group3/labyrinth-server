@@ -27,19 +27,22 @@ public class MessageHandler {
     private final GameInitialitionController gameInitialitionController;
     private final GameManager gameManager;
 
-    public MessageHandler(SocketMessageService socketBroadcastService, GameInitialitionController gameInitialitionController, ConnectionHandler connectionHandler, GameManager gameManager) {
+    public MessageHandler(SocketMessageService socketBroadcastService,
+            GameInitialitionController gameInitialitionController, ConnectionHandler connectionHandler,
+            GameManager gameManager) {
         this.connectionHandler = connectionHandler;
         this.gameInitialitionController = gameInitialitionController;
         this.gameManager = gameManager;
     }
 
-    public boolean handleClientMessage(String message, String userId) throws JsonMappingException, JsonProcessingException {
-        //parsing the client message into a connectRequest object
+    public boolean handleClientMessage(String message, String userId)
+            throws JsonMappingException, JsonProcessingException {
+        // parsing the client message into a connectRequest object
         System.out.println("Received message from user " + userId + ": " + message);
 
         Message request;
         try {
-             request = objectMapper.readValue(message, Message.class);
+            request = objectMapper.readValue(message, Message.class);
         } catch (JsonMappingException e) {
             System.err.println("Failed to parse message from user " + userId + ": " + e.getMessage());
             return false;
@@ -48,10 +51,10 @@ public class MessageHandler {
             return false;
         }
 
-       switch (request.getType()) {
+        switch (request.getType()) {
             // connect action from client
-           case "CONNECT":
-                //convert message to connectRequest
+            case "CONNECT":
+                // convert message to connectRequest
                 ConnectRequest connectReq = objectMapper.readValue(message, ConnectRequest.class);
                 return connectionHandler.handleConnectMessage(connectReq, userId);
             case "DISCONNECT":
@@ -75,14 +78,15 @@ public class MessageHandler {
             case "PUSH_TILE":
                 try {
                     PushTileCommand pushTileCommand = objectMapper.readValue(message, PushTileCommand.class);
-                    return gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(), pushTileCommand.getDirection(), userId);
-                } catch( PushNotValidException e) {
+                    return gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(),
+                            pushTileCommand.getDirection(), userId);
+                } catch (PushNotValidException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     return false;
-                } catch( NotPlayersTurnException e) {
+                } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     return false;
-                } catch( GameNotValidException e) {
+                } catch (GameNotValidException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     return false;
                 } catch (IllegalArgumentException e) {
@@ -93,25 +97,25 @@ public class MessageHandler {
                     return false;
                 }
             case "MOVE_PAWN":
-                try{
+                try {
                     MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
                     return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId);
-                }catch ( NotPlayersTurnException e) {
+                } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
-                } catch( GameNotValidException e) {
+                } catch (GameNotValidException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
-                } catch( NoValidActionException e) {
+                } catch (NoValidActionException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
                 } catch (IllegalArgumentException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
-                } 
-           default:
-               return false;
-         }
+                }
+            default:
+                return false;
+        }
     }
 
 }

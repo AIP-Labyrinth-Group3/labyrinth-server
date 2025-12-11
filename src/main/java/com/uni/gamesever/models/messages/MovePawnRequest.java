@@ -3,7 +3,7 @@ package com.uni.gamesever.models.messages;
 import com.uni.gamesever.models.Coordinates;
 
 public class MovePawnRequest extends Message {
-    Coordinates targetCoordinates;
+    private Coordinates targetCoordinates;
 
     public MovePawnRequest() {
         super("MOVE_PAWN");

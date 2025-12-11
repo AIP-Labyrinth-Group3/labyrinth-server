@@ -25,25 +25,27 @@ import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class GameInitialitionController {
-    //hier kommt die ganze Gameboard generierung hin
+    // hier kommt die ganze Gameboard generierung hin
     PlayerManager playerManager;
     GameManager gameManager;
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
 
-    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService, GameManager gameManager) {
+    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
+            GameManager gameManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameManager = gameManager;
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size) throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException {
+    public boolean handleStartGameMessage(String userID, BoardSize size)
+            throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException {
 
-        if(playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
+        if (playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
             throw new PlayerNotAdminException("Only the admin can start the game.");
         }
-        
-        if(playerManager.getAmountOfPlayers() <2) {
+
+        if (playerManager.getAmountOfPlayers() < 2) {
             throw new NotEnoughPlayerException("Not enough players to start the game.");
         }
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
@@ -55,8 +57,8 @@ public class GameInitialitionController {
         List<Treasure> treasures = createTreasures();
         distributeTreasuresOnPlayers(treasures);
         placeTreasuresOnBoard(board, treasures);
-        
-        if(board.getExtraTile() == null){
+
+        if (board.getExtraTile() == null) {
             throw new NoExtraTileException("Extra tile was not set on the game board.");
         }
 
@@ -66,9 +68,9 @@ public class GameInitialitionController {
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
         gameManager.setGameState(GameState.WAITING_FOR_TILE_PUSH);
-        
-        GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
+
+        GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
@@ -77,7 +79,7 @@ public class GameInitialitionController {
     }
 
     public static List<Treasure> createTreasures() {
-        //es werden 24 Schätze erstellt
+        // es werden 24 Schätze erstellt
         List<Treasure> treasures = new ArrayList<>();
         for (int i = 1; i <= 24; i++) {
             treasures.add(new Treasure(i, "Treasure " + i));
@@ -92,13 +94,14 @@ public class GameInitialitionController {
         Collections.shuffle(treasures);
 
         for (PlayerState state : playerManager.getNonNullPlayerStates()) {
-            if (state == null) continue;
+            if (state == null)
+                continue;
 
             List<Treasure> assigned = new ArrayList<>();
 
             while (index < treasures.size() && assigned.size() < treasures.size() / playersCount) {
                 assigned.add(treasures.get(index++));
-        }
+            }
 
             state.setTreasuresFound(new Treasure[0]);
             state.setRemainingTreasureCount(assigned.size());
@@ -120,7 +123,7 @@ public class GameInitialitionController {
         forbiddenStartPositions.add(new Coordinates(0, cols - 1));
         forbiddenStartPositions.add(new Coordinates(rows - 1, 0));
         forbiddenStartPositions.add(new Coordinates(rows - 1, cols - 1));
-        
+
         for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
             for (int colIndex = 0; colIndex < cols; colIndex++) {
 
