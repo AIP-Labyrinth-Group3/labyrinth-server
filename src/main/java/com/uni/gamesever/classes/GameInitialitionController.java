@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
@@ -20,36 +21,42 @@ import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.Treasure;
+import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class GameInitialitionController {
-    //hier kommt die ganze Gameboard generierung hin
+    // hier kommt die ganze Gameboard generierung hin
     PlayerManager playerManager;
     GameManager gameManager;
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
 
-    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService, GameManager gameManager) {
+    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
+            GameManager gameManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameManager = gameManager;
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size) throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException {
+    public boolean handleStartGameMessage(String userID, BoardSize size)
+            throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
+            GameAlreadyStartedException {
 
-        if(playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
+        if (playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
             throw new PlayerNotAdminException("Only the admin can start the game.");
         }
-        
-        if(playerManager.getAmountOfPlayers() <2) {
+
+        if (playerManager.getAmountOfPlayers() < 2) {
             throw new NotEnoughPlayerException("Not enough players to start the game.");
+        }
+
+        if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
+            throw new GameAlreadyStartedException("Game has already been started.");
         }
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 
         GameBoard board = GameBoard.generateBoard(size);
-
-        GameBoard.printBoard(board);
 
         playerManager.initializePlayerStates(board);
 
@@ -57,20 +64,19 @@ public class GameInitialitionController {
         distributeTreasuresOnPlayers(treasures);
         placeTreasuresOnBoard(board, treasures);
 
+        if (board.getExtraTile() == null) {
+            throw new NoExtraTileException("Extra tile was not set on the game board.");
+        }
+
         GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
 
-        
-        GameStateUpdate gameState = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
-
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
-        gameManager.setGameActive(true);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        if(board.getExtraTile() == null){
-            throw new NoExtraTileException("Extra tile was not set on the game board.");
-        }
+        GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
@@ -79,7 +85,7 @@ public class GameInitialitionController {
     }
 
     public static List<Treasure> createTreasures() {
-        //es werden 24 Schätze erstellt
+        // es werden 24 Schätze erstellt
         List<Treasure> treasures = new ArrayList<>();
         for (int i = 1; i <= 24; i++) {
             treasures.add(new Treasure(i, "Treasure " + i));
@@ -94,13 +100,14 @@ public class GameInitialitionController {
         Collections.shuffle(treasures);
 
         for (PlayerState state : playerManager.getNonNullPlayerStates()) {
-            if (state == null) continue;
+            if (state == null)
+                continue;
 
             List<Treasure> assigned = new ArrayList<>();
 
             while (index < treasures.size() && assigned.size() < treasures.size() / playersCount) {
                 assigned.add(treasures.get(index++));
-        }
+            }
 
             state.setTreasuresFound(new Treasure[0]);
             state.setRemainingTreasureCount(assigned.size());
@@ -122,7 +129,7 @@ public class GameInitialitionController {
         forbiddenStartPositions.add(new Coordinates(0, cols - 1));
         forbiddenStartPositions.add(new Coordinates(rows - 1, 0));
         forbiddenStartPositions.add(new Coordinates(rows - 1, cols - 1));
-        
+
         for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
             for (int colIndex = 0; colIndex < cols; colIndex++) {
 

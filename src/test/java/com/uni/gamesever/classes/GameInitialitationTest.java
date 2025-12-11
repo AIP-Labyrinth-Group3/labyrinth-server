@@ -40,9 +40,12 @@ import com.uni.gamesever.services.SocketMessageService;
 
 public class GameInitialitationTest {
 
-    @Mock PlayerManager playerManager;
-    @Mock SocketMessageService socketBroadcastService;
-    @Mock GameManager gameManager;
+    @Mock
+    PlayerManager playerManager;
+    @Mock
+    SocketMessageService socketBroadcastService;
+    @Mock
+    GameManager gameManager;
 
     @InjectMocks
     GameInitialitionController gameInitialitionController;
@@ -76,14 +79,14 @@ public class GameInitialitationTest {
         BoardSize size = new BoardSize();
         assertThrows(IllegalArgumentException.class,
                 () -> size.setRows(2));
-        }
+    }
 
     @Test
     void boardSize_shouldThrowExceptionOnInvalidCols() {
         BoardSize size = new BoardSize();
         assertThrows(IllegalArgumentException.class,
                 () -> size.setCols(12));
-        }
+    }
 
     @Test
     void gameBoardHandler_shouldThrowExceptionIfPlayerIsNotAdmin() {
@@ -130,6 +133,7 @@ public class GameInitialitationTest {
         when(playerManager.getNonNullPlayerStates()).thenReturn(states);
 
         when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
+        when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
 
@@ -162,61 +166,64 @@ public class GameInitialitationTest {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 Tile t = board.getTiles()[i][j];
-            
+
                 assertNotNull(t, "Tile at (" + i + "," + j + ") should not be null");
 
                 for (String e : t.getEntrances()) {
                     assertTrue(List.of("UP", "DOWN", "LEFT", "RIGHT").contains(e),
-                        "Invalid entrance '" + e + "' at (" + i + "," + j + ")");
+                            "Invalid entrance '" + e + "' at (" + i + "," + j + ")");
                 }
 
                 if ((i == 0 && j == 0) || (i == 0 && j == cols - 1) ||
-                    (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1)) {
-                        assertEquals("CORNER", t.getType(), "Corner type expected at (" + i + "," + j + ")");
-                } 
-                else if (i % 2 == 0 && j % 2 == 0 && (i == 0 || j == 0 || i == rows - 1 || j == cols - 1)) {
+                        (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1)) {
+                    assertEquals("CORNER", t.getType(), "Corner type expected at (" + i + "," + j + ")");
+                } else if (i % 2 == 0 && j % 2 == 0 && (i == 0 || j == 0 || i == rows - 1 || j == cols - 1)) {
                     assertEquals("CROSS", t.getType(), "Edge cross expected at (" + i + "," + j + ")");
-                } 
-                else if (i % 2 == 0 && j % 2 == 0) {
+                } else if (i % 2 == 0 && j % 2 == 0) {
                     assertEquals("CROSS", t.getType(), "Inner cross expected at (" + i + "," + j + ")");
-                } 
-                else {
-                    assertTrue(List.of("STRAIGHT","CROSS","CORNER").contains(t.getType()), 
-                        "Valid type expected at (" + i + "," + j + ")");
+                } else {
+                    assertTrue(List.of("STRAIGHT", "CROSS", "CORNER").contains(t.getType()),
+                            "Valid type expected at (" + i + "," + j + ")");
                 }
             }
         }
     }
+
     @Test
     void bonus_shouldThrowExceptionOnInvalidType() {
         assertThrows(IllegalArgumentException.class, () -> {
             BonusType.valueOf("INVALID_BONUS");
         });
     }
+
     @Test
     void gameState_shouldThrowExceptionOnInvalidTurnState() {
         assertThrows(IllegalArgumentException.class, () -> {
             TurnState.valueOf("INVALID_STATE");
         });
     }
+
     @Test
     void playerState_shouldThrowExceptionOnInvalidBonusType() {
         assertThrows(IllegalArgumentException.class, () -> {
             BonusType.valueOf("UNKNOWN_BONUS");
         });
     }
+
     @Test
     void playerState_shouldThrowExceptionOnInvalidAchievementType() {
         assertThrows(IllegalArgumentException.class, () -> {
             AchievementType.valueOf("INVALID_ACHIEVEMENT");
         });
     }
+
     @Test
     void pushAction_shouldThrowExceptionOnInvalidDirection() {
         assertThrows(IllegalArgumentException.class, () -> {
             DirectionType.valueOf("SIDEWAYS");
         });
-    }   
+    }
+
     @Test
     void generateBoard_shouldSetFixedTilesCorrectly() throws NoExtraTileException {
         BoardSize size = new BoardSize();
@@ -234,8 +241,7 @@ public class GameInitialitationTest {
                 Tile t = tiles[i][j];
                 assertNotNull(t, "Tile should not be null at (" + i + "," + j + ")");
 
-                boolean isCorner =
-                        (i == 0 && j == 0) ||
+                boolean isCorner = (i == 0 && j == 0) ||
                         (i == 0 && j == cols - 1) ||
                         (i == rows - 1 && j == 0) ||
                         (i == rows - 1 && j == cols - 1);
@@ -255,6 +261,7 @@ public class GameInitialitationTest {
             }
         }
     }
+
     @Test
     void generateBoard_shouldHaveAllTilesNonNull() throws NoExtraTileException {
         BoardSize size = new BoardSize();
@@ -270,6 +277,7 @@ public class GameInitialitationTest {
             }
         }
     }
+
     @Test
     void generateBoard_shouldAssignEntrancesForEachTile() throws NoExtraTileException {
         BoardSize size = new BoardSize();
@@ -288,6 +296,7 @@ public class GameInitialitationTest {
             }
         }
     }
+
     @Test
     void createTreasures_shouldReturn24TreasuresWithCorrectIds() {
         List<Treasure> treasures = GameInitialitionController.createTreasures();
@@ -298,9 +307,10 @@ public class GameInitialitationTest {
             Treasure t = treasures.get(i);
             assertEquals(i + 1, t.getId(), "Treasure ID should match its position");
             assertNotNull(t.getName(), "Treasure " + (i + 1) + " name should not be null");
-        
+
         }
     }
+
     @Test
     void distributeTreasuresOnPlayers_shouldAssignTreasuresEqually() {
         PlayerInfo playerInfo1 = new PlayerInfo("player1");
@@ -308,8 +318,8 @@ public class GameInitialitationTest {
 
         PlayerState player1 = new PlayerState(playerInfo1, null, null, null, null, 0);
         PlayerState player2 = new PlayerState(playerInfo2, null, null, null, null, 0);
-        PlayerState players[] = new PlayerState[] {player1, player2};
-        
+        PlayerState players[] = new PlayerState[] { player1, player2 };
+
         PlayerManager mockManager = mock(PlayerManager.class);
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
@@ -322,11 +332,12 @@ public class GameInitialitationTest {
         for (PlayerState p : players) {
             assertNotNull(p.getCurrentTreasure(), "Current treasure should not be null");
             assertEquals(treasures.size() / players.length, p.getRemainingTreasureCount(),
-                "Each player should have equal number of treasures");
+                    "Each player should have equal number of treasures");
             assertEquals(treasures.size() / players.length, p.getAssignedTreasures().size(),
-                "Each player should have correct number of remaining treasure cards");
+                    "Each player should have correct number of remaining treasure cards");
         }
     }
+
     @Test
     void placeTreasuresOnBoard_shouldPlaceTreasuresOnValidTiles() throws NoExtraTileException {
         BoardSize size = new BoardSize();
@@ -340,11 +351,10 @@ public class GameInitialitationTest {
 
         Tile[][] tiles = board.getTiles();
         List<Coordinates> forbiddenStartPositions = List.of(
-            new Coordinates(0, 0),
-            new Coordinates(0, size.getCols() - 1),
-            new Coordinates(size.getRows() - 1, 0),
-            new Coordinates(size.getRows() - 1, size.getCols() - 1)
-        );
+                new Coordinates(0, 0),
+                new Coordinates(0, size.getCols() - 1),
+                new Coordinates(size.getRows() - 1, 0),
+                new Coordinates(size.getRows() - 1, size.getCols() - 1));
 
         int placedCount = 0;
         for (int i = 0; i < tiles.length; i++) {
@@ -370,7 +380,8 @@ public class GameInitialitationTest {
         GameBoard board = GameBoard.generateBoard(size);
 
         List<Treasure> treasures = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) treasures.add(new Treasure(i, "Treasure " + i));
+        for (int i = 1; i <= 10; i++)
+            treasures.add(new Treasure(i, "Treasure " + i));
 
         GameInitialitionController controller = new GameInitialitionController(null, null, null);
 
@@ -391,7 +402,7 @@ public class GameInitialitationTest {
             for (int j = 0; j < size.getCols(); j++) {
                 Tile t = tiles[i][j];
                 assertNotNull(t, "Tile must not be null at (" + i + "," + j + ")");
-                    nonNullCount++;
+                nonNullCount++;
             }
         }
 
@@ -404,11 +415,11 @@ public class GameInitialitationTest {
             for (Tile t : row) {
                 if (t == extraTile) {
                     isOnBoard = true;
-                break;
+                    break;
+                }
             }
-        }
         }
         assertFalse(isOnBoard, "Extra tile should not be on the board");
     }
-    
+
 }
