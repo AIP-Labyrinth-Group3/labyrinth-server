@@ -13,11 +13,11 @@ import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
-import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.Tile;
+import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -54,11 +54,11 @@ public class GameManagerTest {
         state2 = new PlayerState(player2, null, null, null, null, 0);
 
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{state1, state2});
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
 
         board = GameBoard.generateBoard(new BoardSize());
         gameManager.setCurrentBoard(board);
-        gameManager.setGameState(GameState.WAITING_FOR_TILE_PUSH);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
     }
 
     @Test
@@ -79,7 +79,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfGameInactive() {
-        gameManager.setGameState(GameState.NOT_STARTED);
+        gameManager.setTurnState(TurnState.NOT_STARTED);
 
         assertThrows(GameNotValidException.class, () -> {
             gameManager.handlePushTile(1, "UP", player1.getId());
@@ -129,7 +129,7 @@ public class GameManagerTest {
         board.updateBoard(1, "UP");
 
         assertEquals(topBefore, board.getExtraTile(), "Top tile becomes extra");
-        assertEquals(extraBefore, board.getTiles()[board.getRows()-1][1], "Extra tile inserted at bottom");
+        assertEquals(extraBefore, board.getTiles()[board.getRows() - 1][1], "Extra tile inserted at bottom");
     }
 
     @Test
@@ -161,18 +161,19 @@ public class GameManagerTest {
         assertThrows(IllegalArgumentException.class, () -> board.updateBoard(-1, "UP"));
         assertThrows(IllegalArgumentException.class, () -> board.updateBoard(100, "LEFT"));
     }
+
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnTrueIfStartEqualsTarget() {
         Coordinates pos = new Coordinates(0, 0);
-        assertTrue(gameManager.canPlayerMove(board, pos, pos), "It should return true when start and target are the same");
+        assertTrue(gameManager.canPlayerMove(board, pos, pos),
+                "It should return true when start and target are the same");
     }
-
 
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnTrueIfPathExists() {
         Tile t0 = new Tile(List.of("RIGHT", "UP"), "CORNER");
         Tile t1 = new Tile(List.of("LEFT", "DOWN"), "CORNER");
-        
+
         board.setTile(0, 0, t0);
         board.setTile(0, 1, t1);
         Coordinates start = new Coordinates(0, 0);
@@ -184,15 +185,16 @@ public class GameManagerTest {
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnFalseIfPathBlocked() {
         Tile t0 = new Tile(List.of("RIGHT", "LEFT"), "STRAIGHT");
-        Tile t1 = new Tile(List.of("UP", "RIGHT"), "CORNER"); 
-        
+        Tile t1 = new Tile(List.of("UP", "RIGHT"), "CORNER");
+
         board.setTile(0, 0, t1);
         board.setTile(1, 0, t0);
 
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 0);
 
-        assertFalse(gameManager.canPlayerMove(board, start, target), "It should return false when no valid path exists");
+        assertFalse(gameManager.canPlayerMove(board, start, target),
+                "It should return false when no valid path exists");
     }
 
     @Test
@@ -213,13 +215,14 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnFalseIfTileNull() {
-        
+
         board.setTile(0, 0, null);
 
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
-        assertFalse(gameManager.canPlayerMove(board, start, target), "It should return false when no valid path exists");
+        assertFalse(gameManager.canPlayerMove(board, start, target),
+                "It should return false when no valid path exists");
     }
 
 }

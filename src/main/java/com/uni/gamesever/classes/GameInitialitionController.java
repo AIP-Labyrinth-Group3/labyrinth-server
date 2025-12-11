@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
@@ -15,12 +16,12 @@ import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStarted;
-import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.Treasure;
+import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
@@ -39,7 +40,8 @@ public class GameInitialitionController {
     }
 
     public boolean handleStartGameMessage(String userID, BoardSize size)
-            throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException {
+            throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
+            GameAlreadyStartedException {
 
         if (playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
             throw new PlayerNotAdminException("Only the admin can start the game.");
@@ -47,6 +49,10 @@ public class GameInitialitionController {
 
         if (playerManager.getAmountOfPlayers() < 2) {
             throw new NotEnoughPlayerException("Not enough players to start the game.");
+        }
+
+        if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
+            throw new GameAlreadyStartedException("Game has already been started.");
         }
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 
@@ -67,7 +73,7 @@ public class GameInitialitionController {
 
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
-        gameManager.setGameState(GameState.WAITING_FOR_TILE_PUSH);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
         GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));

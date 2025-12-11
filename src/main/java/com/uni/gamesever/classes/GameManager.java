@@ -13,19 +13,19 @@ import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
-import com.uni.gamesever.models.GameState;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.Tile;
+import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class GameManager {
     PlayerManager playerManager;
     private GameBoard currentBoard;
-    private GameState gameState = GameState.NOT_STARTED;
+    private TurnState turnState = TurnState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private final Map<String, Coordinates> DIRECTION_OFFSETS = Map.of(
@@ -47,18 +47,18 @@ public class GameManager {
         this.currentBoard = currentBoard;
     }
 
-    public GameState getGameState() {
-        return gameState;
+    public TurnState getTurnState() {
+        return turnState;
     }
 
-    public void setGameState(GameState gameState) {
-        this.gameState = gameState;
+    public void setTurnState(TurnState turnState) {
+        this.turnState = turnState;
     }
 
     public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed)
             throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
             IllegalArgumentException {
-        if (gameState != GameState.WAITING_FOR_TILE_PUSH) {
+        if (turnState != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException("Game is not active. Cannot push tile.");
         }
         if (!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
@@ -81,19 +81,19 @@ public class GameManager {
 
         GameBoard.printBoard(currentBoard);
 
-        GameStateUpdate gameState = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameState));
+        GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
-        setGameState(GameState.WAITING_FOR_PLAYER_MOVE);
+        setTurnState(TurnState.WAITING_FOR_MOVE);
 
         return true;
     }
 
     public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException,
             NotPlayersTurnException, NoValidActionException, JsonProcessingException, IllegalArgumentException {
-        if (gameState != GameState.WAITING_FOR_PLAYER_MOVE) {
+        if (turnState != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
-                    "Game is not in the WAITING_FOR_PLAYER_MOVE state. Current state: " + gameState);
+                    "Game is not in the WAITING_FOR_MOVE state. Current state: " + turnState);
         }
         if (!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
@@ -114,7 +114,7 @@ public class GameManager {
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
-        setGameState(GameState.WAITING_FOR_TILE_PUSH);
+        setTurnState(TurnState.WAITING_FOR_PUSH);
         playerManager.setNextPlayerAsCurrent();
 
         return true;

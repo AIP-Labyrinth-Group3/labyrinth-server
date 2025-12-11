@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.exceptions.GameNotValidException;
 import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NoValidActionException;
@@ -71,6 +72,9 @@ public class MessageHandler {
                     System.err.println(e.getMessage());
                     return false;
                 } catch (NoExtraTileException e) {
+                    System.err.println(e.getMessage());
+                    return false;
+                } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
                     return false;
                 }
