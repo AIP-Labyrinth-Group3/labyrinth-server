@@ -17,7 +17,6 @@ public class GameBoard {
     private BoardSize size;
     @JsonIgnore
     private Tile extraTile;
-    
 
     private GameBoard(BoardSize size) {
         this.size = size;
@@ -25,12 +24,15 @@ public class GameBoard {
         this.cols = size.getCols();
         this.tiles = new Tile[rows][cols];
     }
+
     public BoardSize getSize() {
         return size;
     }
+
     public Tile[][] getTiles() {
         return tiles;
     }
+
     public void setTile(int row, int col, Tile tile) {
         this.tiles[row][col] = tile;
     }
@@ -38,6 +40,7 @@ public class GameBoard {
     public int getRows() {
         return rows;
     }
+
     public int getCols() {
         return cols;
     }
@@ -53,6 +56,7 @@ public class GameBoard {
     public Tile getExtraTile() {
         return extraTile;
     }
+
     public void setExtraTile(Tile extraTile) {
         this.extraTile = extraTile;
     }
@@ -61,20 +65,35 @@ public class GameBoard {
         return tiles[coord.getX()][coord.getY()];
     }
 
+    public boolean isPlayerOnTile(Coordinates coord, PlayerState[] playerStates) {
+        for (PlayerState ps : playerStates) {
+            if (ps.getCurrentPosition().getX() == coord.getX() && ps.getCurrentPosition().getY() == coord.getY()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void updateBoard(int rowOrColIndex, String direction) throws NoExtraTileException {
         if (extraTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");
         }
 
-        if (rowOrColIndex < 0 || rowOrColIndex >= (direction.equalsIgnoreCase("LEFT") || direction.equalsIgnoreCase("RIGHT") ? rows : cols)) {
+        if (rowOrColIndex < 0
+                || rowOrColIndex >= (direction.equalsIgnoreCase("LEFT") || direction.equalsIgnoreCase("RIGHT") ? rows
+                        : cols)) {
             throw new IllegalArgumentException("Index out of bounds.");
         }
 
         Tile checkTile = null;
-        if (direction.equalsIgnoreCase("UP")) checkTile = tiles[0][rowOrColIndex];
-        else if (direction.equalsIgnoreCase("DOWN")) checkTile = tiles[rows - 1][rowOrColIndex];
-        else if (direction.equalsIgnoreCase("LEFT")) checkTile = tiles[rowOrColIndex][0];
-        else if (direction.equalsIgnoreCase("RIGHT")) checkTile = tiles[rowOrColIndex][cols - 1];
+        if (direction.equalsIgnoreCase("UP"))
+            checkTile = tiles[0][rowOrColIndex];
+        else if (direction.equalsIgnoreCase("DOWN"))
+            checkTile = tiles[rows - 1][rowOrColIndex];
+        else if (direction.equalsIgnoreCase("LEFT"))
+            checkTile = tiles[rowOrColIndex][0];
+        else if (direction.equalsIgnoreCase("RIGHT"))
+            checkTile = tiles[rowOrColIndex][cols - 1];
 
         if (checkTile != null && checkTile.getIsFixed()) {
             throw new IllegalArgumentException("Cannot push a fixed tile.");
@@ -123,26 +142,24 @@ public class GameBoard {
         }
     }
 
-
     // Tile generation and assignment
     public static GameBoard generateBoard(BoardSize size) throws NoExtraTileException {
         GameBoard board = new GameBoard(size);
         board.rows = size.getRows();
         board.cols = size.getCols();
 
-        //ecken generieren
+        // ecken generieren
         board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER", true));
         board.setTile(0, board.cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER", true));
         board.setTile(board.rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER", true));
         board.setTile(board.rows - 1, board.cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER", true));
 
-
-        //Randkreuzungen generieren
-        for(int i = 0; i < board.rows; i++){
-            for (int j = 0; j < board.cols; j++){
-                if(i%2 == 0 && j % 2 == 0){
-                    boolean isEdge = (i == 0 || j == 0 || i == board.rows -1 || j == board.cols -1);
-                    if(isEdge && board.getTiles()[i][j] == null){
+        // Randkreuzungen generieren
+        for (int i = 0; i < board.rows; i++) {
+            for (int j = 0; j < board.cols; j++) {
+                if (i % 2 == 0 && j % 2 == 0) {
+                    boolean isEdge = (i == 0 || j == 0 || i == board.rows - 1 || j == board.cols - 1);
+                    if (isEdge && board.getTiles()[i][j] == null) {
                         List<String> entrances = generateEdgeCrossEntrances(i, j, board.rows, board.cols);
                         Tile t = new Tile(entrances, "CROSS", true);
                         board.setTile(i, j, t);
@@ -184,7 +201,8 @@ public class GameBoard {
 
         int sum = corners + crosses + straights;
         int diff = totalCards - sum;
-        if (diff > 0) straights += diff;
+        if (diff > 0)
+            straights += diff;
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -206,13 +224,16 @@ public class GameBoard {
         }
 
         List<String> remainingTiles = new ArrayList<>();
-        for (int i = 0; i < corners; i++) remainingTiles.add("CORNER");
-        for (int i = 0; i < crosses; i++) remainingTiles.add("CROSS");
-        for (int i = 0; i < straights; i++) remainingTiles.add("STRAIGHT");
+        for (int i = 0; i < corners; i++)
+            remainingTiles.add("CORNER");
+        for (int i = 0; i < crosses; i++)
+            remainingTiles.add("CROSS");
+        for (int i = 0; i < straights; i++)
+            remainingTiles.add("STRAIGHT");
 
         Collections.shuffle(remainingTiles);
 
-        if(!remainingTiles.isEmpty()){
+        if (!remainingTiles.isEmpty()) {
             String extraTileType = remainingTiles.remove(remainingTiles.size() - 1);
             Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
             board.setExtraTile(extraTile);
@@ -244,105 +265,114 @@ public class GameBoard {
         List<String> allDirs = List.of("UP", "RIGHT", "DOWN", "LEFT");
         entrances.addAll(allDirs);
 
-        if (topEdge) entrances.remove("UP");
-        if (bottomEdge) entrances.remove("DOWN");
-        if (leftEdge) entrances.remove("LEFT");
-        if (rightEdge) entrances.remove("RIGHT");
+        if (topEdge)
+            entrances.remove("UP");
+        if (bottomEdge)
+            entrances.remove("DOWN");
+        if (leftEdge)
+            entrances.remove("LEFT");
+        if (rightEdge)
+            entrances.remove("RIGHT");
 
-   
         if (entrances.size() < 3) {
-            if (topEdge) entrances.add("DOWN");
-            if (bottomEdge) entrances.add("UP");
-            if (leftEdge) entrances.add("RIGHT");
-            if (rightEdge) entrances.add("LEFT");
+            if (topEdge)
+                entrances.add("DOWN");
+            if (bottomEdge)
+                entrances.add("UP");
+            if (leftEdge)
+                entrances.add("RIGHT");
+            if (rightEdge)
+                entrances.add("LEFT");
         }
 
         return entrances;
     }
 
-
     private static List<String> generateEntrancesForTypeWithRandomRotation(String type) {
-    Random rnd = new Random();
+        Random rnd = new Random();
         switch (type) {
             case "CORNER":
-            List<List<String>> corners = List.of(
-                List.of("UP", "RIGHT"),
-                List.of("RIGHT", "DOWN"),
-                List.of("DOWN", "LEFT"),
-                List.of("LEFT", "UP")
-            );
-            return new ArrayList<>(corners.get(rnd.nextInt(corners.size())));
+                List<List<String>> corners = List.of(
+                        List.of("UP", "RIGHT"),
+                        List.of("RIGHT", "DOWN"),
+                        List.of("DOWN", "LEFT"),
+                        List.of("LEFT", "UP"));
+                return new ArrayList<>(corners.get(rnd.nextInt(corners.size())));
 
-        case "STRAIGHT":
-            List<List<String>> straights = List.of(
-                List.of("UP", "DOWN"),
-                List.of("LEFT", "RIGHT")
-            );
-            return new ArrayList<>(straights.get(rnd.nextInt(straights.size())));
+            case "STRAIGHT":
+                List<List<String>> straights = List.of(
+                        List.of("UP", "DOWN"),
+                        List.of("LEFT", "RIGHT"));
+                return new ArrayList<>(straights.get(rnd.nextInt(straights.size())));
 
-        case "CROSS":
-            List<List<String>> crosses = List.of(
-                List.of("UP", "LEFT", "RIGHT"),
-                List.of("UP", "RIGHT", "DOWN"),
-                List.of("RIGHT", "DOWN", "LEFT"),
-                List.of("DOWN", "LEFT", "UP")
-            );
-            return new ArrayList<>(crosses.get(rnd.nextInt(crosses.size())));
+            case "CROSS":
+                List<List<String>> crosses = List.of(
+                        List.of("UP", "LEFT", "RIGHT"),
+                        List.of("UP", "RIGHT", "DOWN"),
+                        List.of("RIGHT", "DOWN", "LEFT"),
+                        List.of("DOWN", "LEFT", "UP"));
+                return new ArrayList<>(crosses.get(rnd.nextInt(crosses.size())));
 
-        default:
-            return new ArrayList<>();
-    }
-}
-
-
-
-    //DEMO 
-    public static void printBoard(GameBoard board) {
-    Tile[][] tiles = board.getTiles();
-    int rows = board.getSize().getRows();
-    int cols = board.getSize().getCols();
-
-    System.out.println("=== GAME BOARD VISUALIZATION ===");
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            Tile t = tiles[i][j];
-            if (t == null) {
-                System.out.print(" - ");
-            } else {
-                System.out.print(String.format("%-3s", getTileSymbol(t)));
-            }
+            default:
+                return new ArrayList<>();
         }
-        System.out.println();
-    }
-}
-
-
-private static String getTileSymbol(Tile t) {
-    List<String> e = t.getEntrances();
-    if (e == null || e.isEmpty()) return " ? ";
-
-    // Ecken
-    if (e.size() == 2 && e.contains("UP") && e.contains("RIGHT")) return "└──";
-    if (e.size() == 2 && e.contains("RIGHT") && e.contains("DOWN")) return "┌──";
-    if (e.size() == 2 && e.contains("DOWN") && e.contains("LEFT")) return "──┐";
-    if (e.size() == 2 && e.contains("LEFT") && e.contains("UP")) return "──┘";
-
-    // Gerade
-    if (e.size() == 2 && e.contains("LEFT") && e.contains("RIGHT")) return "───";
-    if (e.size() == 2 && e.contains("UP") && e.contains("DOWN")) return " │ ";
-
-    // T-Stücke
-    if (e.size() == 3) {
-        if (!e.contains("UP")) return "╦──";      
-        if (!e.contains("RIGHT")) return "╣ │";
-        if (!e.contains("DOWN")) return "╩──";
-        if (!e.contains("LEFT")) return "╠ │";
     }
 
+    // DEMO
+    public static void printBoard(GameBoard board) {
+        Tile[][] tiles = board.getTiles();
+        int rows = board.getSize().getRows();
+        int cols = board.getSize().getCols();
 
-    // Fallback
-    return " ? ";
-}
+        System.out.println("=== GAME BOARD VISUALIZATION ===");
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Tile t = tiles[i][j];
+                if (t == null) {
+                    System.out.print(" - ");
+                } else {
+                    System.out.print(String.format("%-3s", getTileSymbol(t)));
+                }
+            }
+            System.out.println();
+        }
+    }
 
+    private static String getTileSymbol(Tile t) {
+        List<String> e = t.getEntrances();
+        if (e == null || e.isEmpty())
+            return " ? ";
+
+        // Ecken
+        if (e.size() == 2 && e.contains("UP") && e.contains("RIGHT"))
+            return "└──";
+        if (e.size() == 2 && e.contains("RIGHT") && e.contains("DOWN"))
+            return "┌──";
+        if (e.size() == 2 && e.contains("DOWN") && e.contains("LEFT"))
+            return "──┐";
+        if (e.size() == 2 && e.contains("LEFT") && e.contains("UP"))
+            return "──┘";
+
+        // Gerade
+        if (e.size() == 2 && e.contains("LEFT") && e.contains("RIGHT"))
+            return "───";
+        if (e.size() == 2 && e.contains("UP") && e.contains("DOWN"))
+            return " │ ";
+
+        // T-Stücke
+        if (e.size() == 3) {
+            if (!e.contains("UP"))
+                return "╦──";
+            if (!e.contains("RIGHT"))
+                return "╣ │";
+            if (!e.contains("DOWN"))
+                return "╩──";
+            if (!e.contains("LEFT"))
+                return "╠ │";
+        }
+
+        // Fallback
+        return " ? ";
+    }
 
 }

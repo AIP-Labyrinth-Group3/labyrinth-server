@@ -58,14 +58,14 @@ public class GameManagerTest {
 
         board = GameBoard.generateBoard(new BoardSize());
         gameManager.setCurrentBoard(board);
-        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
     }
 
     @Test
     void GameManagerTest_handlePushTile_shouldUpdateBoardAndSetLastPush() throws Exception {
         int rowOrColIndex = 1;
         String direction = "UP";
-
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+        when(playerManager.getCurrentPlayer()).thenReturn(player1);
         boolean result = gameManager.handlePushTile(rowOrColIndex, direction, player1.getId());
 
         PushActionInfo lastPush = gameManager.getCurrentBoard().getLastPush();
@@ -88,6 +88,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfNotPlayersTurn() {
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
         assertThrows(NotPlayersTurnException.class, () -> {
             gameManager.handlePushTile(1, "UP", "otherPlayer");
         });
@@ -95,6 +96,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfOppositeDirectionRepeated() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
         int index = 1;
         gameManager.getCurrentBoard().setLastPush(new PushActionInfo(index));
         gameManager.getCurrentBoard().getLastPush().setDirections("UP");
@@ -165,6 +167,9 @@ public class GameManagerTest {
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnTrueIfStartEqualsTarget() {
         Coordinates pos = new Coordinates(0, 0);
+
+        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+
         assertTrue(gameManager.canPlayerMove(board, pos, pos),
                 "It should return true when start and target are the same");
     }
@@ -179,6 +184,8 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
+        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+
         assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
 
@@ -192,6 +199,8 @@ public class GameManagerTest {
 
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 0);
+
+        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
 
         assertFalse(gameManager.canPlayerMove(board, start, target),
                 "It should return false when no valid path exists");
@@ -210,6 +219,8 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 1);
 
+        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+
         assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
 
@@ -221,8 +232,22 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
+        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+
         assertFalse(gameManager.canPlayerMove(board, start, target),
                 "It should return false when no valid path exists");
     }
 
+    @Test
+    void GameManagerTest_ExceptionShouldBeThrownIfTargetIsOccupiedByAnotherPlayer() {
+        Coordinates start = new Coordinates(0, 0);
+        Coordinates target = new Coordinates(1, 1);
+
+        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] { state2 });
+        state2.setCurrentPosition(new Coordinates(1, 1));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameManager.canPlayerMove(board, start, target);
+        });
+    }
 }

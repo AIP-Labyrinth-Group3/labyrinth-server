@@ -132,6 +132,12 @@ public class GameManager {
         if (start == null || target == null) {
             throw new IllegalArgumentException("Start or target coordinates cannot be null");
         }
+
+        if (currentBoard.isPlayerOnTile(target,
+                playerManager.getThePlayerStatesOfAllOtherPlayers())) {
+            throw new IllegalArgumentException("Target tile is occupied by another player");
+        }
+
         if (start.getX() == target.getX() && start.getY() == target.getY()) {
             return true;
         }
