@@ -55,15 +55,26 @@ public class MessageHandler {
         switch (request.getType()) {
             // connect action from client
             case "CONNECT":
-                // convert message to connectRequest
-                ConnectRequest connectReq = objectMapper.readValue(message, ConnectRequest.class);
-                return connectionHandler.handleConnectMessage(connectReq, userId);
-            case "DISCONNECT":
-                ConnectRequest disconnectRequest = objectMapper.readValue(message, ConnectRequest.class);
-                return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
-            case "START_GAME":
-                StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
                 try {
+                    ConnectRequest connectReq = objectMapper.readValue(message, ConnectRequest.class);
+                    return connectionHandler.handleConnectMessage(connectReq, userId);
+                } catch (JsonProcessingException e) {
+                    System.err.println(
+                            "Failed to process connect request from user " + userId + ": " + e.getMessage());
+                    return false;
+                }
+            case "DISCONNECT":
+                try {
+                    ConnectRequest disconnectRequest = objectMapper.readValue(message, ConnectRequest.class);
+                    return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
+                } catch (JsonProcessingException e) {
+                    System.err.println(
+                            "Failed to process disconnect request from user " + userId + ": " + e.getMessage());
+                    return false;
+                }
+            case "START_GAME":
+                try {
+                    StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
                     return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize());
                 } catch (PlayerNotAdminException e) {
                     System.err.println(e.getMessage());
@@ -76,6 +87,10 @@ public class MessageHandler {
                     return false;
                 } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
+                    return false;
+                } catch (JsonProcessingException e) {
+                    System.err.println(
+                            "Failed to process start game request from user " + userId + ": " + e.getMessage());
                     return false;
                 }
 
@@ -115,6 +130,9 @@ public class MessageHandler {
                     return false;
                 } catch (IllegalArgumentException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
+                    return false;
+                } catch (JsonMappingException e) {
+                    System.err.println("Failed to map move pawn command from user " + userId + ": " + e.getMessage());
                     return false;
                 }
             default:
