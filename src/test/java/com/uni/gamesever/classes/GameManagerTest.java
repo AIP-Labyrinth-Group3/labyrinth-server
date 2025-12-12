@@ -66,6 +66,10 @@ public class GameManagerTest {
         String direction = "UP";
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
+        state1.setCurrentPosition(new Coordinates(0, 0));
+        state2.setCurrentPosition(new Coordinates(1, 1));
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
+
         boolean result = gameManager.handlePushTile(rowOrColIndex, direction, player1.getId());
 
         PushActionInfo lastPush = gameManager.getCurrentBoard().getLastPush();
@@ -255,4 +259,96 @@ public class GameManagerTest {
             gameManager.canPlayerMove(board, start, target);
         });
     }
+
+    @Test
+    void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerUp() throws Exception {
+        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        p.setCurrentPosition(new Coordinates(1, 1));
+
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { p });
+
+        gameManager.setCurrentBoard(board);
+        board.setExtraTile(new Tile(List.of("UP"), "STRAIGHT"));
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        gameManager.handlePushTile(1, "UP", player1.getId());
+
+        assertEquals(0, p.getCurrentPosition().getX(),
+                "Player should move up by 1");
+        assertEquals(1, p.getCurrentPosition().getY());
+    }
+
+    @Test
+    void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedUp() throws Exception {
+        int rows = board.getRows();
+
+        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        p.setCurrentPosition(new Coordinates(0, 1));
+
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { p });
+
+        board.setExtraTile(new Tile(List.of("UP"), "STRAIGHT"));
+        gameManager.setCurrentBoard(board);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        gameManager.handlePushTile(1, "UP", player1.getId());
+
+        assertEquals(rows - 1, p.getCurrentPosition().getX(),
+                "Player pushed off top should reappear at bottom");
+        assertEquals(1, p.getCurrentPosition().getY());
+    }
+
+    @Test
+    void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerDown() throws Exception {
+        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        p.setCurrentPosition(new Coordinates(1, 3));
+
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { p });
+
+        board.setExtraTile(new Tile(List.of("DOWN"), "STRAIGHT"));
+        gameManager.setCurrentBoard(board);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        gameManager.handlePushTile(3, "DOWN", player1.getId());
+
+        assertEquals(2, p.getCurrentPosition().getX());
+        assertEquals(3, p.getCurrentPosition().getY());
+    }
+
+    @Test
+    void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedRight() throws Exception {
+
+        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        p.setCurrentPosition(new Coordinates(1, 6));
+
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { p });
+
+        board.setExtraTile(new Tile(List.of("LEFT"), "STRAIGHT"));
+        gameManager.setCurrentBoard(board);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        gameManager.handlePushTile(1, "RIGHT", player1.getId());
+
+        assertEquals(1, p.getCurrentPosition().getX());
+        assertEquals(0, p.getCurrentPosition().getY(),
+                "Player pushed off right should reappear at left edge");
+    }
+
+    @Test
+    void GameManagerTest_updatePlayerPositionsAfterPush_shouldNotMoveUnrelatedPlayer() throws Exception {
+        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        p.setCurrentPosition(new Coordinates(4, 4));
+
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { p });
+
+        board.setExtraTile(new Tile(List.of("UP"), "STRAIGHT"));
+        gameManager.setCurrentBoard(board);
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        gameManager.handlePushTile(1, "UP", player1.getId());
+
+        assertEquals(4, p.getCurrentPosition().getX());
+        assertEquals(4, p.getCurrentPosition().getY());
+    }
+
 }

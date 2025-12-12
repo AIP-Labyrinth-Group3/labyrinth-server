@@ -75,18 +75,65 @@ public class GameManager {
         }
 
         currentBoard.updateBoard(rowOrColIndex, direction);
+        updatePlayerPositionsAfterPush(rowOrColIndex, direction, currentBoard.getRows(), currentBoard.getCols());
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
         pushInfo.setDirections(direction);
         currentBoard.setLastPush(pushInfo);
-
-        GameBoard.printBoard(currentBoard);
-
         GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         setTurnState(TurnState.WAITING_FOR_MOVE);
 
         return true;
+    }
+
+    private void updatePlayerPositionsAfterPush(int index, String direction, int rows, int cols) {
+        PlayerState[] allPlayerStates = playerManager.getPlayerStates();
+
+        for (PlayerState player : allPlayerStates) {
+            Coordinates pos = player.getCurrentPosition();
+            int x = pos.getX();
+            int y = pos.getY();
+
+            switch (direction.toUpperCase()) {
+                case "UP":
+                    if (y == index) {
+                        x -= 1;
+                        if (x < 0) {
+                            x = rows - 1;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+                case "DOWN":
+                    if (y == index) {
+                        x += 1;
+                        if (x >= rows) {
+                            x = 0;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+                case "LEFT":
+                    if (x == index) {
+                        y -= 1;
+                        if (y < 0) {
+                            y = cols - 1;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+                case "RIGHT":
+                    if (x == index) {
+                        y += 1;
+                        if (y >= cols) {
+                            y = 0;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+            }
+        }
     }
 
     public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException,
