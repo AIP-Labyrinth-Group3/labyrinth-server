@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.uni.gamesever.models.ActionErrorEvent;
+
 @Service
 public class SocketMessageService {
     // In this list all the connections will be stored

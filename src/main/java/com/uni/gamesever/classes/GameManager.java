@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameNotStartedException;
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
@@ -56,10 +58,10 @@ public class GameManager {
     }
 
     public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed)
-            throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
-            IllegalArgumentException {
+            throws GameNotStartedException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
+            IllegalArgumentException, NoExtraTileException {
         if (turnState != TurnState.WAITING_FOR_PUSH) {
-            throw new GameNotValidException("Game is not active. Cannot push tile.");
+            throw new GameNotStartedException("Game is not active. Cannot push tile.");
         }
         if (!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
