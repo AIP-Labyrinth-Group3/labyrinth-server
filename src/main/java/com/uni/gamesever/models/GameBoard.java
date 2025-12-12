@@ -17,6 +17,7 @@ public class GameBoard {
     private BoardSize size;
     @JsonIgnore
     private Tile extraTile;
+    private static final int spacing = 2;
 
     private GameBoard(BoardSize size) {
         this.size = size;
@@ -145,41 +146,49 @@ public class GameBoard {
     // Tile generation and assignment
     public static GameBoard generateBoard(BoardSize size) throws NoExtraTileException {
         GameBoard board = new GameBoard(size);
-        board.rows = size.getRows();
-        board.cols = size.getCols();
+        int rows = size.getRows();
+        int cols = size.getCols();
 
-        // ecken generieren
-        board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER", true));
-        board.setTile(0, board.cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER", true));
-        board.setTile(board.rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER", true));
-        board.setTile(board.rows - 1, board.cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER", true));
+        board.rows = rows;
+        board.cols = cols;
 
-        // Randkreuzungen generieren
-        for (int i = 0; i < board.rows; i++) {
-            for (int j = 0; j < board.cols; j++) {
-                if (i % 2 == 0 && j % 2 == 0) {
-                    boolean isEdge = (i == 0 || j == 0 || i == board.rows - 1 || j == board.cols - 1);
-                    if (isEdge && board.getTiles()[i][j] == null) {
-                        List<String> entrances = generateEdgeCrossEntrances(i, j, board.rows, board.cols);
-                        Tile t = new Tile(entrances, "CROSS", true);
-                        board.setTile(i, j, t);
-                    }
-                }
+        if (rows > 0 && cols > 0) {
+            board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER", true));
+            board.setTile(0, cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER", true));
+            board.setTile(rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER", true));
+            board.setTile(rows - 1, cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER", true));
+        }
+
+        for (int j = 1; j < cols - 1; j++) {
+            if (j % 2 == 0) {
+                board.setTile(0, j,
+                        new Tile(generateEdgeCrossEntrances(0, j, rows, cols), "CROSS", true));
+                board.setTile(rows - 1, j,
+                        new Tile(generateEdgeCrossEntrances(rows - 1, j, rows, cols), "CROSS", true));
             }
         }
 
-        // Innenkreuzungen generieren
-        for (int i = 2; i < board.rows - 1; i += 2) {
-            for (int j = 2; j < board.cols - 1; j += 2) {
-                if (board.getTiles()[i][j] == null) {
-                    Tile t = new Tile(generateEntrancesForTypeWithRandomRotation("CROSS"), "CROSS");
-                    board.setTile(i, j, t);
-                }
+        for (int i = 1; i < rows - 1; i++) {
+            if (i % 2 == 0) {
+                board.setTile(i, 0,
+                        new Tile(generateEdgeCrossEntrances(i, 0, rows, cols), "CROSS", true));
+                board.setTile(i, cols - 1,
+                        new Tile(generateEdgeCrossEntrances(i, cols - 1, rows, cols), "CROSS", true));
             }
         }
 
-        // Restliche Tiles zufällig füllen
+        for (int i = 1; i < rows - 1; i++) {
+            for (int j = 1; j < cols - 1; j++) {
+                if (i % spacing == 0 && j % spacing == 0) {
+                    if (i == 0 || i == rows - 1 || j == 0 || j == cols - 1)
+                        continue;
+                    board.setTile(i, j,
+                            new Tile(generateEntrancesForTypeWithRandomRotation("CROSS"), "CROSS", true));
+                }
+            }
+        }
         fillRandomTiles(board);
+
         return board;
     }
 

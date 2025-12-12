@@ -103,7 +103,7 @@ public class PlayerManager {
     }
 
     public PlayerState[] getPlayerStates() {
-        return playerStates.clone();
+        return playerStates;
     }
 
     public PlayerState[] getNonNullPlayerStates() {

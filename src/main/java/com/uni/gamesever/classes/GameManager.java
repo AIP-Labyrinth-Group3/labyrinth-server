@@ -88,7 +88,7 @@ public class GameManager {
     }
 
     private void updatePlayerPositionsAfterPush(int index, String direction, int rows, int cols) {
-        PlayerState[] allPlayerStates = playerManager.getPlayerStates();
+        PlayerState[] allPlayerStates = playerManager.getNonNullPlayerStates();
 
         for (PlayerState player : allPlayerStates) {
             Coordinates pos = player.getCurrentPosition();
