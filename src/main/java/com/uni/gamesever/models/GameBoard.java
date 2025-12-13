@@ -75,25 +75,25 @@ public class GameBoard {
         return false;
     }
 
-    public void updateBoard(int rowOrColIndex, String direction) throws NoExtraTileException {
+    public void updateBoard(int rowOrColIndex, DirectionType direction) throws NoExtraTileException {
         if (extraTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");
         }
 
         if (rowOrColIndex < 0
-                || rowOrColIndex >= (direction.equalsIgnoreCase("LEFT") || direction.equalsIgnoreCase("RIGHT") ? rows
+                || rowOrColIndex >= (direction == DirectionType.LEFT || direction == DirectionType.RIGHT ? rows
                         : cols)) {
             throw new IllegalArgumentException("Index out of bounds.");
         }
 
         Tile checkTile = null;
-        if (direction.equalsIgnoreCase("UP"))
+        if (direction == DirectionType.UP)
             checkTile = tiles[0][rowOrColIndex];
-        else if (direction.equalsIgnoreCase("DOWN"))
+        else if (direction == DirectionType.DOWN)
             checkTile = tiles[rows - 1][rowOrColIndex];
-        else if (direction.equalsIgnoreCase("LEFT"))
+        else if (direction == DirectionType.LEFT)
             checkTile = tiles[rowOrColIndex][0];
-        else if (direction.equalsIgnoreCase("RIGHT"))
+        else if (direction == DirectionType.RIGHT)
             checkTile = tiles[rowOrColIndex][cols - 1];
 
         if (checkTile != null && checkTile.getIsFixed()) {
@@ -101,8 +101,8 @@ public class GameBoard {
         }
 
         Tile tempTile;
-        switch (direction.toUpperCase()) {
-            case "UP":
+        switch (direction) {
+            case UP:
                 tempTile = tiles[0][rowOrColIndex];
                 for (int i = 0; i < rows - 1; i++) {
                     tiles[i][rowOrColIndex] = tiles[i + 1][rowOrColIndex];
@@ -111,7 +111,7 @@ public class GameBoard {
                 extraTile = tempTile;
                 break;
 
-            case "DOWN":
+            case DOWN:
                 tempTile = tiles[rows - 1][rowOrColIndex];
                 for (int i = rows - 1; i > 0; i--) {
                     tiles[i][rowOrColIndex] = tiles[i - 1][rowOrColIndex];
@@ -120,7 +120,7 @@ public class GameBoard {
                 extraTile = tempTile;
                 break;
 
-            case "LEFT":
+            case LEFT:
                 tempTile = tiles[rowOrColIndex][0];
                 for (int j = 0; j < cols - 1; j++) {
                     tiles[rowOrColIndex][j] = tiles[rowOrColIndex][j + 1];
@@ -129,7 +129,7 @@ public class GameBoard {
                 extraTile = tempTile;
                 break;
 
-            case "RIGHT":
+            case RIGHT:
                 tempTile = tiles[rowOrColIndex][cols - 1];
                 for (int j = cols - 1; j > 0; j--) {
                     tiles[rowOrColIndex][j] = tiles[rowOrColIndex][j - 1];
@@ -153,27 +153,29 @@ public class GameBoard {
         board.cols = cols;
 
         if (rows > 0 && cols > 0) {
-            board.setTile(0, 0, new Tile(List.of("RIGHT", "DOWN"), "CORNER", true));
-            board.setTile(0, cols - 1, new Tile(List.of("LEFT", "DOWN"), "CORNER", true));
-            board.setTile(rows - 1, 0, new Tile(List.of("UP", "RIGHT"), "CORNER", true));
-            board.setTile(rows - 1, cols - 1, new Tile(List.of("UP", "LEFT"), "CORNER", true));
+            board.setTile(0, 0, new Tile(List.of(DirectionType.RIGHT, DirectionType.DOWN), TileType.CORNER, true));
+            board.setTile(0, cols - 1,
+                    new Tile(List.of(DirectionType.LEFT, DirectionType.DOWN), TileType.CORNER, true));
+            board.setTile(rows - 1, 0, new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER, true));
+            board.setTile(rows - 1, cols - 1,
+                    new Tile(List.of(DirectionType.UP, DirectionType.LEFT), TileType.CORNER, true));
         }
 
         for (int j = 1; j < cols - 1; j++) {
             if (j % 2 == 0) {
                 board.setTile(0, j,
-                        new Tile(generateEdgeCrossEntrances(0, j, rows, cols), "CROSS", true));
+                        new Tile(generateEdgeCrossEntrances(0, j, rows, cols), TileType.CROSS, true));
                 board.setTile(rows - 1, j,
-                        new Tile(generateEdgeCrossEntrances(rows - 1, j, rows, cols), "CROSS", true));
+                        new Tile(generateEdgeCrossEntrances(rows - 1, j, rows, cols), TileType.CROSS, true));
             }
         }
 
         for (int i = 1; i < rows - 1; i++) {
             if (i % 2 == 0) {
                 board.setTile(i, 0,
-                        new Tile(generateEdgeCrossEntrances(i, 0, rows, cols), "CROSS", true));
+                        new Tile(generateEdgeCrossEntrances(i, 0, rows, cols), TileType.CROSS, true));
                 board.setTile(i, cols - 1,
-                        new Tile(generateEdgeCrossEntrances(i, cols - 1, rows, cols), "CROSS", true));
+                        new Tile(generateEdgeCrossEntrances(i, cols - 1, rows, cols), TileType.CROSS, true));
             }
         }
 
@@ -183,7 +185,7 @@ public class GameBoard {
                     if (i == 0 || i == rows - 1 || j == 0 || j == cols - 1)
                         continue;
                     board.setTile(i, j,
-                            new Tile(generateEntrancesForTypeWithRandomRotation("CROSS"), "CROSS", true));
+                            new Tile(generateEntrancesForTypeWithRandomRotation(TileType.CROSS), TileType.CROSS, true));
                 }
             }
         }
@@ -218,13 +220,13 @@ public class GameBoard {
                 Tile t = board.getTiles()[i][j];
                 if (t != null && t.getType() != null) {
                     switch (t.getType()) {
-                        case "CORNER":
+                        case CORNER:
                             corners--;
                             break;
-                        case "CROSS":
+                        case CROSS:
                             crosses--;
                             break;
-                        case "STRAIGHT":
+                        case STRAIGHT:
                             straights--;
                             break;
                     }
@@ -232,18 +234,18 @@ public class GameBoard {
             }
         }
 
-        List<String> remainingTiles = new ArrayList<>();
+        List<TileType> remainingTiles = new ArrayList<>();
         for (int i = 0; i < corners; i++)
-            remainingTiles.add("CORNER");
+            remainingTiles.add(TileType.CORNER);
         for (int i = 0; i < crosses; i++)
-            remainingTiles.add("CROSS");
+            remainingTiles.add(TileType.CROSS);
         for (int i = 0; i < straights; i++)
-            remainingTiles.add("STRAIGHT");
+            remainingTiles.add(TileType.STRAIGHT);
 
         Collections.shuffle(remainingTiles);
 
         if (!remainingTiles.isEmpty()) {
-            String extraTileType = remainingTiles.remove(remainingTiles.size() - 1);
+            TileType extraTileType = remainingTiles.remove(remainingTiles.size() - 1);
             Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
             board.setExtraTile(extraTile);
         } else {
@@ -254,7 +256,7 @@ public class GameBoard {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (board.getTiles()[i][j] == null && index < remainingTiles.size()) {
-                    String type = remainingTiles.get(index++);
+                    TileType type = remainingTiles.get(index++);
                     Tile t = new Tile(generateEntrancesForTypeWithRandomRotation(type), type);
                     board.setTile(i, j, t);
                 }
@@ -263,63 +265,64 @@ public class GameBoard {
 
     }
 
-    private static List<String> generateEdgeCrossEntrances(int row, int col, int rows, int cols) {
-        List<String> entrances = new ArrayList<>();
+    private static List<DirectionType> generateEdgeCrossEntrances(int row, int col, int rows, int cols) {
+        List<DirectionType> entrances = new ArrayList<>();
 
         boolean topEdge = (row == 0);
         boolean bottomEdge = (row == rows - 1);
         boolean leftEdge = (col == 0);
         boolean rightEdge = (col == cols - 1);
 
-        List<String> allDirs = List.of("UP", "RIGHT", "DOWN", "LEFT");
+        List<DirectionType> allDirs = List.of(DirectionType.UP, DirectionType.RIGHT, DirectionType.DOWN,
+                DirectionType.LEFT);
         entrances.addAll(allDirs);
 
         if (topEdge)
-            entrances.remove("UP");
+            entrances.remove(DirectionType.UP);
         if (bottomEdge)
-            entrances.remove("DOWN");
+            entrances.remove(DirectionType.DOWN);
         if (leftEdge)
-            entrances.remove("LEFT");
+            entrances.remove(DirectionType.LEFT);
         if (rightEdge)
-            entrances.remove("RIGHT");
+            entrances.remove(DirectionType.RIGHT);
 
         if (entrances.size() < 3) {
             if (topEdge)
-                entrances.add("DOWN");
+                entrances.add(DirectionType.DOWN);
             if (bottomEdge)
-                entrances.add("UP");
+                entrances.add(DirectionType.UP);
             if (leftEdge)
-                entrances.add("RIGHT");
+                entrances.add(DirectionType.RIGHT);
             if (rightEdge)
-                entrances.add("LEFT");
+                entrances.add(DirectionType.LEFT);
         }
 
         return entrances;
     }
 
-    private static List<String> generateEntrancesForTypeWithRandomRotation(String type) {
+    private static List<DirectionType> generateEntrancesForTypeWithRandomRotation(TileType type) {
         Random rnd = new Random();
         switch (type) {
-            case "CORNER":
-                List<List<String>> corners = List.of(
-                        List.of("UP", "RIGHT"),
-                        List.of("RIGHT", "DOWN"),
-                        List.of("DOWN", "LEFT"),
-                        List.of("LEFT", "UP"));
+            case CORNER:
+                List<List<DirectionType>> corners = List.of(
+                        List.of(DirectionType.UP, DirectionType.RIGHT),
+                        List.of(DirectionType.RIGHT, DirectionType.DOWN),
+                        List.of(DirectionType.DOWN, DirectionType.LEFT),
+                        List.of(DirectionType.LEFT, DirectionType.UP));
                 return new ArrayList<>(corners.get(rnd.nextInt(corners.size())));
 
-            case "STRAIGHT":
-                List<List<String>> straights = List.of(
-                        List.of("UP", "DOWN"),
-                        List.of("LEFT", "RIGHT"));
+            case STRAIGHT:
+                List<List<DirectionType>> straights = List.of(
+                        List.of(DirectionType.UP, DirectionType.DOWN),
+                        List.of(DirectionType.LEFT, DirectionType.RIGHT));
                 return new ArrayList<>(straights.get(rnd.nextInt(straights.size())));
 
-            case "CROSS":
-                List<List<String>> crosses = List.of(
-                        List.of("UP", "LEFT", "RIGHT"),
-                        List.of("UP", "RIGHT", "DOWN"),
-                        List.of("RIGHT", "DOWN", "LEFT"),
-                        List.of("DOWN", "LEFT", "UP"));
+            case CROSS:
+                List<List<DirectionType>> crosses = List.of(
+                        List.of(DirectionType.UP, DirectionType.LEFT, DirectionType.RIGHT),
+                        List.of(DirectionType.UP, DirectionType.RIGHT, DirectionType.DOWN),
+                        List.of(DirectionType.RIGHT, DirectionType.DOWN, DirectionType.LEFT),
+                        List.of(DirectionType.DOWN, DirectionType.LEFT, DirectionType.UP));
                 return new ArrayList<>(crosses.get(rnd.nextInt(crosses.size())));
 
             default:

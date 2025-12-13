@@ -1,33 +1,34 @@
 package com.uni.gamesever.models;
+
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-
 public class Tile {
-    private List<String> entrances;
+    private List<DirectionType> entrances;
     @JsonIgnore
-    private String type;
+    private TileType type;
     private Treasure treasure;
     private Bonus bonus;
     private boolean isFixed;
 
-    public Tile(List<String> entrances, String type, boolean isFixed) {
+    public Tile(List<DirectionType> entrances, TileType type, boolean isFixed) {
         this.entrances = entrances;
         this.type = type;
         this.isFixed = isFixed;
     }
-    public Tile(List<String> entrances, String type) {
+
+    public Tile(List<DirectionType> entrances, TileType type) {
         this.entrances = entrances;
         this.type = type;
         this.isFixed = false;
     }
 
-    public List<String> getEntrances() {
+    public List<DirectionType> getEntrances() {
         return entrances;
     }
 
-    public void setEntrances(List<String> entrances) {
+    public void setEntrances(List<DirectionType> entrances) {
         this.entrances = entrances;
     }
 
@@ -47,16 +48,18 @@ public class Tile {
         this.bonus = bonus;
     }
 
-    public String getType() {
+    public TileType getType() {
         return type;
     }
-    public void setType(String type) {
+
+    public void setType(TileType type) {
         this.type = type;
     }
 
     public void setisFixed(boolean isFixed) {
         this.isFixed = isFixed;
     }
+
     public boolean getIsFixed() {
         return isFixed;
     }

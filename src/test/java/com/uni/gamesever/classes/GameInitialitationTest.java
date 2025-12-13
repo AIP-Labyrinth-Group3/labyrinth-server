@@ -33,6 +33,7 @@ import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.Tile;
+import com.uni.gamesever.models.TileType;
 import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.models.messages.StartGameAction;
@@ -169,20 +170,22 @@ public class GameInitialitationTest {
 
                 assertNotNull(t, "Tile at (" + i + "," + j + ") should not be null");
 
-                for (String e : t.getEntrances()) {
-                    assertTrue(List.of("UP", "DOWN", "LEFT", "RIGHT").contains(e),
+                for (DirectionType e : t.getEntrances()) {
+                    assertTrue(
+                            List.of(DirectionType.UP, DirectionType.DOWN, DirectionType.LEFT, DirectionType.RIGHT)
+                                    .contains(e),
                             "Invalid entrance '" + e + "' at (" + i + "," + j + ")");
                 }
 
                 if ((i == 0 && j == 0) || (i == 0 && j == cols - 1) ||
                         (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1)) {
-                    assertEquals("CORNER", t.getType(), "Corner type expected at (" + i + "," + j + ")");
+                    assertEquals(TileType.CORNER, t.getType(), "Corner type expected at (" + i + "," + j + ")");
                 } else if (i % 2 == 0 && j % 2 == 0 && (i == 0 || j == 0 || i == rows - 1 || j == cols - 1)) {
-                    assertEquals("CROSS", t.getType(), "Edge cross expected at (" + i + "," + j + ")");
+                    assertEquals(TileType.CROSS, t.getType(), "Edge cross expected at (" + i + "," + j + ")");
                 } else if (i % 2 == 0 && j % 2 == 0) {
-                    assertEquals("CROSS", t.getType(), "Inner cross expected at (" + i + "," + j + ")");
+                    assertEquals(TileType.CROSS, t.getType(), "Inner cross expected at (" + i + "," + j + ")");
                 } else {
-                    assertTrue(List.of("STRAIGHT", "CROSS", "CORNER").contains(t.getType()),
+                    assertTrue(List.of(TileType.STRAIGHT, TileType.CROSS, TileType.CORNER).contains(t.getType()),
                             "Valid type expected at (" + i + "," + j + ")");
                 }
             }
@@ -247,17 +250,15 @@ public class GameInitialitationTest {
                         (i == rows - 1 && j == cols - 1);
 
                 boolean isEvenEven = (i % 2 == 0 && j % 2 == 0);
-                boolean isEdge = (i == 0 || j == 0 || i == rows - 1 || j == cols - 1);
 
-                if (isCorner) {
-                    assertTrue(t.getIsFixed(), "Corner tile at (" + i + "," + j + ") must be fixed");
-                } else if (isEvenEven && isEdge) {
-                    assertTrue(t.getIsFixed(), "Edge even-even tile at (" + i + "," + j + ") must be fixed");
+                if (isCorner || isEvenEven) {
+                    assertTrue(t.getIsFixed(),
+                            "Tile at (" + i + "," + j + ") should be fixed");
                 } else {
-                    if ("CROSS".equals(t.getType()) || "CORNER".equals(t.getType()) || "STRAIGHT".equals(t.getType())) {
-                        assertFalse(t.getIsFixed(), "Tile at (" + i + "," + j + ") should not be fixed");
-                    }
+                    assertFalse(t.getIsFixed(),
+                            "Tile at (" + i + "," + j + ") should not be fixed");
                 }
+
             }
         }
     }
@@ -290,7 +291,7 @@ public class GameInitialitationTest {
         for (int i = 0; i < size.getRows(); i++) {
             for (int j = 0; j < size.getCols(); j++) {
                 Tile t = tiles[i][j];
-                List<String> entrances = t.getEntrances();
+                List<DirectionType> entrances = t.getEntrances();
                 assertNotNull(entrances, "Entrances must not be null at (" + i + "," + j + ")");
                 assertTrue(entrances.size() >= 2, "Tile at (" + i + "," + j + ") should have at least 2 entrances");
             }

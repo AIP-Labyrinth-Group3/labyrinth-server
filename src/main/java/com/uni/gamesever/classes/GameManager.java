@@ -14,6 +14,7 @@ import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.Coordinates;
+import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
@@ -30,11 +31,11 @@ public class GameManager {
     private TurnState turnState = TurnState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
-    private final Map<String, Coordinates> DIRECTION_OFFSETS = Map.of(
-            "UP", new Coordinates(-1, 0),
-            "DOWN", new Coordinates(1, 0),
-            "LEFT", new Coordinates(0, -1),
-            "RIGHT", new Coordinates(0, 1));
+    private final Map<DirectionType, Coordinates> DIRECTION_OFFSETS = Map.of(
+            DirectionType.UP, new Coordinates(-1, 0),
+            DirectionType.DOWN, new Coordinates(1, 0),
+            DirectionType.LEFT, new Coordinates(0, -1),
+            DirectionType.RIGHT, new Coordinates(0, 1));
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
         this.playerManager = playerManager;
@@ -57,7 +58,7 @@ public class GameManager {
         this.turnState = turnState;
     }
 
-    public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed)
+    public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed)
             throws GameNotStartedException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
             IllegalArgumentException, NoExtraTileException {
         if (turnState != TurnState.WAITING_FOR_PUSH) {
@@ -69,7 +70,7 @@ public class GameManager {
         }
         if (currentBoard.getLastPush() != null) {
             int lastIndex = currentBoard.getLastPush().getRowOrColIndex();
-            String lastDirection = currentBoard.getLastPush().getDirection();
+            DirectionType lastDirection = currentBoard.getLastPush().getDirection();
 
             if (lastIndex == rowOrColIndex && isOppositeDirection(lastDirection, direction)) {
                 throw new PushNotValidException("Invalid push: same index and opposite direction");
@@ -79,7 +80,7 @@ public class GameManager {
         currentBoard.updateBoard(rowOrColIndex, direction);
         updatePlayerPositionsAfterPush(rowOrColIndex, direction, currentBoard.getRows(), currentBoard.getCols());
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
-        pushInfo.setDirections(direction);
+        pushInfo.setDirections(direction.name());
         currentBoard.setLastPush(pushInfo);
         GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
@@ -89,7 +90,7 @@ public class GameManager {
         return true;
     }
 
-    private void updatePlayerPositionsAfterPush(int index, String direction, int rows, int cols) {
+    private void updatePlayerPositionsAfterPush(int index, DirectionType direction, int rows, int cols) {
         PlayerState[] allPlayerStates = playerManager.getNonNullPlayerStates();
 
         for (PlayerState player : allPlayerStates) {
@@ -97,8 +98,8 @@ public class GameManager {
             int x = pos.getX();
             int y = pos.getY();
 
-            switch (direction.toUpperCase()) {
-                case "UP":
+            switch (direction) {
+                case UP:
                     if (y == index) {
                         x -= 1;
                         if (x < 0) {
@@ -107,7 +108,7 @@ public class GameManager {
                         player.setCurrentPosition(new Coordinates(x, y));
                     }
                     break;
-                case "DOWN":
+                case DOWN:
                     if (y == index) {
                         x += 1;
                         if (x >= rows) {
@@ -116,7 +117,7 @@ public class GameManager {
                         player.setCurrentPosition(new Coordinates(x, y));
                     }
                     break;
-                case "LEFT":
+                case LEFT:
                     if (x == index) {
                         y -= 1;
                         if (y < 0) {
@@ -125,7 +126,7 @@ public class GameManager {
                         player.setCurrentPosition(new Coordinates(x, y));
                     }
                     break;
-                case "RIGHT":
+                case RIGHT:
                     if (x == index) {
                         y += 1;
                         if (y >= cols) {
@@ -169,11 +170,11 @@ public class GameManager {
         return true;
     }
 
-    public boolean isOppositeDirection(String dir1, String dir2) {
-        return (dir1.equals("UP") && dir2.equals("DOWN")) ||
-                (dir1.equals("DOWN") && dir2.equals("UP")) ||
-                (dir1.equals("LEFT") && dir2.equals("RIGHT")) ||
-                (dir1.equals("RIGHT") && dir2.equals("LEFT"));
+    public boolean isOppositeDirection(DirectionType dir1, DirectionType dir2) {
+        return (dir1.equals(DirectionType.UP) && dir2.equals(DirectionType.DOWN)) ||
+                (dir1.equals(DirectionType.DOWN) && dir2.equals(DirectionType.UP)) ||
+                (dir1.equals(DirectionType.LEFT) && dir2.equals(DirectionType.RIGHT)) ||
+                (dir1.equals(DirectionType.RIGHT) && dir2.equals(DirectionType.LEFT));
     }
 
     public boolean canPlayerMove(GameBoard board, Coordinates start, Coordinates target)
@@ -209,7 +210,7 @@ public class GameManager {
                 continue;
             }
 
-            for (String dir : tile.getEntrances()) {
+            for (DirectionType dir : tile.getEntrances()) {
                 Coordinates offset = DIRECTION_OFFSETS.get(dir);
                 int newX = x + offset.getX();
                 int newY = y + offset.getY();
