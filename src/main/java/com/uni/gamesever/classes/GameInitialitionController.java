@@ -39,7 +39,7 @@ public class GameInitialitionController {
         this.gameManager = gameManager;
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size)
+    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures)
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException {
 
@@ -54,6 +54,9 @@ public class GameInitialitionController {
         if (playerManager.getAmountOfPlayers() < 2) {
             throw new NotEnoughPlayerException("Not enough players to start the game.");
         }
+        if (amountOfTreasures < 1 || amountOfTreasures > 24) {
+            throw new IllegalArgumentException("Amount of treasures must be between 1 and 24.");
+        }
 
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 
@@ -61,7 +64,7 @@ public class GameInitialitionController {
 
         playerManager.initializePlayerStates(board);
 
-        List<Treasure> treasures = createTreasures();
+        List<Treasure> treasures = createTreasures(amountOfTreasures);
         distributeTreasuresOnPlayers(treasures);
         placeTreasuresOnBoard(board, treasures);
 
@@ -85,10 +88,9 @@ public class GameInitialitionController {
         return true;
     }
 
-    public static List<Treasure> createTreasures() {
-        // es werden 24 Schätze erstellt
+    public static List<Treasure> createTreasures(int amountOfTreasures) {
         List<Treasure> treasures = new ArrayList<>();
-        for (int i = 1; i <= 24; i++) {
+        for (int i = 1; i <= amountOfTreasures; i++) {
             treasures.add(new Treasure(i, "Treasure " + i));
         }
 

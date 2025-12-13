@@ -97,7 +97,7 @@ public class GameInitialitationTest {
         when(playerManager.getAdminID()).thenReturn("adminUser");
 
         assertThrows(PlayerNotAdminException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size);
+            gameInitialitionController.handleStartGameMessage(userId, size, 24);
         });
     }
 
@@ -110,7 +110,7 @@ public class GameInitialitationTest {
         when(playerManager.getAmountOfPlayers()).thenReturn(1);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size);
+            gameInitialitionController.handleStartGameMessage(userId, size, 24);
         });
     }
 
@@ -136,7 +136,7 @@ public class GameInitialitationTest {
         when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
         when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
-        boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
+        boolean result = gameInitialitionController.handleStartGameMessage(userId, size, 24);
 
         assertEquals(true, result);
         verify(playerManager).initializePlayerStates(any());
@@ -300,7 +300,7 @@ public class GameInitialitationTest {
 
     @Test
     void createTreasures_shouldReturn24TreasuresWithCorrectIds() {
-        List<Treasure> treasures = GameInitialitionController.createTreasures();
+        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
 
         assertEquals(24, treasures.size(), "Should create 24 treasures");
 
@@ -327,7 +327,7 @@ public class GameInitialitationTest {
 
         GameInitialitionController controller = new GameInitialitionController(mockManager, null, null);
 
-        List<Treasure> treasures = GameInitialitionController.createTreasures();
+        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
         controller.distributeTreasuresOnPlayers(treasures);
 
         for (PlayerState p : players) {
@@ -346,7 +346,7 @@ public class GameInitialitationTest {
         size.setCols(10);
         GameBoard board = GameBoard.generateBoard(size);
 
-        List<Treasure> treasures = GameInitialitionController.createTreasures();
+        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
         GameInitialitionController controller = new GameInitialitionController(null, null, null);
         controller.placeTreasuresOnBoard(board, treasures);
 
