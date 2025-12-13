@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import com.uni.gamesever.exceptions.GameNotValidException;
-import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.BoardSize;

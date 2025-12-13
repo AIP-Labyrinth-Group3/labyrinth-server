@@ -9,12 +9,17 @@ import com.uni.gamesever.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.exceptions.GameFullException;
 import com.uni.gamesever.exceptions.GameNotStartedException;
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoDirectionForPush;
 import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.exceptions.PushNotValidException;
+import com.uni.gamesever.exceptions.TargetCoordinateNullException;
+import com.uni.gamesever.exceptions.UserNotFoundException;
+import com.uni.gamesever.exceptions.UsernameAlreadyTakenException;
+import com.uni.gamesever.exceptions.UsernameNullOrEmptyException;
 import com.uni.gamesever.models.ActionErrorEvent;
 import com.uni.gamesever.models.ErrorCode;
 import com.uni.gamesever.models.messages.ConnectRequest;
@@ -23,8 +28,6 @@ import com.uni.gamesever.models.messages.MovePawnRequest;
 import com.uni.gamesever.models.messages.PushTileCommand;
 import com.uni.gamesever.models.messages.StartGameAction;
 import com.uni.gamesever.services.SocketMessageService;
-
-import ch.qos.logback.core.joran.action.Action;
 
 @Service
 public class MessageHandler {
@@ -69,10 +72,16 @@ public class MessageHandler {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.LOBBY_FULL, "Game is full");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
-                } catch (IllegalArgumentException e) {
+                } catch (UsernameNullOrEmptyException e) {
+                    System.err.println(e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (UsernameAlreadyTakenException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.USERNAME_TAKEN,
-                            "Username is already taken");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (JsonProcessingException e) {
@@ -87,10 +96,16 @@ public class MessageHandler {
                 try {
                     ConnectRequest disconnectRequest = objectMapper.readValue(message, ConnectRequest.class);
                     return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
+                } catch (UserNotFoundException e) {
+                    System.err.println(e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (IllegalArgumentException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "User could not be found");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (JsonProcessingException e) {
@@ -105,6 +120,12 @@ public class MessageHandler {
                 try {
                     StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
                     return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize());
+                } catch (GameAlreadyStartedException e) {
+                    System.err.println(e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
+                            "The game has already started");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (PlayerNotAdminException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_ADMIN,
@@ -121,12 +142,6 @@ public class MessageHandler {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "There was a problem with the extra tile");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
-                } catch (GameAlreadyStartedException e) {
-                    System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
-                            "The game has already started");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (JsonProcessingException e) {
@@ -146,25 +161,31 @@ public class MessageHandler {
                 } catch (PushNotValidException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_PUSH,
-                            "You are not allowed to push the tile that way");
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NoDirectionForPush e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            "It's not your turn to push a tile");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (NoExtraTileException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "There was a problem with the extra tile");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (GameNotStartedException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "The game has not started yet");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (IllegalArgumentException e) {
@@ -184,28 +205,34 @@ public class MessageHandler {
                 try {
                     MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
                     return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId);
+                } catch (TargetCoordinateNullException e) {
+                    System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            "It's not your turn to move the pawn");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (GameNotValidException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "The game state is not valid for this action");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (NoValidActionException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
-                            "Player cannot move to the target coordinates.");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (IllegalArgumentException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (JsonMappingException e) {

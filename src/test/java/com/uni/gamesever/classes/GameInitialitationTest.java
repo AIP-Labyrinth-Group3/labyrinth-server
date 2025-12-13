@@ -59,7 +59,7 @@ public class GameInitialitationTest {
     @Test
     void startGameAction_shouldHaveDefaultValues() {
         BoardSize size = new BoardSize();
-        StartGameAction action = new StartGameAction(500, size);
+        StartGameAction action = new StartGameAction(500, size, 24, 0);
 
         assertEquals(500, action.getGameDurationInSeconds(), "Game duration should be 500 seconds");
         assertEquals(7, action.getBoardSize().getRows(), "Board rows should be 7");

@@ -43,6 +43,10 @@ public class GameInitialitionController {
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException {
 
+        if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
+            throw new GameAlreadyStartedException("Game has already been started.");
+        }
+
         if (playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
             throw new PlayerNotAdminException("Only the admin can start the game.");
         }
@@ -51,9 +55,6 @@ public class GameInitialitionController {
             throw new NotEnoughPlayerException("Not enough players to start the game.");
         }
 
-        if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
-            throw new GameAlreadyStartedException("Game has already been started.");
-        }
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 
         GameBoard board = GameBoard.generateBoard(size);

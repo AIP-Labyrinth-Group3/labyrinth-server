@@ -3,8 +3,9 @@ package com.uni.gamesever.models.messages;
 public class ConnectRequest extends Message {
     private String username;
 
-    // Default constructor for JSON deserialization
-    public ConnectRequest() {}
+    public ConnectRequest() {
+        this.username = "";
+    }
 
     public ConnectRequest(String action, String username) {
         super(action);
