@@ -41,7 +41,7 @@ public class GameInitialitionController {
 
     public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures)
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
-            GameAlreadyStartedException {
+            GameAlreadyStartedException, IllegalArgumentException {
 
         if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
             throw new GameAlreadyStartedException("Game has already been started.");

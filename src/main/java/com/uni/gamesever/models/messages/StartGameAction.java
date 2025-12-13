@@ -41,9 +41,6 @@ public class StartGameAction extends Message {
     }
 
     public void setTreasureCardCount(int treasureCardCount) throws IllegalArgumentException {
-        if (treasureCardCount < 2 || treasureCardCount > 24) {
-            throw new IllegalArgumentException("Treasure card count must be between 2 and 24.");
-        }
         this.treasureCardCount = treasureCardCount;
     }
 

@@ -145,6 +145,12 @@ public class MessageHandler {
                             "There was a problem with the extra tile");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Invalid start game request from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (JsonProcessingException e) {
                     System.err.println(
                             "Failed to process start game request from user " + userId + ": " + e.getMessage());
