@@ -33,6 +33,7 @@ import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.Tile;
+import com.uni.gamesever.models.TileType;
 import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.models.messages.StartGameAction;
@@ -58,7 +59,7 @@ public class GameInitialitationTest {
     @Test
     void startGameAction_shouldHaveDefaultValues() {
         BoardSize size = new BoardSize();
-        StartGameAction action = new StartGameAction(500, size);
+        StartGameAction action = new StartGameAction(500, size, 24, 0);
 
         assertEquals(500, action.getGameDurationInSeconds(), "Game duration should be 500 seconds");
         assertEquals(7, action.getBoardSize().getRows(), "Board rows should be 7");
@@ -96,7 +97,7 @@ public class GameInitialitationTest {
         when(playerManager.getAdminID()).thenReturn("adminUser");
 
         assertThrows(PlayerNotAdminException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size);
+            gameInitialitionController.handleStartGameMessage(userId, size, 24);
         });
     }
 
@@ -109,7 +110,7 @@ public class GameInitialitationTest {
         when(playerManager.getAmountOfPlayers()).thenReturn(1);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size);
+            gameInitialitionController.handleStartGameMessage(userId, size, 24);
         });
     }
 
@@ -135,7 +136,7 @@ public class GameInitialitationTest {
         when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
         when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
-        boolean result = gameInitialitionController.handleStartGameMessage(userId, size);
+        boolean result = gameInitialitionController.handleStartGameMessage(userId, size, 24);
 
         assertEquals(true, result);
         verify(playerManager).initializePlayerStates(any());
@@ -169,20 +170,22 @@ public class GameInitialitationTest {
 
                 assertNotNull(t, "Tile at (" + i + "," + j + ") should not be null");
 
-                for (String e : t.getEntrances()) {
-                    assertTrue(List.of("UP", "DOWN", "LEFT", "RIGHT").contains(e),
+                for (DirectionType e : t.getEntrances()) {
+                    assertTrue(
+                            List.of(DirectionType.UP, DirectionType.DOWN, DirectionType.LEFT, DirectionType.RIGHT)
+                                    .contains(e),
                             "Invalid entrance '" + e + "' at (" + i + "," + j + ")");
                 }
 
                 if ((i == 0 && j == 0) || (i == 0 && j == cols - 1) ||
                         (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1)) {
-                    assertEquals("CORNER", t.getType(), "Corner type expected at (" + i + "," + j + ")");
+                    assertEquals(TileType.CORNER, t.getType(), "Corner type expected at (" + i + "," + j + ")");
                 } else if (i % 2 == 0 && j % 2 == 0 && (i == 0 || j == 0 || i == rows - 1 || j == cols - 1)) {
-                    assertEquals("CROSS", t.getType(), "Edge cross expected at (" + i + "," + j + ")");
+                    assertEquals(TileType.CROSS, t.getType(), "Edge cross expected at (" + i + "," + j + ")");
                 } else if (i % 2 == 0 && j % 2 == 0) {
-                    assertEquals("CROSS", t.getType(), "Inner cross expected at (" + i + "," + j + ")");
+                    assertEquals(TileType.CROSS, t.getType(), "Inner cross expected at (" + i + "," + j + ")");
                 } else {
-                    assertTrue(List.of("STRAIGHT", "CROSS", "CORNER").contains(t.getType()),
+                    assertTrue(List.of(TileType.STRAIGHT, TileType.CROSS, TileType.CORNER).contains(t.getType()),
                             "Valid type expected at (" + i + "," + j + ")");
                 }
             }
@@ -247,17 +250,15 @@ public class GameInitialitationTest {
                         (i == rows - 1 && j == cols - 1);
 
                 boolean isEvenEven = (i % 2 == 0 && j % 2 == 0);
-                boolean isEdge = (i == 0 || j == 0 || i == rows - 1 || j == cols - 1);
 
-                if (isCorner) {
-                    assertTrue(t.getIsFixed(), "Corner tile at (" + i + "," + j + ") must be fixed");
-                } else if (isEvenEven && isEdge) {
-                    assertTrue(t.getIsFixed(), "Edge even-even tile at (" + i + "," + j + ") must be fixed");
+                if (isCorner || isEvenEven) {
+                    assertTrue(t.getIsFixed(),
+                            "Tile at (" + i + "," + j + ") should be fixed");
                 } else {
-                    if ("CROSS".equals(t.getType()) || "CORNER".equals(t.getType()) || "STRAIGHT".equals(t.getType())) {
-                        assertFalse(t.getIsFixed(), "Tile at (" + i + "," + j + ") should not be fixed");
-                    }
+                    assertFalse(t.getIsFixed(),
+                            "Tile at (" + i + "," + j + ") should not be fixed");
                 }
+
             }
         }
     }
@@ -290,7 +291,7 @@ public class GameInitialitationTest {
         for (int i = 0; i < size.getRows(); i++) {
             for (int j = 0; j < size.getCols(); j++) {
                 Tile t = tiles[i][j];
-                List<String> entrances = t.getEntrances();
+                List<DirectionType> entrances = t.getEntrances();
                 assertNotNull(entrances, "Entrances must not be null at (" + i + "," + j + ")");
                 assertTrue(entrances.size() >= 2, "Tile at (" + i + "," + j + ") should have at least 2 entrances");
             }
@@ -299,7 +300,7 @@ public class GameInitialitationTest {
 
     @Test
     void createTreasures_shouldReturn24TreasuresWithCorrectIds() {
-        List<Treasure> treasures = GameInitialitionController.createTreasures();
+        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
 
         assertEquals(24, treasures.size(), "Should create 24 treasures");
 
@@ -326,7 +327,7 @@ public class GameInitialitationTest {
 
         GameInitialitionController controller = new GameInitialitionController(mockManager, null, null);
 
-        List<Treasure> treasures = GameInitialitionController.createTreasures();
+        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
         controller.distributeTreasuresOnPlayers(treasures);
 
         for (PlayerState p : players) {
@@ -345,7 +346,7 @@ public class GameInitialitationTest {
         size.setCols(10);
         GameBoard board = GameBoard.generateBoard(size);
 
-        List<Treasure> treasures = GameInitialitionController.createTreasures();
+        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
         GameInitialitionController controller = new GameInitialitionController(null, null, null);
         controller.placeTreasuresOnBoard(board, treasures);
 

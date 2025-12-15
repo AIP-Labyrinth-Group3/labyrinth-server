@@ -5,6 +5,8 @@ public class Coordinates {
     private int y;
 
     public Coordinates() {
+        this.x = -1;
+        this.y = -1;
     }
 
     public Coordinates(int x, int y) {
@@ -21,10 +23,17 @@ public class Coordinates {
     }
 
     public void setX(int x) {
+        if (x < 0) {
+            throw new IllegalArgumentException("X coordinate cannot be negative");
+        }
         this.x = x;
     }
+
     public void setY(int y) {
+        if (y < 0) {
+            throw new IllegalArgumentException("Y coordinate cannot be negative");
+        }
         this.y = y;
     }
-    
+
 }

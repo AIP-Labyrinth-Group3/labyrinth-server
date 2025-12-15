@@ -7,6 +7,7 @@ public class MovePawnRequest extends Message {
 
     public MovePawnRequest() {
         super("MOVE_PAWN");
+        this.targetCoordinates = null;
     }
 
     public Coordinates getTargetCoordinates() {

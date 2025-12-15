@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.uni.gamesever.exceptions.UserNotFoundException;
+import com.uni.gamesever.exceptions.UsernameAlreadyTakenException;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.PlayerInfo;
@@ -40,13 +42,13 @@ public class PlayerManager {
         return null;
     }
 
-    public boolean addPlayer(PlayerInfo newPlayer) throws IllegalArgumentException {
+    public boolean addPlayer(PlayerInfo newPlayer) throws UsernameAlreadyTakenException {
         if (newPlayer == null) {
             return false;
         }
         for (PlayerInfo player : players) {
             if (player != null && player.getName().equals(newPlayer.getName())) {
-                throw new IllegalArgumentException("Username already taken.");
+                throw new UsernameAlreadyTakenException("Username already taken.");
             }
         }
         for (int i = 0; i < MAX_PLAYERS; i++) {
@@ -63,8 +65,8 @@ public class PlayerManager {
         return false;
     }
 
-    public boolean removePlayer(String userID) {
-        if (userID == null) {
+    public boolean removePlayer(String userID) throws UserNotFoundException {
+        if (userID == null || userID.isEmpty()) {
             return false;
         }
         hasAdministrator = false;
@@ -89,7 +91,7 @@ public class PlayerManager {
                 return true;
             }
         }
-        return false;
+        throw new UserNotFoundException("User not found.");
     }
 
     public PlayerInfo[] getPlayers() {
@@ -103,7 +105,7 @@ public class PlayerManager {
     }
 
     public PlayerState[] getPlayerStates() {
-        return playerStates.clone();
+        return playerStates;
     }
 
     public PlayerState[] getNonNullPlayerStates() {

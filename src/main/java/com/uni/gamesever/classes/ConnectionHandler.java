@@ -4,6 +4,10 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameFullException;
+import com.uni.gamesever.exceptions.UserNotFoundException;
+import com.uni.gamesever.exceptions.UsernameAlreadyTakenException;
+import com.uni.gamesever.exceptions.UsernameNullOrEmptyException;
 import com.uni.gamesever.models.ConnectAck;
 import com.uni.gamesever.models.LobbyState;
 import com.uni.gamesever.models.PlayerInfo;
@@ -21,40 +25,39 @@ public class ConnectionHandler {
         this.socketMessageService = socketMessageService;
     }
 
-    public boolean handleConnectMessage(ConnectRequest request, String userId) throws JsonProcessingException {
-            PlayerInfo newPlayer = new PlayerInfo(userId);
-            try{
-                newPlayer.setName(request.getUsername());
-                if (playerManager.addPlayer(newPlayer)){
-                    System.out.println("User " + userId + " connected as " + request.getUsername());
-                    ConnectAck connectionAck = new ConnectAck(newPlayer.getId());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));         
+    public boolean handleConnectMessage(ConnectRequest request, String userId)
+            throws JsonProcessingException, GameFullException, IllegalArgumentException, UsernameNullOrEmptyException,
+            UsernameAlreadyTakenException {
+        if (request.getUsername() == null || request.getUsername().isEmpty()) {
+            throw new UsernameNullOrEmptyException("Username cannot be null or empty.");
+        }
+        PlayerInfo newPlayer = new PlayerInfo(userId);
+        newPlayer.setName(request.getUsername());
+        if (playerManager.addPlayer(newPlayer)) {
+            System.out.println("User " + userId + " connected as " + request.getUsername());
+            ConnectAck connectionAck = new ConnectAck(newPlayer.getId());
+            socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
 
-                    LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
-                    socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
-                } else {
-                    System.err.println("Game is full. User " + userId + " cannot join.");
-                    return false;
-                }
-            }
-            catch (IllegalArgumentException e){
-                System.err.println(e.getMessage());
-                return false;
-            }
-           
-            return true; 
+            LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+            socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
+        } else {
+            System.err.println("Game is full. User " + userId + " cannot join.");
+            throw new GameFullException("Game is full");
+        }
+
+        return true;
     }
 
-    public boolean handleDisconnectRequest(ConnectRequest request, String userId) throws JsonProcessingException {
-        if (playerManager.removePlayer(userId)){
-             System.out.println("User " + userId + " disconnected " + request.getUsername());
-             LobbyState lobbyState =  new LobbyState(playerManager.getNonNullPlayers());
-             socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
-         } else {
-             System.err.println("User " + userId + " not found in player list.");
-             return false;
+    public boolean handleDisconnectRequest(ConnectRequest request, String userId)
+            throws IllegalArgumentException, UserNotFoundException, JsonProcessingException {
+        if (playerManager.removePlayer(userId)) {
+            System.out.println("User " + userId + " disconnected " + request.getUsername());
+            LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+            socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
+        } else {
+            throw new IllegalArgumentException("Username can not be null or empty.");
         }
-           return true;
+        return true;
     }
 
     public void processGameAction(String action, String userId) {
@@ -62,6 +65,4 @@ public class ConnectionHandler {
         System.out.println("Processing action: " + action + " for user: " + userId);
     }
 
-
 }
-

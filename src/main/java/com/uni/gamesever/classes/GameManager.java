@@ -7,11 +7,16 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.exceptions.GameNotStartedException;
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoDirectionForPush;
+import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
+import com.uni.gamesever.exceptions.TargetCoordinateNullException;
 import com.uni.gamesever.models.Coordinates;
+import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
@@ -28,11 +33,11 @@ public class GameManager {
     private TurnState turnState = TurnState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
-    private final Map<String, Coordinates> DIRECTION_OFFSETS = Map.of(
-            "UP", new Coordinates(-1, 0),
-            "DOWN", new Coordinates(1, 0),
-            "LEFT", new Coordinates(0, -1),
-            "RIGHT", new Coordinates(0, 1));
+    private final Map<DirectionType, Coordinates> DIRECTION_OFFSETS = Map.of(
+            DirectionType.UP, new Coordinates(-1, 0),
+            DirectionType.DOWN, new Coordinates(1, 0),
+            DirectionType.LEFT, new Coordinates(0, -1),
+            DirectionType.RIGHT, new Coordinates(0, 1));
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
         this.playerManager = playerManager;
@@ -55,32 +60,33 @@ public class GameManager {
         this.turnState = turnState;
     }
 
-    public boolean handlePushTile(int rowOrColIndex, String direction, String playerIdWhoPushed)
-            throws GameNotValidException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
-            IllegalArgumentException {
+    public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed)
+            throws GameNotStartedException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
+            IllegalArgumentException, NoExtraTileException, NoDirectionForPush {
         if (turnState != TurnState.WAITING_FOR_PUSH) {
-            throw new GameNotValidException("Game is not active. Cannot push tile.");
+            throw new GameNotStartedException("Game is not active. Cannot push tile.");
         }
         if (!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
-                    "It's not the turn of player " + playerIdWhoPushed + ". Cannot push tile.");
+                    "It is not your turn to push a tile.");
+        }
+        if (direction == null) {
+            throw new NoDirectionForPush("Direction for push cannot be null");
         }
         if (currentBoard.getLastPush() != null) {
             int lastIndex = currentBoard.getLastPush().getRowOrColIndex();
-            String lastDirection = currentBoard.getLastPush().getDirection();
+            DirectionType lastDirection = currentBoard.getLastPush().getDirection();
 
             if (lastIndex == rowOrColIndex && isOppositeDirection(lastDirection, direction)) {
-                throw new PushNotValidException("Invalid push: same index and opposite direction");
+                throw new PushNotValidException("You are not allowed to push back the tile that was just pushed.");
             }
         }
 
         currentBoard.updateBoard(rowOrColIndex, direction);
+        updatePlayerPositionsAfterPush(rowOrColIndex, direction, currentBoard.getRows(), currentBoard.getCols());
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
-        pushInfo.setDirections(direction);
+        pushInfo.setDirections(direction.name());
         currentBoard.setLastPush(pushInfo);
-
-        GameBoard.printBoard(currentBoard);
-
         GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
@@ -89,15 +95,72 @@ public class GameManager {
         return true;
     }
 
+    private void updatePlayerPositionsAfterPush(int index, DirectionType direction, int rows, int cols) {
+        PlayerState[] allPlayerStates = playerManager.getNonNullPlayerStates();
+
+        for (PlayerState player : allPlayerStates) {
+            Coordinates pos = player.getCurrentPosition();
+            int x = pos.getX();
+            int y = pos.getY();
+
+            switch (direction) {
+                case UP:
+                    if (y == index) {
+                        x -= 1;
+                        if (x < 0) {
+                            x = rows - 1;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+                case DOWN:
+                    if (y == index) {
+                        x += 1;
+                        if (x >= rows) {
+                            x = 0;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+                case LEFT:
+                    if (x == index) {
+                        y -= 1;
+                        if (y < 0) {
+                            y = cols - 1;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+                case RIGHT:
+                    if (x == index) {
+                        y += 1;
+                        if (y >= cols) {
+                            y = 0;
+                        }
+                        player.setCurrentPosition(new Coordinates(x, y));
+                    }
+                    break;
+            }
+        }
+    }
+
     public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException,
-            NotPlayersTurnException, NoValidActionException, JsonProcessingException, IllegalArgumentException {
+            NotPlayersTurnException, NoValidActionException, JsonProcessingException, TargetCoordinateNullException {
         if (turnState != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
-                    "Game is not in the WAITING_FOR_MOVE state. Current state: " + turnState);
+                    "It is not the phase to move the pawn.");
+        }
+        if (targetCoordinates == null) {
+            throw new TargetCoordinateNullException("Target coordinates cannot be null");
+        }
+        if (targetCoordinates.getX() < 0 || targetCoordinates.getY() < 0 ||
+                targetCoordinates.getX() >= currentBoard.getRows()
+                || targetCoordinates.getY() >= currentBoard.getCols()) {
+            throw new IllegalArgumentException("Target coordinates are out of board bounds.");
         }
         if (!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
-                    "It's not the turn of player " + playerIdWhoMoved + ". Cannot move pawn.");
+                    "It is not your turn to move the pawn.");
         }
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
@@ -120,11 +183,11 @@ public class GameManager {
         return true;
     }
 
-    public boolean isOppositeDirection(String dir1, String dir2) {
-        return (dir1.equals("UP") && dir2.equals("DOWN")) ||
-                (dir1.equals("DOWN") && dir2.equals("UP")) ||
-                (dir1.equals("LEFT") && dir2.equals("RIGHT")) ||
-                (dir1.equals("RIGHT") && dir2.equals("LEFT"));
+    public boolean isOppositeDirection(DirectionType dir1, DirectionType dir2) {
+        return (dir1.equals(DirectionType.UP) && dir2.equals(DirectionType.DOWN)) ||
+                (dir1.equals(DirectionType.DOWN) && dir2.equals(DirectionType.UP)) ||
+                (dir1.equals(DirectionType.LEFT) && dir2.equals(DirectionType.RIGHT)) ||
+                (dir1.equals(DirectionType.RIGHT) && dir2.equals(DirectionType.LEFT));
     }
 
     public boolean canPlayerMove(GameBoard board, Coordinates start, Coordinates target)
@@ -160,7 +223,7 @@ public class GameManager {
                 continue;
             }
 
-            for (String dir : tile.getEntrances()) {
+            for (DirectionType dir : tile.getEntrances()) {
                 Coordinates offset = DIRECTION_OFFSETS.get(dir);
                 int newX = x + offset.getX();
                 int newY = y + offset.getY();

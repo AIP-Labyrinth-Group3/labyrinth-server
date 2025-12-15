@@ -1,5 +1,7 @@
 package com.uni.gamesever.classes;
 
+import com.uni.gamesever.exceptions.UserNotFoundException;
+import com.uni.gamesever.exceptions.UsernameAlreadyTakenException;
 import com.uni.gamesever.models.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +36,7 @@ class PlayerManagerTest {
     @Mock
     private PlayerInfo mockPlayer5; // Für den Test der Kapazitätsgrenze
 
-    //non Mock Players
+    // non Mock Players
     private PlayerInfo player1 = new PlayerInfo("id1");
     private PlayerInfo player2 = new PlayerInfo("id2");
     private PlayerInfo player3 = new PlayerInfo("id3");
@@ -48,7 +50,6 @@ class PlayerManagerTest {
         player5.setName("Player5");
     }
 
-
     // Gemocktes GameBoard Objekt für initializePlayerStates
     @Mock
     private GameBoard mockBoard;
@@ -56,7 +57,8 @@ class PlayerManagerTest {
     private BoardSize mockSize;
 
     // Setzt den Manager vor jedem Test in einen sauberen Zustand zurück.
-    // Da @InjectMocks eine neue Instanz pro Test erstellt, sind die internen Arrays leer (null-initialisiert).
+    // Da @InjectMocks eine neue Instanz pro Test erstellt, sind die internen Arrays
+    // leer (null-initialisiert).
     @BeforeEach
     void setUp() {
         playerManager = new PlayerManager();
@@ -75,7 +77,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void getAmountOfPlayers_shouldReturnCorrectCount() {
+        void getAmountOfPlayers_shouldReturnCorrectCount() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.addPlayer(player2);
@@ -88,7 +90,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void getAmountOfPlayers_shouldReturnCorrectCountWhenNewPlayerIsNull() {
+        void getAmountOfPlayers_shouldReturnCorrectCountWhenNewPlayerIsNull() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.addPlayer(null);
@@ -107,7 +109,7 @@ class PlayerManagerTest {
     @DisplayName("addPlayer Tests")
     public class addPlayer_test {
         @Test
-        void addPlayer_shouldAddNewPlayerSuccessfully() {
+        void addPlayer_shouldAddNewPlayerSuccessfully() throws UsernameAlreadyTakenException {
             // WHEN
             boolean result = playerManager.addPlayer(player1);
 
@@ -117,7 +119,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void addPlayer_shouldAddPlayersUpToMaxCapacity() {
+        void addPlayer_shouldAddPlayersUpToMaxCapacity() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.addPlayer(player2);
@@ -132,7 +134,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void addPlayer_shouldFailWhenGameIsFull() {
+        void addPlayer_shouldFailWhenGameIsFull() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.addPlayer(player2);
@@ -148,7 +150,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void addPlayer_shouldFailWhenNewPlayerIsNull() {
+        void addPlayer_shouldFailWhenNewPlayerIsNull() throws UsernameAlreadyTakenException {
             // WHEN
             boolean result = playerManager.addPlayer(null);
 
@@ -158,24 +160,25 @@ class PlayerManagerTest {
         }
 
         @Test
-        void addPlayer_shouldAddNewPlayerAsAdmin() {
+        void addPlayer_shouldAddNewPlayerAsAdmin() throws UsernameAlreadyTakenException {
             PlayerInfo adminPlayer = new PlayerInfo("testAdmin");
             // WHEN
             playerManager.addPlayer(adminPlayer);
 
             // THEN
-            assertTrue(playerManager.getPlayers()[0].getIsAdmin(), "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
+            assertTrue(playerManager.getPlayers()[0].getIsAdmin(),
+                    "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
         }
 
-        //add a test to check if a player can not gave the same username - exception
+        // add a test to check if a player can not gave the same username - exception
         @Test
-        void addPlayer_shouldFailWhenUsernameAlreadyExists() {
+        void addPlayer_shouldFailWhenUsernameAlreadyExists() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1);
             PlayerInfo duplicatePlayer = new PlayerInfo("idDuplicate");
             duplicatePlayer.setName(player1.getName()); // Gleicher Username wie player1
             // WHEN & THEN
-            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            Exception exception = assertThrows(UsernameAlreadyTakenException.class, () -> {
                 playerManager.addPlayer(duplicatePlayer);
             });
             String expectedMessage = "Username already taken.";
@@ -189,7 +192,7 @@ class PlayerManagerTest {
     @DisplayName("removePlayer Tests")
     public class removePlayer_test {
         @Test
-        void removePlayer_shouldRemovePlayerSuccessfully() {
+        void removePlayer_shouldRemovePlayerSuccessfully() throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
 
@@ -202,7 +205,8 @@ class PlayerManagerTest {
         }
 
         @Test
-        void removePlayer_shouldFailWhenRemovePlayerTwice() {
+        void removePlayer_shouldFailWhenRemovePlayerTwice()
+                throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.removePlayer(player1.getId());
@@ -212,11 +216,13 @@ class PlayerManagerTest {
 
             // THEN
             assertFalse(result, "Das zweimalige Entfernen des Spielers sollte fehlschlagen.");
-            assertEquals(0, playerManager.getAmountOfPlayers(), "Nach dem zweimaligen Entfernen sollte die Anzahl 1 sein.");
+            assertEquals(0, playerManager.getAmountOfPlayers(),
+                    "Nach dem zweimaligen Entfernen sollte die Anzahl 1 sein.");
         }
 
         @Test
-        void removePlayer_shouldFailWhenRemovePlayerWithNull() {
+        void removePlayer_shouldFailWhenRemovePlayerWithNull()
+                throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
 
@@ -229,7 +235,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void removePlayer_shouldRemoveAdminSuccessfully() {
+        void removePlayer_shouldRemoveAdminSuccessfully() throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             PlayerInfo adminPlayer = new PlayerInfo("id1");
             adminPlayer.setName("testAdmin");
@@ -244,7 +250,8 @@ class PlayerManagerTest {
             // THEN
             assertTrue(result, "Das Entfernen des Spielers sollte erfolgreich sein.");
             assertEquals(1, playerManager.getAmountOfPlayers(), "Nach dem Entfernen sollte die Anzahl 1 sein.");
-            assertTrue(playerManager.getPlayers()[1].getIsAdmin(), "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein.");
+            assertTrue(playerManager.getPlayers()[1].getIsAdmin(),
+                    "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein.");
         }
     }
 
@@ -259,12 +266,14 @@ class PlayerManagerTest {
             // THEN
             assertNotNull(players, "Das zurückgegebene Array sollte nicht null sein.");
             assertEquals(4, players.length, "Das Array sollte die maximale Größe von 4 haben.");
-            // Standardmäßig sollte das Array mit null initialisiert sein, bevor initializePlayerStates aufgerufen wird.
-            assertTrue(Arrays.stream(players).allMatch(playerInfo -> playerInfo == null), "Alle Spieler sollten anfangs null sein.");
+            // Standardmäßig sollte das Array mit null initialisiert sein, bevor
+            // initializePlayerStates aufgerufen wird.
+            assertTrue(Arrays.stream(players).allMatch(playerInfo -> playerInfo == null),
+                    "Alle Spieler sollten anfangs null sein.");
         }
 
         @Test
-        void getPlayers_shouldReturnArrayOfPlayerInfos() {
+        void getPlayers_shouldReturnArrayOfPlayerInfos() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1);
 
@@ -290,8 +299,10 @@ class PlayerManagerTest {
             // THEN
             assertNotNull(playerStates, "Das zurückgegebene Array sollte nicht null sein.");
             assertEquals(4, playerStates.length, "Das Array sollte die maximale Größe von 4 haben.");
-            // Standardmäßig sollte das Array mit null initialisiert sein, bevor initializePlayerStates aufgerufen wird.
-            assertTrue(Arrays.stream(playerStates).allMatch(state -> state == null), "Alle Zustände sollten anfangs null sein.");
+            // Standardmäßig sollte das Array mit null initialisiert sein, bevor
+            // initializePlayerStates aufgerufen wird.
+            assertTrue(Arrays.stream(playerStates).allMatch(state -> state == null),
+                    "Alle Zustände sollten anfangs null sein.");
         }
     }
 
@@ -299,7 +310,7 @@ class PlayerManagerTest {
     @DisplayName("initializePlayerStates Tests")
     public class initializePlayerStates_test {
         @Test
-        void initializePlayerStates_shouldInitializeStatesForExistingPlayers() {
+        void initializePlayerStates_shouldInitializeStatesForExistingPlayers() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1); // Index 0 (0, 0)
             playerManager.addPlayer(player3); // Index 1 (0, cols-1)
@@ -307,8 +318,8 @@ class PlayerManagerTest {
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
             Coordinates expectedPos2 = new Coordinates(0, 7 - 1); // Oben rechts (0, 6)
-            
-            when(mockBoard.getSize()).thenReturn(new BoardSize(7,7));
+
+            when(mockBoard.getSize()).thenReturn(new BoardSize(7, 7));
             when(mockBoard.getRows()).thenReturn(7);
             when(mockBoard.getCols()).thenReturn(7);
             // WHEN
@@ -335,7 +346,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void initializePlayerStates_shouldAssignCorrectCornerCoordinates() {
+        void initializePlayerStates_shouldAssignCorrectCornerCoordinates() throws UsernameAlreadyTakenException {
             // GIVEN
             playerManager.addPlayer(player1); // Index 0 (0, 0)
             playerManager.addPlayer(player2); // Index 1 (0, cols-1)
@@ -348,7 +359,7 @@ class PlayerManagerTest {
             Coordinates expectedPos3 = new Coordinates(7 - 1, 0); // Unten links (6, 0)
             Coordinates expectedPos4 = new Coordinates(7 - 1, 7 - 1); // Unten rechts (6, 6)
 
-            when(mockBoard.getSize()).thenReturn(new BoardSize(7,7));
+            when(mockBoard.getSize()).thenReturn(new BoardSize(7, 7));
             when(mockBoard.getRows()).thenReturn(7);
             when(mockBoard.getCols()).thenReturn(7);
 
@@ -372,13 +383,13 @@ class PlayerManagerTest {
         }
 
         @Test
-        void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() {
+        void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() throws UsernameAlreadyTakenException {
             // GIVEN
             PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0);
             player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
-            when(mockBoard.getSize()).thenReturn(new BoardSize(7,7));
+            when(mockBoard.getSize()).thenReturn(new BoardSize(7, 7));
             when(mockBoard.getRows()).thenReturn(7);
             when(mockBoard.getCols()).thenReturn(7);
 
