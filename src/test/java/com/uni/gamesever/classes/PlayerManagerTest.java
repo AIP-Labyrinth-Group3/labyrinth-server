@@ -205,17 +205,15 @@ class PlayerManagerTest {
         }
 
         @Test
-        void removePlayer_shouldFailWhenRemovePlayerTwice()
+        void removePlayer_shouldThrowAnExceptionWhenRemovingPlayerTwice()
                 throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.removePlayer(player1.getId());
 
-            // WHEN
-            boolean result = playerManager.removePlayer(player1.getId());
-
-            // THEN
-            assertFalse(result, "Das zweimalige Entfernen des Spielers sollte fehlschlagen.");
+            assertThrows(UserNotFoundException.class, () -> {
+                playerManager.removePlayer(player1.getId());
+            }, "Das zweite Entfernen des gleichen Spielers sollte eine UserNotFoundException werfen.");
             assertEquals(0, playerManager.getAmountOfPlayers(),
                     "Nach dem zweimaligen Entfernen sollte die Anzahl 1 sein.");
         }
