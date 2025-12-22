@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.uni.gamesever.exceptions.GameNotValidException;
@@ -18,6 +19,7 @@ import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.TileType;
+import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
@@ -51,8 +53,8 @@ public class GameManagerTest {
         player1 = new PlayerInfo("player1");
         player2 = new PlayerInfo("player2");
 
-        state1 = new PlayerState(player1, null, null, null, null, 0);
-        state2 = new PlayerState(player2, null, null, null, null, 0);
+        state1 = new PlayerState(player1, null, null, null, 0);
+        state2 = new PlayerState(player2, null, null, null, 0);
 
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
@@ -256,7 +258,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerUp() throws Exception {
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 1));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -276,7 +278,7 @@ public class GameManagerTest {
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedUp() throws Exception {
         int rows = board.getRows();
 
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(0, 1));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -294,7 +296,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerDown() throws Exception {
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 3));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -312,7 +314,7 @@ public class GameManagerTest {
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedRight() throws Exception {
 
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 6));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -330,7 +332,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldNotMoveUnrelatedPlayer() throws Exception {
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(4, 4));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -343,6 +345,74 @@ public class GameManagerTest {
 
         assertEquals(4, p.getCurrentPosition().getX());
         assertEquals(4, p.getCurrentPosition().getY());
+    }
+
+    @Test
+    void PlayerStateTest_collectCurrentTreasure_shouldCollectTreasureAndUpdateState() {
+        Treasure t1 = new Treasure(0, "T1");
+        Treasure t2 = new Treasure(0, "T2");
+
+        PlayerState p = new PlayerState(player1, null, null, t1, 2);
+        p.setAssignedTreasures(new ArrayList<>(List.of(t1, t2)));
+
+        p.collectCurrentTreasure();
+
+        assertEquals(1, p.getTreasuresFound().size(), "Treasure should be added");
+        assertEquals(t1, p.getTreasuresFound().get(0));
+        assertEquals(1, p.getRemainingTreasureCount(), "Remaining count should decrease");
+        assertEquals(t2, p.getCurrentTreasure(), "Next treasure should be assigned");
+    }
+
+    @Test
+    void PlayerStateTest_collectCurrentTreasure_shouldThrowExceptionIfTreasureIsNull() {
+        PlayerState p = new PlayerState(player1, null, null, null, 1);
+
+        assertThrows(IllegalStateException.class, () -> p.collectCurrentTreasure());
+    }
+
+    @Test
+    void PlayerStateTest_collectCurrentTreasure_shouldSetCurrentTreasureNullIfLastTreasure() {
+        Treasure t1 = new Treasure(0, "T1");
+
+        PlayerState p = new PlayerState(player1, null, null, t1, 1);
+        p.setAssignedTreasures(new ArrayList<>(List.of(t1)));
+
+        p.collectCurrentTreasure();
+
+        assertEquals(1, p.getTreasuresFound().size());
+        assertEquals(0, p.getRemainingTreasureCount());
+        assertNull(p.getCurrentTreasure(), "No treasure should remain");
+    }
+
+    @Test
+    void PlayerStateTest_collectCurrentTreasure_shouldHandleEmptyAssignedTreasures() {
+        Treasure t1 = new Treasure(0, "T1");
+
+        PlayerState p = new PlayerState(player1, null, null, t1, 1);
+        p.setAssignedTreasures(new ArrayList<>());
+
+        p.collectCurrentTreasure();
+
+        assertEquals(1, p.getTreasuresFound().size());
+        assertNull(p.getCurrentTreasure());
+    }
+
+    @Test
+    void PlayerStateTest_collectCurrentTreasure_shouldCollectMultipleTreasuresInOrder() {
+        Treasure t1 = new Treasure(0, "T1");
+        Treasure t2 = new Treasure(0, "T2");
+        Treasure t3 = new Treasure(0, "T3");
+
+        PlayerState p = new PlayerState(player1, null, null, t1, 3);
+        p.setAssignedTreasures(new ArrayList<>(List.of(t1, t2, t3)));
+
+        p.collectCurrentTreasure();
+        p.collectCurrentTreasure();
+        p.collectCurrentTreasure();
+
+        assertEquals(3, p.getTreasuresFound().size());
+        assertEquals(0, p.getRemainingTreasureCount());
+        assertNull(p.getCurrentTreasure());
     }
 
 }

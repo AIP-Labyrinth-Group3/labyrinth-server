@@ -125,8 +125,8 @@ public class GameInitialitationTest {
         players[1] = new PlayerInfo("user2");
 
         PlayerState[] states = new PlayerState[2];
-        states[0] = new PlayerState(players[0], null, null, null, null, 0);
-        states[1] = new PlayerState(players[1], null, null, null, null, 0);
+        states[0] = new PlayerState(players[0], null, null, null, 0);
+        states[1] = new PlayerState(players[1], null, null, null, 0);
 
         when(playerManager.getAdminID()).thenReturn(userId);
         when(playerManager.getAmountOfPlayers()).thenReturn(2);
@@ -319,8 +319,8 @@ public class GameInitialitationTest {
         PlayerInfo playerInfo1 = new PlayerInfo("player1");
         PlayerInfo playerInfo2 = new PlayerInfo("player2");
 
-        PlayerState player1 = new PlayerState(playerInfo1, null, null, null, null, 0);
-        PlayerState player2 = new PlayerState(playerInfo2, null, null, null, null, 0);
+        PlayerState player1 = new PlayerState(playerInfo1, null, null, null, 0);
+        PlayerState player2 = new PlayerState(playerInfo2, null, null, null, 0);
         PlayerState players[] = new PlayerState[] { player1, player2 };
 
         PlayerManager mockManager = mock(PlayerManager.class);

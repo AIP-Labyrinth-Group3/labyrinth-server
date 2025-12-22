@@ -383,7 +383,7 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() throws UsernameAlreadyTakenException {
             // GIVEN
-            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0);
+            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, 0);
             player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
@@ -396,7 +396,7 @@ class PlayerManagerTest {
             // THEN
             PlayerState state = playerManager.getNonNullPlayerStates()[0];
             assertNotNull(state.getTreasuresFound(), "Die gesammelten Schätze sollten nicht null sein.");
-            assertEquals(0, state.getTreasuresFound().length, "Die gesammelten Schätze sollten leer sein.");
+            assertEquals(0, state.getTreasuresFound().size(), "Die gesammelten Schätze sollten leer sein.");
 
             assertNotNull(state.getAchievements(), "Die Achievements sollten nicht null sein.");
             assertEquals(0, state.getAchievements().length, "Die Achievements sollten leer sein.");

@@ -19,6 +19,7 @@ import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStateUpdate;
+import com.uni.gamesever.models.NextTreasureCardEvent;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.PushActionInfo;
@@ -171,6 +172,22 @@ public class GameManager {
         }
 
         currentPlayerState.setCurrentPosition(targetCoordinates);
+
+        Tile targetTile = currentBoard.getTileAtCoordinate(targetCoordinates);
+        if (targetTile != null && targetTile.getTreasure() != null &&
+                targetTile.getTreasure().equals(currentPlayerState.getCurrentTreasure())) {
+            try {
+                currentPlayerState.collectCurrentTreasure();
+                currentBoard.removeTreasureFromTile(targetCoordinates);
+                NextTreasureCardEvent nextTreasureEvent = new NextTreasureCardEvent(
+                        currentPlayerState.getCurrentTreasure());
+                socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
+                        objectMapper.writeValueAsString(nextTreasureEvent));
+            } catch (IllegalStateException e) {
+                throw new GameNotValidException("Error collecting treasure: " + e.getMessage());
+            }
+        }
+
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 

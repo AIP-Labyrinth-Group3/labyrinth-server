@@ -330,4 +330,10 @@ public class GameBoard {
         }
     }
 
+    public void removeTreasureFromTile(Coordinates coord) {
+        Tile tile = getTileAtCoordinate(coord);
+        if (tile != null) {
+            tile.setTreasure(null);
+        }
+    }
 }
