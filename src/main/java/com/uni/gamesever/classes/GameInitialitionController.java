@@ -112,7 +112,6 @@ public class GameInitialitionController {
                 assigned.add(treasures.get(index++));
             }
 
-            state.setTreasuresFound(new Treasure[0]);
             state.setRemainingTreasureCount(assigned.size());
             state.setCurrentTreasure(assigned.get(0));
             state.setAssignedTreasures(assigned);

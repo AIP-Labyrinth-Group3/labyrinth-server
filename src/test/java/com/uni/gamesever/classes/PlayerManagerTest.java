@@ -205,19 +205,17 @@ class PlayerManagerTest {
         }
 
         @Test
-        void removePlayer_shouldFailWhenRemovePlayerTwice()
+        void removePlayer_shouldThrowAnExceptionWhenRemovingPlayerTwice()
                 throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.removePlayer(player1.getId());
 
-            // WHEN
-            boolean result = playerManager.removePlayer(player1.getId());
-
-            // THEN
-            assertFalse(result, "Das zweimalige Entfernen des Spielers sollte fehlschlagen.");
+            assertThrows(UserNotFoundException.class, () -> {
+                playerManager.removePlayer(player1.getId());
+            }, "Das zweite Entfernen des gleichen Spielers sollte eine UserNotFoundException werfen.");
             assertEquals(0, playerManager.getAmountOfPlayers(),
-                    "Nach dem zweimaligen Entfernen sollte die Anzahl 1 sein.");
+                    "Nach dem zweimaligen Entfernen sollte die Anzahl 0 sein.");
         }
 
         @Test
@@ -385,7 +383,7 @@ class PlayerManagerTest {
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() throws UsernameAlreadyTakenException {
             // GIVEN
-            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, null, 0);
+            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, 0);
             player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
@@ -398,7 +396,7 @@ class PlayerManagerTest {
             // THEN
             PlayerState state = playerManager.getNonNullPlayerStates()[0];
             assertNotNull(state.getTreasuresFound(), "Die gesammelten Schätze sollten nicht null sein.");
-            assertEquals(0, state.getTreasuresFound().length, "Die gesammelten Schätze sollten leer sein.");
+            assertEquals(0, state.getTreasuresFound().size(), "Die gesammelten Schätze sollten leer sein.");
 
             assertNotNull(state.getAchievements(), "Die Achievements sollten nicht null sein.");
             assertEquals(0, state.getAchievements().length, "Die Achievements sollten leer sein.");

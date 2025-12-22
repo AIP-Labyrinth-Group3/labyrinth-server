@@ -1,5 +1,6 @@
 package com.uni.gamesever.models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -8,7 +9,7 @@ public class PlayerState {
     private PlayerInfo player;
     private Coordinates currentPosition;
     private Coordinates homePosition;
-    private Treasure[] treasuresFound;
+    private List<Treasure> treasuresFound;
     private Treasure currentTreasure;
     private int remainingTreasureCount;
     private String[] achievements;
@@ -16,23 +17,26 @@ public class PlayerState {
     @JsonIgnore
     private List<Treasure> assignedTreasures;
 
-    public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homePosition, Treasure[] treasuresFound, Treasure currentTreasure, int remainingTreasureCount) {
+    public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homePosition,
+            Treasure currentTreasure, int remainingTreasureCount) {
         this.player = player;
         this.currentPosition = currentPosition;
         this.homePosition = homePosition;
-        this.treasuresFound = treasuresFound;
+        this.treasuresFound = new ArrayList<>();
         this.currentTreasure = currentTreasure;
         this.remainingTreasureCount = remainingTreasureCount;
         this.achievements = new String[0];
         this.availableBonuses = new String[0];
     }
+
     public Coordinates getCurrentPosition() {
         return currentPosition;
     }
-    public Treasure[] getTreasuresFound() {
+
+    public List<Treasure> getTreasuresFound() {
         return treasuresFound;
     }
-    
+
     public String[] getAchievements() {
         return achievements;
     }
@@ -44,9 +48,11 @@ public class PlayerState {
     public Coordinates getHomePosition() {
         return homePosition;
     }
+
     public Treasure getCurrentTreasure() {
         return currentTreasure;
     }
+
     public int getRemainingTreasureCount() {
         return remainingTreasureCount;
     }
@@ -54,6 +60,7 @@ public class PlayerState {
     public String[] getAvailableBonuses() {
         return availableBonuses;
     }
+
     public List<Treasure> getAssignedTreasures() {
         return assignedTreasures;
     }
@@ -61,12 +68,13 @@ public class PlayerState {
     public void setCurrentPosition(Coordinates currentPosition) {
         this.currentPosition = currentPosition;
     }
-    public void setTreasuresFound(Treasure[] treasuresFound) {
+
+    public void setTreasuresFound(List<Treasure> treasuresFound) {
         this.treasuresFound = treasuresFound;
     }
-    
+
     public void setAchievements(String[] achievements) {
-        if(achievements == null) {
+        if (achievements == null) {
             this.achievements = null;
             return;
         }
@@ -80,15 +88,19 @@ public class PlayerState {
         }
         this.achievements = achievements;
     }
+
     public void setPlayer(PlayerInfo player) {
         this.player = player;
     }
+
     public void setHomePosition(Coordinates homePosition) {
         this.homePosition = homePosition;
     }
+
     public void setCurrentTreasure(Treasure currentTreasure) {
         this.currentTreasure = currentTreasure;
     }
+
     public void setRemainingTreasureCount(int remainingTreasureCount) {
         this.remainingTreasureCount = remainingTreasureCount;
     }
@@ -107,9 +119,29 @@ public class PlayerState {
             try {
                 BonusType.valueOf(bonus);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid bonus type: " + bonus + ". Valid types are: BEAM, PUSH_FIXED, SWAP, PUSH_TWICE");
+                throw new IllegalArgumentException(
+                        "Invalid bonus type: " + bonus + ". Valid types are: BEAM, PUSH_FIXED, SWAP, PUSH_TWICE");
             }
         }
         this.availableBonuses = availableBonuses;
     }
+
+    public void collectCurrentTreasure() throws IllegalStateException {
+        if (currentTreasure == null) {
+            throw new IllegalStateException("No current treasure to collect.");
+        }
+        treasuresFound.add(currentTreasure);
+        remainingTreasureCount--;
+
+        if (assignedTreasures != null && !assignedTreasures.isEmpty()) {
+            assignedTreasures.remove(currentTreasure);
+        }
+
+        if (remainingTreasureCount > 0 && assignedTreasures != null && !assignedTreasures.isEmpty()) {
+            currentTreasure = assignedTreasures.get(0);
+        } else {
+            currentTreasure = null;
+        }
+    }
+
 }

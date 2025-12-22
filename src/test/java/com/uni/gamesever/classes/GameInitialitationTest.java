@@ -73,6 +73,8 @@ public class GameInitialitationTest {
         StartGameAction action = new StartGameAction();
         assertThrows(IllegalArgumentException.class,
                 () -> action.setTreasureCardCount(1));
+        assertThrows(IllegalArgumentException.class,
+                () -> action.setTreasureCardCount(50));
     }
 
     @Test
@@ -95,6 +97,7 @@ public class GameInitialitationTest {
         BoardSize size = new BoardSize();
 
         when(playerManager.getAdminID()).thenReturn("adminUser");
+        when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(PlayerNotAdminException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24);
@@ -108,6 +111,7 @@ public class GameInitialitationTest {
 
         when(playerManager.getAdminID()).thenReturn("adminUser");
         when(playerManager.getAmountOfPlayers()).thenReturn(1);
+        when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24);
@@ -123,8 +127,8 @@ public class GameInitialitationTest {
         players[1] = new PlayerInfo("user2");
 
         PlayerState[] states = new PlayerState[2];
-        states[0] = new PlayerState(players[0], null, null, null, null, 0);
-        states[1] = new PlayerState(players[1], null, null, null, null, 0);
+        states[0] = new PlayerState(players[0], null, null, null, 0);
+        states[1] = new PlayerState(players[1], null, null, null, 0);
 
         when(playerManager.getAdminID()).thenReturn(userId);
         when(playerManager.getAmountOfPlayers()).thenReturn(2);
@@ -317,8 +321,8 @@ public class GameInitialitationTest {
         PlayerInfo playerInfo1 = new PlayerInfo("player1");
         PlayerInfo playerInfo2 = new PlayerInfo("player2");
 
-        PlayerState player1 = new PlayerState(playerInfo1, null, null, null, null, 0);
-        PlayerState player2 = new PlayerState(playerInfo2, null, null, null, null, 0);
+        PlayerState player1 = new PlayerState(playerInfo1, null, null, null, 0);
+        PlayerState player2 = new PlayerState(playerInfo2, null, null, null, 0);
         PlayerState players[] = new PlayerState[] { player1, player2 };
 
         PlayerManager mockManager = mock(PlayerManager.class);

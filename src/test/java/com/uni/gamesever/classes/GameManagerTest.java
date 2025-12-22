@@ -51,8 +51,8 @@ public class GameManagerTest {
         player1 = new PlayerInfo("player1");
         player2 = new PlayerInfo("player2");
 
-        state1 = new PlayerState(player1, null, null, null, null, 0);
-        state2 = new PlayerState(player2, null, null, null, null, 0);
+        state1 = new PlayerState(player1, null, null, null, 0);
+        state2 = new PlayerState(player2, null, null, null, 0);
 
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
@@ -256,7 +256,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerUp() throws Exception {
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 1));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -276,7 +276,7 @@ public class GameManagerTest {
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedUp() throws Exception {
         int rows = board.getRows();
 
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(0, 1));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -294,7 +294,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerDown() throws Exception {
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 3));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -312,7 +312,7 @@ public class GameManagerTest {
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedRight() throws Exception {
 
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 6));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
@@ -330,7 +330,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldNotMoveUnrelatedPlayer() throws Exception {
-        PlayerState p = new PlayerState(player1, null, null, null, null, 0);
+        PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(4, 4));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });

@@ -181,7 +181,6 @@ public class PlayerManager {
                         players[i],
                         startPos,
                         startPos,
-                        new Treasure[0],
                         null,
                         0);
                 playerStates[i] = state;
