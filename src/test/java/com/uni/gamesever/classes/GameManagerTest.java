@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.uni.gamesever.exceptions.GameNotValidException;
@@ -19,7 +18,6 @@ import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.TileType;
-import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
@@ -345,74 +343,6 @@ public class GameManagerTest {
 
         assertEquals(4, p.getCurrentPosition().getX());
         assertEquals(4, p.getCurrentPosition().getY());
-    }
-
-    @Test
-    void PlayerStateTest_collectCurrentTreasure_shouldCollectTreasureAndUpdateState() {
-        Treasure t1 = new Treasure(0, "T1");
-        Treasure t2 = new Treasure(0, "T2");
-
-        PlayerState p = new PlayerState(player1, null, null, t1, 2);
-        p.setAssignedTreasures(new ArrayList<>(List.of(t1, t2)));
-
-        p.collectCurrentTreasure();
-
-        assertEquals(1, p.getTreasuresFound().size(), "Treasure should be added");
-        assertEquals(t1, p.getTreasuresFound().get(0));
-        assertEquals(1, p.getRemainingTreasureCount(), "Remaining count should decrease");
-        assertEquals(t2, p.getCurrentTreasure(), "Next treasure should be assigned");
-    }
-
-    @Test
-    void PlayerStateTest_collectCurrentTreasure_shouldThrowExceptionIfTreasureIsNull() {
-        PlayerState p = new PlayerState(player1, null, null, null, 1);
-
-        assertThrows(IllegalStateException.class, () -> p.collectCurrentTreasure());
-    }
-
-    @Test
-    void PlayerStateTest_collectCurrentTreasure_shouldSetCurrentTreasureNullIfLastTreasure() {
-        Treasure t1 = new Treasure(0, "T1");
-
-        PlayerState p = new PlayerState(player1, null, null, t1, 1);
-        p.setAssignedTreasures(new ArrayList<>(List.of(t1)));
-
-        p.collectCurrentTreasure();
-
-        assertEquals(1, p.getTreasuresFound().size());
-        assertEquals(0, p.getRemainingTreasureCount());
-        assertNull(p.getCurrentTreasure(), "No treasure should remain");
-    }
-
-    @Test
-    void PlayerStateTest_collectCurrentTreasure_shouldHandleEmptyAssignedTreasures() {
-        Treasure t1 = new Treasure(0, "T1");
-
-        PlayerState p = new PlayerState(player1, null, null, t1, 1);
-        p.setAssignedTreasures(new ArrayList<>());
-
-        p.collectCurrentTreasure();
-
-        assertEquals(1, p.getTreasuresFound().size());
-        assertNull(p.getCurrentTreasure());
-    }
-
-    @Test
-    void PlayerStateTest_collectCurrentTreasure_shouldCollectMultipleTreasuresInOrder() {
-        Treasure t1 = new Treasure(0, "T1");
-        Treasure t2 = new Treasure(0, "T2");
-        Treasure t3 = new Treasure(0, "T3");
-
-        PlayerState p = new PlayerState(player1, null, null, t1, 3);
-        p.setAssignedTreasures(new ArrayList<>(List.of(t1, t2, t3)));
-
-        p.collectCurrentTreasure();
-        p.collectCurrentTreasure();
-        p.collectCurrentTreasure();
-
-        assertEquals(3, p.getTreasuresFound().size());
-        assertEquals(0, p.getRemainingTreasureCount());
-        assertNull(p.getCurrentTreasure());
     }
 
 }

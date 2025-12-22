@@ -133,7 +133,7 @@ public class PlayerState {
         treasuresFound.add(currentTreasure);
         remainingTreasureCount--;
 
-        if (!assignedTreasures.isEmpty()) {
+        if (assignedTreasures != null && !assignedTreasures.isEmpty()) {
             assignedTreasures.remove(currentTreasure);
         }
 

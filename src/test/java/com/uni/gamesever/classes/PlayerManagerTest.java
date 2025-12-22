@@ -215,7 +215,7 @@ class PlayerManagerTest {
                 playerManager.removePlayer(player1.getId());
             }, "Das zweite Entfernen des gleichen Spielers sollte eine UserNotFoundException werfen.");
             assertEquals(0, playerManager.getAmountOfPlayers(),
-                    "Nach dem zweimaligen Entfernen sollte die Anzahl 1 sein.");
+                    "Nach dem zweimaligen Entfernen sollte die Anzahl 0 sein.");
         }
 
         @Test

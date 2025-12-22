@@ -184,7 +184,7 @@ public class GameManager {
                 socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
                         objectMapper.writeValueAsString(nextTreasureEvent));
             } catch (IllegalStateException e) {
-                throw new GameNotValidException("Error collecting treasure: " + e.getMessage());
+                throw new GameNotValidException(e.getMessage());
             }
         }
 
