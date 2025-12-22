@@ -179,10 +179,16 @@ public class GameManager {
             try {
                 currentPlayerState.collectCurrentTreasure();
                 currentBoard.removeTreasureFromTile(targetCoordinates);
-                NextTreasureCardEvent nextTreasureEvent = new NextTreasureCardEvent(
-                        currentPlayerState.getCurrentTreasure());
-                socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
-                        objectMapper.writeValueAsString(nextTreasureEvent));
+                if (currentPlayerState.getCurrentTreasure() != null) {
+                    NextTreasureCardEvent nextTreasureEvent = new NextTreasureCardEvent(
+                            currentPlayerState.getCurrentTreasure());
+                    socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
+                            objectMapper.writeValueAsString(nextTreasureEvent));
+                } else {
+                    // Player has collected all treasures
+                    // Handle end-of-game logic here if needed
+                }
+
             } catch (IllegalStateException e) {
                 throw new GameNotValidException(e.getMessage());
             }

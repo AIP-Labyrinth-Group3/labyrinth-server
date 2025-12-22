@@ -73,6 +73,8 @@ public class GameInitialitationTest {
         StartGameAction action = new StartGameAction();
         assertThrows(IllegalArgumentException.class,
                 () -> action.setTreasureCardCount(1));
+        assertThrows(IllegalArgumentException.class,
+                () -> action.setTreasureCardCount(50));
     }
 
     @Test
