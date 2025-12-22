@@ -194,14 +194,14 @@ public class GameManager {
             }
         }
 
+        setTurnState(TurnState.WAITING_FOR_PUSH);
+        playerManager.setNextPlayerAsCurrent();
+
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
-
-        setTurnState(TurnState.WAITING_FOR_PUSH);
-        playerManager.setNextPlayerAsCurrent();
 
         return true;
     }
