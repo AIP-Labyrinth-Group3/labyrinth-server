@@ -12,7 +12,6 @@ import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
-import com.uni.gamesever.models.Treasure;
 
 @Service
 public class PlayerManager {
@@ -114,7 +113,7 @@ public class PlayerManager {
                 .toArray(PlayerState[]::new);
     }
 
-    public PlayerState[] getThePlayerStatesOfAllOtherPlayers() {
+    public PlayerState[] getPlayerStatesOfPlayersNotOnTurn() {
         List<PlayerState> otherPlayerStates = new ArrayList<>();
         for (PlayerState state : playerStates) {
             if (state != null && !state.getPlayer().getId().equals(this.currentPlayer.getId())) {
@@ -164,14 +163,14 @@ public class PlayerManager {
     }
 
     public void initializePlayerStates(GameBoard board) {
-        int rows = board.getSize().getRows();
-        int cols = board.getSize().getCols();
+        int boardRows = board.getSize().getRows();
+        int boardCols = board.getSize().getCols();
 
         Coordinates[] startingPositions = new Coordinates[] {
                 new Coordinates(0, 0),
-                new Coordinates(0, cols - 1),
-                new Coordinates(rows - 1, 0),
-                new Coordinates(rows - 1, cols - 1)
+                new Coordinates(boardCols - 1, 0),
+                new Coordinates(boardCols - 1, boardRows - 1),
+                new Coordinates(0, boardRows - 1)
         };
 
         for (int i = 0; i < players.length; i++) {

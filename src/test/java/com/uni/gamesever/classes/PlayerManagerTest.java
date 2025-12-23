@@ -315,7 +315,7 @@ class PlayerManagerTest {
 
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
-            Coordinates expectedPos2 = new Coordinates(0, 7 - 1); // Oben rechts (0, 6)
+            Coordinates expectedPos2 = new Coordinates(6, 0); // Oben rechts (0, 6)
 
             when(mockBoard.getSize()).thenReturn(new BoardSize(7, 7));
             when(mockBoard.getRows()).thenReturn(7);
@@ -329,14 +329,18 @@ class PlayerManagerTest {
             // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
             assertEquals(player1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
-            assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY(), "Die Y Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getColumn(), states[0].getCurrentPosition().getColumn(),
+                    "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getRow(), states[0].getCurrentPosition().getRow(),
+                    "Die Y Koordinate sollte 0 sein.");
 
             // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
             assertEquals(player3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
-            assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX(), "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY(), "Die Y Koordinate sollte 6 sein.");
+            assertEquals(expectedPos2.getColumn(), states[1].getCurrentPosition().getColumn(),
+                    "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos2.getRow(), states[1].getCurrentPosition().getRow(),
+                    "Die Y Koordinate sollte 6 sein.");
 
             // Überprüfung von leeren Plätzen
             assertNull(states[2], "Der leere Platz 2 sollte null bleiben.");
@@ -353,9 +357,9 @@ class PlayerManagerTest {
 
             // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
-            Coordinates expectedPos2 = new Coordinates(0, 7 - 1); // Oben rechts (0, 6)
-            Coordinates expectedPos3 = new Coordinates(7 - 1, 0); // Unten links (6, 0)
-            Coordinates expectedPos4 = new Coordinates(7 - 1, 7 - 1); // Unten rechts (6, 6)
+            Coordinates expectedPos2 = new Coordinates(6, 0); // Oben rechts (0, 6)
+            Coordinates expectedPos3 = new Coordinates(6, 6); // Unten rechts (6, 6)
+            Coordinates expectedPos4 = new Coordinates(0, 6); // Unten links (0, 6)
 
             when(mockBoard.getSize()).thenReturn(new BoardSize(7, 7));
             when(mockBoard.getRows()).thenReturn(7);
@@ -368,16 +372,17 @@ class PlayerManagerTest {
             PlayerState[] states = playerManager.getNonNullPlayerStates();
 
             // Überprüfung der erwarteten Startpositionen
-            assertEquals(expectedPos1.getX(), states[0].getCurrentPosition().getX());
-            assertEquals(expectedPos1.getY(), states[0].getCurrentPosition().getY());
+            assertEquals(expectedPos1.getColumn(), states[0].getCurrentPosition().getColumn());
+            assertEquals(expectedPos1.getRow(), states[0].getCurrentPosition().getRow());
 
-            assertEquals(expectedPos2.getX(), states[1].getCurrentPosition().getX());
-            assertEquals(expectedPos2.getY(), states[1].getCurrentPosition().getY());
-            assertEquals(expectedPos3.getX(), states[2].getCurrentPosition().getX());
-            assertEquals(expectedPos3.getY(), states[2].getCurrentPosition().getY());
+            assertEquals(expectedPos2.getColumn(), states[1].getCurrentPosition().getColumn());
+            assertEquals(expectedPos2.getRow(), states[1].getCurrentPosition().getRow());
 
-            assertEquals(expectedPos4.getX(), states[3].getCurrentPosition().getX());
-            assertEquals(expectedPos4.getY(), states[3].getCurrentPosition().getY());
+            assertEquals(expectedPos3.getColumn(), states[2].getCurrentPosition().getColumn());
+            assertEquals(expectedPos3.getRow(), states[2].getCurrentPosition().getRow());
+
+            assertEquals(expectedPos4.getColumn(), states[3].getCurrentPosition().getColumn());
+            assertEquals(expectedPos4.getRow(), states[3].getCurrentPosition().getRow());
         }
 
         @Test

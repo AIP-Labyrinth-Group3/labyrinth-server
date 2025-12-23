@@ -35,10 +35,10 @@ public class GameManager {
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private final Map<DirectionType, Coordinates> DIRECTION_OFFSETS = Map.of(
-            DirectionType.UP, new Coordinates(-1, 0),
-            DirectionType.DOWN, new Coordinates(1, 0),
-            DirectionType.LEFT, new Coordinates(0, -1),
-            DirectionType.RIGHT, new Coordinates(0, 1));
+            DirectionType.UP, new Coordinates(0, -1),
+            DirectionType.DOWN, new Coordinates(0, 1),
+            DirectionType.LEFT, new Coordinates(-1, 0),
+            DirectionType.RIGHT, new Coordinates(1, 0));
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
         this.playerManager = playerManager;
@@ -83,7 +83,7 @@ public class GameManager {
             }
         }
 
-        currentBoard.updateBoard(rowOrColIndex, direction);
+        currentBoard.pushTile(rowOrColIndex, direction);
         updatePlayerPositionsAfterPush(rowOrColIndex, direction, currentBoard.getRows(), currentBoard.getCols());
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
         pushInfo.setDirections(direction.name());
@@ -96,49 +96,49 @@ public class GameManager {
         return true;
     }
 
-    private void updatePlayerPositionsAfterPush(int index, DirectionType direction, int rows, int cols) {
+    private void updatePlayerPositionsAfterPush(int rowOrColToPushIndex, DirectionType direction, int rows, int cols) {
         PlayerState[] allPlayerStates = playerManager.getNonNullPlayerStates();
 
         for (PlayerState player : allPlayerStates) {
             Coordinates pos = player.getCurrentPosition();
-            int x = pos.getX();
-            int y = pos.getY();
+            int colOfPlayer = pos.getColumn();
+            int rowOfPlayer = pos.getRow();
 
             switch (direction) {
                 case UP:
-                    if (y == index) {
-                        x -= 1;
-                        if (x < 0) {
-                            x = rows - 1;
+                    if (colOfPlayer == rowOrColToPushIndex) {
+                        rowOfPlayer -= 1;
+                        if (rowOfPlayer < 0) {
+                            rowOfPlayer = rows - 1;
                         }
-                        player.setCurrentPosition(new Coordinates(x, y));
+                        player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
                     break;
                 case DOWN:
-                    if (y == index) {
-                        x += 1;
-                        if (x >= rows) {
-                            x = 0;
+                    if (colOfPlayer == rowOrColToPushIndex) {
+                        rowOfPlayer += 1;
+                        if (rowOfPlayer >= rows) {
+                            rowOfPlayer = 0;
                         }
-                        player.setCurrentPosition(new Coordinates(x, y));
+                        player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
                     break;
                 case LEFT:
-                    if (x == index) {
-                        y -= 1;
-                        if (y < 0) {
-                            y = cols - 1;
+                    if (rowOfPlayer == rowOrColToPushIndex) {
+                        colOfPlayer -= 1;
+                        if (colOfPlayer < 0) {
+                            colOfPlayer = cols - 1;
                         }
-                        player.setCurrentPosition(new Coordinates(x, y));
+                        player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
                     break;
                 case RIGHT:
-                    if (x == index) {
-                        y += 1;
-                        if (y >= cols) {
-                            y = 0;
+                    if (rowOfPlayer == rowOrColToPushIndex) {
+                        colOfPlayer += 1;
+                        if (colOfPlayer >= cols) {
+                            colOfPlayer = 0;
                         }
-                        player.setCurrentPosition(new Coordinates(x, y));
+                        player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
                     break;
             }
@@ -154,9 +154,9 @@ public class GameManager {
         if (targetCoordinates == null) {
             throw new TargetCoordinateNullException("Target coordinates cannot be null");
         }
-        if (targetCoordinates.getX() < 0 || targetCoordinates.getY() < 0 ||
-                targetCoordinates.getX() >= currentBoard.getRows()
-                || targetCoordinates.getY() >= currentBoard.getCols()) {
+        if (targetCoordinates.getColumn() < 0 || targetCoordinates.getRow() < 0 ||
+                targetCoordinates.getColumn() >= currentBoard.getCols()
+                || targetCoordinates.getRow() >= currentBoard.getRows()) {
             throw new IllegalArgumentException("Target coordinates are out of board bounds.");
         }
         if (!playerIdWhoMoved.equals(playerManager.getCurrentPlayer().getId())) {
@@ -165,9 +165,9 @@ public class GameManager {
         }
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
-        Coordinates currentCoordinates = currentPlayerState.getCurrentPosition();
+        Coordinates currentPlayerCoordinates = currentPlayerState.getCurrentPosition();
 
-        if (!canPlayerMove(currentBoard, currentCoordinates, targetCoordinates)) {
+        if (!canPlayerMove(currentBoard, currentPlayerCoordinates, targetCoordinates)) {
             throw new NoValidActionException("Player cannot move to the target coordinates.");
         }
 
@@ -194,14 +194,14 @@ public class GameManager {
             }
         }
 
+        setTurnState(TurnState.WAITING_FOR_PUSH);
+        playerManager.setNextPlayerAsCurrent();
+
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
-
-        setTurnState(TurnState.WAITING_FOR_PUSH);
-        playerManager.setNextPlayerAsCurrent();
 
         return true;
     }
@@ -219,27 +219,27 @@ public class GameManager {
             throw new IllegalArgumentException("Start or target coordinates cannot be null");
         }
 
-        if (currentBoard.isPlayerOnTile(target,
-                playerManager.getThePlayerStatesOfAllOtherPlayers())) {
+        if (currentBoard.isAnyPlayerOnTile(target,
+                playerManager.getPlayerStatesOfPlayersNotOnTurn())) {
             throw new IllegalArgumentException("Target tile is occupied by another player");
         }
 
-        if (start.getX() == target.getX() && start.getY() == target.getY()) {
+        if (start.getColumn() == target.getColumn() && start.getRow() == target.getRow()) {
             return true;
         }
 
-        int rows = board.getRows();
-        int cols = board.getCols();
+        int boardRows = board.getRows();
+        int boardCols = board.getCols();
 
-        boolean[][] visited = new boolean[rows][cols];
+        boolean[][] visited = new boolean[boardRows][boardCols];
         Queue<Coordinates> queue = new java.util.LinkedList<>();
         queue.add(start);
-        visited[start.getX()][start.getY()] = true;
+        visited[start.getRow()][start.getColumn()] = true;
 
         while (!queue.isEmpty()) {
             Coordinates current = queue.poll();
-            int x = current.getX();
-            int y = current.getY();
+            int currentColumn = current.getColumn();
+            int currentRow = current.getRow();
 
             Tile tile = board.getTileAtCoordinate(current);
             if (tile == null) {
@@ -248,16 +248,16 @@ public class GameManager {
 
             for (DirectionType dir : tile.getEntrances()) {
                 Coordinates offset = DIRECTION_OFFSETS.get(dir);
-                int newX = x + offset.getX();
-                int newY = y + offset.getY();
+                int newColumn = currentColumn + offset.getColumn();
+                int newRow = currentRow + offset.getRow();
 
-                if (newX < 0 || newX >= rows || newY < 0 || newY >= cols) {
+                if (newColumn < 0 || newColumn >= boardCols || newRow < 0 || newRow >= boardRows) {
                     continue;
                 }
 
-                Coordinates neighbor = new Coordinates(newX, newY);
+                Coordinates neighbor = new Coordinates(newColumn, newRow);
                 Tile neighborTile = board.getTileAtCoordinate(neighbor);
-                if (neighborTile == null || visited[newX][newY]) {
+                if (neighborTile == null || visited[newRow][newColumn]) {
                     continue;
                 }
                 boolean hasOppositeEntrance = neighborTile.getEntrances().stream()
@@ -265,11 +265,11 @@ public class GameManager {
                 if (!hasOppositeEntrance) {
                     continue;
                 }
-                if (neighbor.getX() == target.getX() && neighbor.getY() == target.getY()) {
+                if (neighbor.getColumn() == target.getColumn() && neighbor.getRow() == target.getRow()) {
                     return true;
                 }
                 queue.add(neighbor);
-                visited[newX][newY] = true;
+                visited[newRow][newColumn] = true;
             }
         }
         return false;
