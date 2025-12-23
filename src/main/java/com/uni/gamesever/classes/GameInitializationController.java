@@ -25,14 +25,14 @@ import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
-public class GameInitialitionController {
+public class GameInitializationController {
     // hier kommt die ganze Gameboard generierung hin
     PlayerManager playerManager;
     GameManager gameManager;
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
 
-    public GameInitialitionController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
+    public GameInitializationController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameManager gameManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
@@ -128,16 +128,16 @@ public class GameInitialitionController {
 
         List<Coordinates> forbiddenStartPositions = new ArrayList<>();
         forbiddenStartPositions.add(new Coordinates(0, 0));
-        forbiddenStartPositions.add(new Coordinates(0, cols - 1));
-        forbiddenStartPositions.add(new Coordinates(rows - 1, 0));
-        forbiddenStartPositions.add(new Coordinates(rows - 1, cols - 1));
+        forbiddenStartPositions.add(new Coordinates(0, rows - 1));
+        forbiddenStartPositions.add(new Coordinates(cols - 1, 0));
+        forbiddenStartPositions.add(new Coordinates(cols - 1, rows - 1));
 
         for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
             for (int colIndex = 0; colIndex < cols; colIndex++) {
 
                 boolean isStartField = false;
                 for (Coordinates start : forbiddenStartPositions) {
-                    if (start.getX() == rowIndex && start.getY() == colIndex) {
+                    if (start.getColumn() == colIndex && start.getRow() == rowIndex) {
                         isStartField = true;
                         break;
                     }

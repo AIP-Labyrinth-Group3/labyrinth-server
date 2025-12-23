@@ -49,7 +49,7 @@ public class GameInitialitationTest {
     GameManager gameManager;
 
     @InjectMocks
-    GameInitialitionController gameInitialitionController;
+    GameInitializationController gameInitialitionController;
 
     @BeforeEach
     void setUp() {
@@ -304,7 +304,7 @@ public class GameInitialitationTest {
 
     @Test
     void createTreasures_shouldReturn24TreasuresWithCorrectIds() {
-        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
+        List<Treasure> treasures = GameInitializationController.createTreasures(24);
 
         assertEquals(24, treasures.size(), "Should create 24 treasures");
 
@@ -329,9 +329,9 @@ public class GameInitialitationTest {
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
-        GameInitialitionController controller = new GameInitialitionController(mockManager, null, null);
+        GameInitializationController controller = new GameInitializationController(mockManager, null, null);
 
-        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
+        List<Treasure> treasures = GameInitializationController.createTreasures(24);
         controller.distributeTreasuresOnPlayers(treasures);
 
         for (PlayerState p : players) {
@@ -350,8 +350,8 @@ public class GameInitialitationTest {
         size.setCols(10);
         GameBoard board = GameBoard.generateBoard(size);
 
-        List<Treasure> treasures = GameInitialitionController.createTreasures(24);
-        GameInitialitionController controller = new GameInitialitionController(null, null, null);
+        List<Treasure> treasures = GameInitializationController.createTreasures(24);
+        GameInitializationController controller = new GameInitializationController(null, null, null);
         controller.placeTreasuresOnBoard(board, treasures);
 
         Tile[][] tiles = board.getTiles();
@@ -368,7 +368,7 @@ public class GameInitialitationTest {
                 if (t.getTreasure() != null) {
                     placedCount++;
                     for (Coordinates forbidden : forbiddenStartPositions) {
-                        assertFalse(forbidden.getX() == i && forbidden.getY() == j, "No treasure on start tile");
+                        assertFalse(forbidden.getColumn() == i && forbidden.getRow() == j, "No treasure on start tile");
                     }
                 }
             }
@@ -388,7 +388,7 @@ public class GameInitialitationTest {
         for (int i = 1; i <= 10; i++)
             treasures.add(new Treasure(i, "Treasure " + i));
 
-        GameInitialitionController controller = new GameInitialitionController(null, null, null);
+        GameInitializationController controller = new GameInitializationController(null, null, null);
 
         assertThrows(IllegalArgumentException.class, () -> controller.placeTreasuresOnBoard(board, treasures));
     }

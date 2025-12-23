@@ -133,7 +133,7 @@ public class GameManagerTest {
         Tile topBefore = board.getTiles()[0][1];
         Tile extraBefore = board.getExtraTile();
 
-        board.updateBoard(1, DirectionType.UP);
+        board.pushTile(1, DirectionType.UP);
 
         assertEquals(topBefore, board.getExtraTile(), "Top tile becomes extra");
         assertEquals(extraBefore, board.getTiles()[board.getRows() - 1][1], "Extra tile inserted at bottom");
@@ -143,7 +143,7 @@ public class GameManagerTest {
     void GameManagerTest_updateBoard_shouldThrowIfExtraTileNull() {
         board.setExtraTile(null);
 
-        assertThrows(Exception.class, () -> board.updateBoard(1, DirectionType.UP));
+        assertThrows(Exception.class, () -> board.pushTile(1, DirectionType.UP));
     }
 
     @Test
@@ -151,22 +151,22 @@ public class GameManagerTest {
         board.getTiles()[0][1].setisFixed(true);
         board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
 
-        assertThrows(IllegalArgumentException.class, () -> board.updateBoard(1, DirectionType.UP));
+        assertThrows(IllegalArgumentException.class, () -> board.pushTile(1, DirectionType.UP));
     }
 
     @Test
     void GameManagerTest_updateBoard_shouldThrowIfIndexOutOfBounds() {
         board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
 
-        assertThrows(IllegalArgumentException.class, () -> board.updateBoard(-1, DirectionType.UP));
-        assertThrows(IllegalArgumentException.class, () -> board.updateBoard(100, DirectionType.LEFT));
+        assertThrows(IllegalArgumentException.class, () -> board.pushTile(-1, DirectionType.UP));
+        assertThrows(IllegalArgumentException.class, () -> board.pushTile(100, DirectionType.LEFT));
     }
 
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnTrueIfStartEqualsTarget() {
         Coordinates pos = new Coordinates(0, 0);
 
-        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
 
         assertTrue(gameManager.canPlayerMove(board, pos, pos),
                 "It should return true when start and target are the same");
@@ -180,9 +180,9 @@ public class GameManagerTest {
         board.setTile(0, 0, t0);
         board.setTile(0, 1, t1);
         Coordinates start = new Coordinates(0, 0);
-        Coordinates target = new Coordinates(0, 1);
+        Coordinates target = new Coordinates(1, 0);
 
-        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
 
         assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
@@ -203,7 +203,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 0);
 
-        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
 
         assertFalse(gameManager.canPlayerMove(board, start, target),
                 "It should return false when no valid path exists");
@@ -222,7 +222,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 1);
 
-        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
 
         assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
@@ -235,7 +235,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
-        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
 
         assertFalse(gameManager.canPlayerMove(board, start, target),
                 "It should return false when no valid path exists");
@@ -246,7 +246,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 1);
 
-        when(playerManager.getThePlayerStatesOfAllOtherPlayers()).thenReturn(new PlayerState[] { state2 });
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] { state2 });
         state2.setCurrentPosition(new Coordinates(1, 1));
 
         assertThrows(IllegalArgumentException.class, () -> {
@@ -267,9 +267,9 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
 
-        assertEquals(0, p.getCurrentPosition().getX(),
+        assertEquals(0, p.getCurrentPosition().getRow(),
                 "Player should move up by 1");
-        assertEquals(1, p.getCurrentPosition().getY());
+        assertEquals(1, p.getCurrentPosition().getColumn());
     }
 
     @Test
@@ -277,7 +277,7 @@ public class GameManagerTest {
         int rows = board.getRows();
 
         PlayerState p = new PlayerState(player1, null, null, null, 0);
-        p.setCurrentPosition(new Coordinates(0, 1));
+        p.setCurrentPosition(new Coordinates(1, 0));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
@@ -287,15 +287,15 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
 
-        assertEquals(rows - 1, p.getCurrentPosition().getX(),
+        assertEquals(rows - 1, p.getCurrentPosition().getRow(),
                 "Player pushed off top should reappear at bottom");
-        assertEquals(1, p.getCurrentPosition().getY());
+        assertEquals(1, p.getCurrentPosition().getColumn());
     }
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerDown() throws Exception {
         PlayerState p = new PlayerState(player1, null, null, null, 0);
-        p.setCurrentPosition(new Coordinates(1, 3));
+        p.setCurrentPosition(new Coordinates(3, 1));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
@@ -305,15 +305,15 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(3, DirectionType.DOWN, player1.getId());
 
-        assertEquals(2, p.getCurrentPosition().getX());
-        assertEquals(3, p.getCurrentPosition().getY());
+        assertEquals(2, p.getCurrentPosition().getRow());
+        assertEquals(3, p.getCurrentPosition().getColumn());
     }
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedRight() throws Exception {
 
         PlayerState p = new PlayerState(player1, null, null, null, 0);
-        p.setCurrentPosition(new Coordinates(1, 6));
+        p.setCurrentPosition(new Coordinates(6, 1));
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
@@ -323,8 +323,8 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(1, DirectionType.RIGHT, player1.getId());
 
-        assertEquals(1, p.getCurrentPosition().getX());
-        assertEquals(0, p.getCurrentPosition().getY(),
+        assertEquals(1, p.getCurrentPosition().getRow());
+        assertEquals(0, p.getCurrentPosition().getColumn(),
                 "Player pushed off right should reappear at left edge");
     }
 
@@ -341,8 +341,8 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
 
-        assertEquals(4, p.getCurrentPosition().getX());
-        assertEquals(4, p.getCurrentPosition().getY());
+        assertEquals(4, p.getCurrentPosition().getColumn());
+        assertEquals(4, p.getCurrentPosition().getRow());
     }
 
 }

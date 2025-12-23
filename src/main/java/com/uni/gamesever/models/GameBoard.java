@@ -62,20 +62,21 @@ public class GameBoard {
         this.extraTile = extraTile;
     }
 
-    public Tile getTileAtCoordinate(Coordinates coord) {
-        return tiles[coord.getX()][coord.getY()];
+    public Tile getTileAtCoordinate(Coordinates coordinate) {
+        return tiles[coordinate.getRow()][coordinate.getColumn()];
     }
 
-    public boolean isPlayerOnTile(Coordinates coord, PlayerState[] playerStates) {
+    public boolean isAnyPlayerOnTile(Coordinates coordinate, PlayerState[] playerStates) {
         for (PlayerState ps : playerStates) {
-            if (ps.getCurrentPosition().getX() == coord.getX() && ps.getCurrentPosition().getY() == coord.getY()) {
+            if (ps.getCurrentPosition().getColumn() == coordinate.getColumn()
+                    && ps.getCurrentPosition().getRow() == coordinate.getRow()) {
                 return true;
             }
         }
         return false;
     }
 
-    public void updateBoard(int rowOrColIndex, DirectionType direction) throws NoExtraTileException {
+    public void pushTile(int rowOrColIndex, DirectionType direction) throws NoExtraTileException {
         if (extraTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");
         }
@@ -86,56 +87,55 @@ public class GameBoard {
             throw new IllegalArgumentException("Index out of bounds.");
         }
 
-        Tile checkTile = null;
+        Tile tileToBePushedOut = null;
         if (direction == DirectionType.UP)
-            checkTile = tiles[0][rowOrColIndex];
+            tileToBePushedOut = tiles[0][rowOrColIndex];
         else if (direction == DirectionType.DOWN)
-            checkTile = tiles[rows - 1][rowOrColIndex];
+            tileToBePushedOut = tiles[rows - 1][rowOrColIndex];
         else if (direction == DirectionType.LEFT)
-            checkTile = tiles[rowOrColIndex][0];
+            tileToBePushedOut = tiles[rowOrColIndex][0];
         else if (direction == DirectionType.RIGHT)
-            checkTile = tiles[rowOrColIndex][cols - 1];
+            tileToBePushedOut = tiles[rowOrColIndex][cols - 1];
 
-        if (checkTile != null && checkTile.getIsFixed()) {
+        if (tileToBePushedOut == null) {
+            throw new IllegalArgumentException("No tile to be pushed out at the specified index and direction.");
+        }
+
+        if (tileToBePushedOut.getIsFixed()) {
             throw new IllegalArgumentException("Cannot push a fixed tile.");
         }
 
-        Tile tempTile;
         switch (direction) {
             case UP:
-                tempTile = tiles[0][rowOrColIndex];
-                for (int i = 0; i < rows - 1; i++) {
-                    tiles[i][rowOrColIndex] = tiles[i + 1][rowOrColIndex];
+                for (int r = 0; r < rows - 1; r++) {
+                    tiles[r][rowOrColIndex] = tiles[r + 1][rowOrColIndex];
                 }
                 tiles[rows - 1][rowOrColIndex] = extraTile;
-                extraTile = tempTile;
+                extraTile = tileToBePushedOut;
                 break;
 
             case DOWN:
-                tempTile = tiles[rows - 1][rowOrColIndex];
-                for (int i = rows - 1; i > 0; i--) {
-                    tiles[i][rowOrColIndex] = tiles[i - 1][rowOrColIndex];
+                for (int r = rows - 1; r > 0; r--) {
+                    tiles[r][rowOrColIndex] = tiles[r - 1][rowOrColIndex];
                 }
                 tiles[0][rowOrColIndex] = extraTile;
-                extraTile = tempTile;
+                extraTile = tileToBePushedOut;
                 break;
 
             case LEFT:
-                tempTile = tiles[rowOrColIndex][0];
-                for (int j = 0; j < cols - 1; j++) {
-                    tiles[rowOrColIndex][j] = tiles[rowOrColIndex][j + 1];
+                for (int c = 0; c < cols - 1; c++) {
+                    tiles[rowOrColIndex][c] = tiles[rowOrColIndex][c + 1];
                 }
                 tiles[rowOrColIndex][cols - 1] = extraTile;
-                extraTile = tempTile;
+                extraTile = tileToBePushedOut;
                 break;
 
             case RIGHT:
-                tempTile = tiles[rowOrColIndex][cols - 1];
-                for (int j = cols - 1; j > 0; j--) {
-                    tiles[rowOrColIndex][j] = tiles[rowOrColIndex][j - 1];
+                for (int c = cols - 1; c > 0; c--) {
+                    tiles[rowOrColIndex][c] = tiles[rowOrColIndex][c - 1];
                 }
                 tiles[rowOrColIndex][0] = extraTile;
-                extraTile = tempTile;
+                extraTile = tileToBePushedOut;
                 break;
 
             default:
@@ -146,45 +146,48 @@ public class GameBoard {
     // Tile generation and assignment
     public static GameBoard generateBoard(BoardSize size) throws NoExtraTileException {
         GameBoard board = new GameBoard(size);
-        int rows = size.getRows();
-        int cols = size.getCols();
+        int boardRows = size.getRows();
+        int boardCols = size.getCols();
 
-        board.rows = rows;
-        board.cols = cols;
+        board.rows = boardRows;
+        board.cols = boardCols;
 
-        if (rows > 0 && cols > 0) {
+        if (boardRows > 0 && boardCols > 0) {
             board.setTile(0, 0, new Tile(List.of(DirectionType.RIGHT, DirectionType.DOWN), TileType.CORNER, true));
-            board.setTile(0, cols - 1,
+            board.setTile(0, boardCols - 1,
                     new Tile(List.of(DirectionType.LEFT, DirectionType.DOWN), TileType.CORNER, true));
-            board.setTile(rows - 1, 0, new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER, true));
-            board.setTile(rows - 1, cols - 1,
+            board.setTile(boardRows - 1, 0,
+                    new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER, true));
+            board.setTile(boardRows - 1, boardCols - 1,
                     new Tile(List.of(DirectionType.UP, DirectionType.LEFT), TileType.CORNER, true));
         }
 
-        for (int j = 1; j < cols - 1; j++) {
-            if (j % 2 == 0) {
-                board.setTile(0, j,
-                        new Tile(generateEdgeCrossEntrances(0, j, rows, cols), TileType.CROSS, true));
-                board.setTile(rows - 1, j,
-                        new Tile(generateEdgeCrossEntrances(rows - 1, j, rows, cols), TileType.CROSS, true));
+        for (int c = 1; c < boardCols - 1; c++) {
+            if (c % 2 == 0) {
+                board.setTile(0, c,
+                        new Tile(generateEdgeCrossEntrances(0, c, boardRows, boardCols), TileType.CROSS, true));
+                board.setTile(boardRows - 1, c,
+                        new Tile(generateEdgeCrossEntrances(boardRows - 1, c, boardRows, boardCols), TileType.CROSS,
+                                true));
             }
         }
 
-        for (int i = 1; i < rows - 1; i++) {
-            if (i % 2 == 0) {
-                board.setTile(i, 0,
-                        new Tile(generateEdgeCrossEntrances(i, 0, rows, cols), TileType.CROSS, true));
-                board.setTile(i, cols - 1,
-                        new Tile(generateEdgeCrossEntrances(i, cols - 1, rows, cols), TileType.CROSS, true));
+        for (int r = 1; r < boardRows - 1; r++) {
+            if (r % 2 == 0) {
+                board.setTile(r, 0,
+                        new Tile(generateEdgeCrossEntrances(r, 0, boardRows, boardCols), TileType.CROSS, true));
+                board.setTile(r, boardCols - 1,
+                        new Tile(generateEdgeCrossEntrances(r, boardCols - 1, boardRows, boardCols), TileType.CROSS,
+                                true));
             }
         }
 
-        for (int i = 1; i < rows - 1; i++) {
-            for (int j = 1; j < cols - 1; j++) {
-                if (i % spacing == 0 && j % spacing == 0) {
-                    if (i == 0 || i == rows - 1 || j == 0 || j == cols - 1)
+        for (int r = 1; r < boardRows - 1; r++) {
+            for (int c = 1; c < boardCols - 1; c++) {
+                if (r % spacing == 0 && c % spacing == 0) {
+                    if (r == 0 || r == boardRows - 1 || c == 0 || c == boardCols - 1)
                         continue;
-                    board.setTile(i, j,
+                    board.setTile(r, c,
                             new Tile(generateEntrancesForTypeWithRandomRotation(TileType.CROSS), TileType.CROSS, true));
                 }
             }
@@ -195,9 +198,9 @@ public class GameBoard {
     }
 
     private static void fillRandomTiles(GameBoard board) throws NoExtraTileException {
-        int rows = board.getSize().getRows();
-        int cols = board.getSize().getCols();
-        int totalTiles = rows * cols;
+        int boardRows = board.getSize().getRows();
+        int boardCols = board.getSize().getCols();
+        int totalTiles = boardRows * boardCols;
         int totalCards = totalTiles + 1;
 
         int baseRows = 7;
@@ -215,9 +218,9 @@ public class GameBoard {
         if (diff > 0)
             straights += diff;
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                Tile t = board.getTiles()[i][j];
+        for (int r = 0; r < boardRows; r++) {
+            for (int c = 0; c < boardCols; c++) {
+                Tile t = board.getTiles()[r][c];
                 if (t != null && t.getType() != null) {
                     switch (t.getType()) {
                         case CORNER:
@@ -252,26 +255,26 @@ public class GameBoard {
             throw new NoExtraTileException("No tiles available to assign as extra tile.");
         }
 
-        int index = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (board.getTiles()[i][j] == null && index < remainingTiles.size()) {
-                    TileType type = remainingTiles.get(index++);
+        int remainingTileIndex = 0;
+        for (int r = 0; r < boardRows; r++) {
+            for (int c = 0; c < boardCols; c++) {
+                if (board.getTiles()[r][c] == null && remainingTileIndex < remainingTiles.size()) {
+                    TileType type = remainingTiles.get(remainingTileIndex++);
                     Tile t = new Tile(generateEntrancesForTypeWithRandomRotation(type), type);
-                    board.setTile(i, j, t);
+                    board.setTile(r, c, t);
                 }
             }
         }
 
     }
 
-    private static List<DirectionType> generateEdgeCrossEntrances(int row, int col, int rows, int cols) {
+    private static List<DirectionType> generateEdgeCrossEntrances(int row, int col, int boardRows, int boardCols) {
         List<DirectionType> entrances = new ArrayList<>();
 
         boolean topEdge = (row == 0);
-        boolean bottomEdge = (row == rows - 1);
+        boolean bottomEdge = (row == boardRows - 1);
         boolean leftEdge = (col == 0);
-        boolean rightEdge = (col == cols - 1);
+        boolean rightEdge = (col == boardCols - 1);
 
         List<DirectionType> allDirs = List.of(DirectionType.UP, DirectionType.RIGHT, DirectionType.DOWN,
                 DirectionType.LEFT);
@@ -330,8 +333,8 @@ public class GameBoard {
         }
     }
 
-    public void removeTreasureFromTile(Coordinates coord) {
-        Tile tile = getTileAtCoordinate(coord);
+    public void removeTreasureFromTile(Coordinates coordinate) {
+        Tile tile = getTileAtCoordinate(coordinate);
         if (tile != null) {
             tile.setTreasure(null);
         }

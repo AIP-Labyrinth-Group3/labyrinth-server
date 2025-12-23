@@ -34,12 +34,12 @@ public class MessageHandler {
 
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private final ConnectionHandler connectionHandler;
-    private final GameInitialitionController gameInitialitionController;
+    private final GameInitializationController gameInitialitionController;
     private final GameManager gameManager;
     private final SocketMessageService socketMessageService;
 
     public MessageHandler(SocketMessageService socketMessageService,
-            GameInitialitionController gameInitialitionController, ConnectionHandler connectionHandler,
+            GameInitializationController gameInitialitionController, ConnectionHandler connectionHandler,
             GameManager gameManager) {
         this.socketMessageService = socketMessageService;
         this.connectionHandler = connectionHandler;
