@@ -2,6 +2,7 @@ package com.uni.gamesever.classes;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
@@ -13,11 +14,14 @@ import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
+import com.uni.gamesever.models.PlayerGameStats;
 import com.uni.gamesever.models.PushActionInfo;
+import com.uni.gamesever.models.RankingEntry;
 import com.uni.gamesever.models.PlayerInfo;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.TileType;
+import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.SocketMessageService;
 
@@ -34,6 +38,9 @@ public class GameManagerTest {
 
     @Mock
     SocketMessageService socketBroadcastService;
+
+    @Mock
+    GameStatsManager gameStatsManager;
 
     @InjectMocks
     GameManager gameManager;
@@ -343,6 +350,49 @@ public class GameManagerTest {
 
         assertEquals(4, p.getCurrentPosition().getColumn());
         assertEquals(4, p.getCurrentPosition().getRow());
+    }
+
+    @Test
+    void GameManagerTest_handleMovePawn_shouldBroadcastGameOverWhenLastTreasureCollected() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+
+        for (int r = 0; r < board.getRows(); r++) {
+            for (int c = 0; c < board.getCols(); c++) {
+                board.setTile(r, c, null);
+            }
+        }
+
+        Coordinates startPos = new Coordinates(0, 0);
+        state1.setCurrentPosition(startPos);
+
+        Treasure targetTreasure = new Treasure(1, "Treasure 1");
+        state1.setCurrentTreasure(targetTreasure);
+
+        Tile startTile = new Tile(List.of(DirectionType.DOWN), TileType.STRAIGHT);
+        Tile targetTile = new Tile(List.of(DirectionType.UP), TileType.STRAIGHT);
+        targetTile.setTreasure(targetTreasure);
+
+        board.setTile(0, 0, startTile);
+        board.setTile(1, 0, targetTile);
+
+        when(playerManager.getCurrentPlayerState()).thenReturn(state1);
+        when(playerManager.getCurrentPlayer()).thenReturn(player1);
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1 });
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+
+        PlayerGameStats endStats = new PlayerGameStats(10, 5, 1);
+        RankingEntry finalRanking = new RankingEntry(player1, 1, 100, endStats);
+        when(gameStatsManager.getSortedRankings()).thenReturn(List.of(finalRanking));
+
+        boolean result = gameManager.handleMovePawn(new Coordinates(0, 1), player1.getId());
+
+        assertTrue(result);
+        verify(gameStatsManager).increaseTreasuresCollected(1, player1.getId());
+        verify(gameStatsManager).updateScoresForAllPlayers();
+        verify(socketBroadcastService, atLeastOnce()).broadcastMessage(
+                argThat(message -> message.contains(player1.getId()) && message.contains("rank")));
+
+        assertEquals(TurnState.NOT_STARTED, gameManager.getTurnState());
     }
 
 }

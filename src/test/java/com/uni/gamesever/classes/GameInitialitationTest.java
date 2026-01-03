@@ -47,6 +47,8 @@ public class GameInitialitationTest {
     SocketMessageService socketBroadcastService;
     @Mock
     GameManager gameManager;
+    @Mock
+    GameStatsManager gameStatsManager;
 
     @InjectMocks
     GameInitializationController gameInitialitionController;
@@ -329,7 +331,8 @@ public class GameInitialitationTest {
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
-        GameInitializationController controller = new GameInitializationController(mockManager, null, null);
+        GameInitializationController controller = new GameInitializationController(mockManager, null, null,
+                gameStatsManager);
 
         List<Treasure> treasures = GameInitializationController.createTreasures(24);
         controller.distributeTreasuresOnPlayers(treasures);
@@ -351,7 +354,7 @@ public class GameInitialitationTest {
         GameBoard board = GameBoard.generateBoard(size);
 
         List<Treasure> treasures = GameInitializationController.createTreasures(24);
-        GameInitializationController controller = new GameInitializationController(null, null, null);
+        GameInitializationController controller = new GameInitializationController(null, null, null, gameStatsManager);
         controller.placeTreasuresOnBoard(board, treasures);
 
         Tile[][] tiles = board.getTiles();
@@ -388,7 +391,7 @@ public class GameInitialitationTest {
         for (int i = 1; i <= 10; i++)
             treasures.add(new Treasure(i, "Treasure " + i));
 
-        GameInitializationController controller = new GameInitializationController(null, null, null);
+        GameInitializationController controller = new GameInitializationController(null, null, null, gameStatsManager);
 
         assertThrows(IllegalArgumentException.class, () -> controller.placeTreasuresOnBoard(board, treasures));
     }

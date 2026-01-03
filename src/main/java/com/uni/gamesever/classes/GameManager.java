@@ -18,6 +18,7 @@ import com.uni.gamesever.exceptions.TargetCoordinateNullException;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
+import com.uni.gamesever.models.GameOver;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.NextTreasureCardEvent;
 import com.uni.gamesever.models.PlayerState;
@@ -30,6 +31,7 @@ import com.uni.gamesever.services.SocketMessageService;
 @Service
 public class GameManager {
     PlayerManager playerManager;
+    GameStatsManager gameStatsManager;
     private GameBoard currentBoard;
     private TurnState turnState = TurnState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
@@ -40,9 +42,11 @@ public class GameManager {
             DirectionType.LEFT, new Coordinates(-1, 0),
             DirectionType.RIGHT, new Coordinates(1, 0));
 
-    public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService) {
+    public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
+            GameStatsManager gameStatsManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
+        this.gameStatsManager = gameStatsManager;
     }
 
     public GameBoard getCurrentBoard() {
@@ -84,6 +88,7 @@ public class GameManager {
         }
 
         currentBoard.pushTile(rowOrColIndex, direction);
+        gameStatsManager.increaseTilesPushed(1, playerManager.getCurrentPlayer().getId());
         updatePlayerPositionsAfterPush(rowOrColIndex, direction, currentBoard.getRows(), currentBoard.getCols());
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
         pushInfo.setDirections(direction.name());
@@ -179,14 +184,23 @@ public class GameManager {
             try {
                 currentPlayerState.collectCurrentTreasure();
                 currentBoard.removeTreasureFromTile(targetCoordinates);
+                gameStatsManager.increaseTreasuresCollected(1, playerIdWhoMoved);
                 if (currentPlayerState.getCurrentTreasure() != null) {
                     NextTreasureCardEvent nextTreasureEvent = new NextTreasureCardEvent(
                             currentPlayerState.getCurrentTreasure());
                     socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
                             objectMapper.writeValueAsString(nextTreasureEvent));
                 } else {
-                    // Player has collected all treasures
-                    // Handle end-of-game logic here if needed
+                    gameStatsManager.updateScoresForAllPlayers();
+                    gameStatsManager.updateRankForAllPlayersBasedOnAmountOfTreasures();
+                    GameOver gameOver = new GameOver(gameStatsManager.getSortedRankings());
+                    if (gameOver.getWinnerId() != null) {
+                        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
+                        setTurnState(TurnState.NOT_STARTED);
+                        return true;
+                    } else {
+                        throw new IllegalStateException("Winner ID is null despite all treasures being collected.");
+                    }
                 }
 
             } catch (IllegalStateException e) {
@@ -230,11 +244,13 @@ public class GameManager {
 
         int boardRows = board.getRows();
         int boardCols = board.getCols();
+        Map<Coordinates, Integer> stepsMap = new java.util.HashMap<>();
 
         boolean[][] visited = new boolean[boardRows][boardCols];
         Queue<Coordinates> queue = new java.util.LinkedList<>();
         queue.add(start);
         visited[start.getRow()][start.getColumn()] = true;
+        stepsMap.put(start, 0);
 
         while (!queue.isEmpty()) {
             Coordinates current = queue.poll();
@@ -266,12 +282,16 @@ public class GameManager {
                     continue;
                 }
                 if (neighbor.getColumn() == target.getColumn() && neighbor.getRow() == target.getRow()) {
+                    gameStatsManager.increaseStepsTaken(stepsMap.get(current) + 1,
+                            playerManager.getCurrentPlayer().getId());
                     return true;
                 }
                 queue.add(neighbor);
                 visited[newRow][newColumn] = true;
+                stepsMap.put(neighbor, stepsMap.get(current) + 1);
             }
         }
         return false;
     }
+
 }

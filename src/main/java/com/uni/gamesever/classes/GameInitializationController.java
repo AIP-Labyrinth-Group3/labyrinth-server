@@ -31,12 +31,14 @@ public class GameInitializationController {
     GameManager gameManager;
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
+    GameStatsManager gameStatsManager;
 
     public GameInitializationController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
-            GameManager gameManager) {
+            GameManager gameManager, GameStatsManager gameStatsManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameManager = gameManager;
+        this.gameStatsManager = gameStatsManager;
     }
 
     public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures)
@@ -78,6 +80,8 @@ public class GameInitializationController {
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        gameStatsManager.initAllRankingStats(playerManager);
 
         GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
