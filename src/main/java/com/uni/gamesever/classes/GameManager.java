@@ -205,23 +205,23 @@ public class GameManager {
 
         return true;
     }
+
     public boolean handleRotateTile(String playerIdWhoRotated) throws GameNotValidException,
             NotPlayersTurnException, NoValidActionException, JsonProcessingException {
+
+        if (!playerIdWhoRotated.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It is not your turn to rotate tiles.");
+        }
+
         if (turnState != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "It is not the phase to rotate tiles.");
         }
 
-        if (!playerIdWhoRotated.equals(playerManager.getCurrentPlayer().getId())) {
-            throw new NotPlayersTurnException(
-                    "It is not your turn to move the pawn.");
-        }
-
-        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         Tile spareTile = currentBoard.getExtraTile();
         spareTile.rotateClockwise();
         currentBoard.setExtraTile(spareTile);
-
 
         setTurnState(TurnState.WAITING_FOR_PUSH);
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
@@ -232,7 +232,6 @@ public class GameManager {
 
         return true;
     }
-
 
     public boolean isOppositeDirection(DirectionType dir1, DirectionType dir2) {
         return (dir1.equals(DirectionType.UP) && dir2.equals(DirectionType.DOWN)) ||
