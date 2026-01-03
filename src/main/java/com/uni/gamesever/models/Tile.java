@@ -63,4 +63,24 @@ public class Tile {
     public boolean getIsFixed() {
         return isFixed;
     }
+
+    public void rotateClockwise() {
+        for (int i = 0; i < entrances.size(); i++) {
+            DirectionType dir = entrances.get(i);
+            switch (dir) {
+                case UP:
+                    entrances.set(i, DirectionType.RIGHT);
+                    break;
+                case RIGHT:
+                    entrances.set(i, DirectionType.DOWN);
+                    break;
+                case DOWN:
+                    entrances.set(i, DirectionType.LEFT);
+                    break;
+                case LEFT:
+                    entrances.set(i, DirectionType.UP);
+                    break;
+            }
+        }
+    }
 }

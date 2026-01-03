@@ -1,32 +1,14 @@
 package com.uni.gamesever.classes;
 
+import com.uni.gamesever.exceptions.*;
+import com.uni.gamesever.models.messages.*;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uni.gamesever.exceptions.GameAlreadyStartedException;
-import com.uni.gamesever.exceptions.GameFullException;
-import com.uni.gamesever.exceptions.GameNotStartedException;
-import com.uni.gamesever.exceptions.GameNotValidException;
-import com.uni.gamesever.exceptions.NoDirectionForPush;
-import com.uni.gamesever.exceptions.NoExtraTileException;
-import com.uni.gamesever.exceptions.NoValidActionException;
-import com.uni.gamesever.exceptions.NotEnoughPlayerException;
-import com.uni.gamesever.exceptions.NotPlayersTurnException;
-import com.uni.gamesever.exceptions.PlayerNotAdminException;
-import com.uni.gamesever.exceptions.PushNotValidException;
-import com.uni.gamesever.exceptions.TargetCoordinateNullException;
-import com.uni.gamesever.exceptions.UserNotFoundException;
-import com.uni.gamesever.exceptions.UsernameAlreadyTakenException;
-import com.uni.gamesever.exceptions.UsernameNullOrEmptyException;
 import com.uni.gamesever.models.ActionErrorEvent;
 import com.uni.gamesever.models.ErrorCode;
-import com.uni.gamesever.models.messages.ConnectRequest;
-import com.uni.gamesever.models.messages.Message;
-import com.uni.gamesever.models.messages.MovePawnRequest;
-import com.uni.gamesever.models.messages.PushTileCommand;
-import com.uni.gamesever.models.messages.StartGameAction;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
@@ -205,6 +187,47 @@ public class MessageHandler {
                     System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                             "Invalid command format");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
+            case "ROTATE_TILE":
+                try {
+                    RotateTileRequest rotateTileRequest = objectMapper.readValue(message, RotateTileRequest.class);
+                    return gameManager.handleRotateTile(userId);
+                } catch (NotPlayersRotateTileExeption e) {
+                    System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }catch (NotPlayersTurnException e) {
+                    System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }catch (GameNotValidException e) {
+                    System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }catch (NoValidActionException e) {
+                    System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (JsonMappingException e) {
+                    System.err.println("Failed to map move pawn command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
