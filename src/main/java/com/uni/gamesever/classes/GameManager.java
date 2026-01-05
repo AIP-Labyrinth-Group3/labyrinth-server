@@ -362,4 +362,54 @@ public class GameManager {
 
         return handleMovePawn(targetCoordinates, playerIdWhoUsedBeam, true);
     }
+
+    public boolean handleUseSwap(String targetPlayerId, String playerIdWhoUsedSwap)
+            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
+            TargetCoordinateNullException, JsonProcessingException {
+        if (!playerIdWhoUsedSwap.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It is not your turn to use the swap bonus.");
+        }
+        if (turnState != TurnState.WAITING_FOR_MOVE) {
+            throw new GameNotValidException(
+                    "It is not the phase to use the swap bonus.");
+        }
+        if (targetPlayerId == null || targetPlayerId.isEmpty()) {
+            throw new NoValidActionException("Target player ID cannot be null or empty");
+        }
+
+        if (targetPlayerId.equals(playerIdWhoUsedSwap)) {
+            throw new NoValidActionException("Cannot swap with yourself.");
+        }
+
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+        if (!currentPlayerState.hasBonusOfType(BonusType.SWAP)) {
+            throw new NoValidActionException("Player does not have a SWAP bonus to use.");
+        }
+
+        PlayerState targetPlayerState = playerManager.getPlayerStateById(targetPlayerId);
+        if (targetPlayerState == null) {
+            throw new NoValidActionException("Target player does not exist.");
+        }
+
+        currentPlayerState.useOneBonusOfType(BonusType.SWAP);
+
+        Coordinates currentPlayerPosition = currentPlayerState.getCurrentPosition();
+        Coordinates targetPlayerPosition = targetPlayerState.getCurrentPosition();
+
+        currentPlayerState.setCurrentPosition(targetPlayerPosition);
+        targetPlayerState.setCurrentPosition(currentPlayerPosition);
+
+        setTurnState(TurnState.WAITING_FOR_PUSH);
+        playerManager.setNextPlayerAsCurrent();
+        boardItemPlacementService.trySpawnBonus(currentBoard);
+
+        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
+
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+
+        return true;
+    }
 }
