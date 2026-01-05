@@ -144,4 +144,43 @@ public class PlayerState {
         }
     }
 
+    public void collectBonus(Bonus bonus) {
+        List<String> bonusesList = new ArrayList<>();
+        for (String b : availableBonuses) {
+            bonusesList.add(b);
+        }
+        bonusesList.add(bonus.getType().name());
+        this.availableBonuses = bonusesList.toArray(new String[0]);
+    }
+
+    public boolean hasBonusOfType(BonusType type) {
+        if (availableBonuses == null) {
+            return false;
+        }
+        for (String bonus : availableBonuses) {
+            if (bonus.equals(type.name())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void useOneBonusOfType(BonusType type) throws IllegalStateException {
+        if (availableBonuses == null) {
+            throw new IllegalStateException("No available bonuses to use.");
+        }
+        List<String> bonusesList = new ArrayList<>();
+        boolean found = false;
+        for (String bonus : availableBonuses) {
+            if (bonus.equals(type.name()) && !found) {
+                found = true;
+            } else {
+                bonusesList.add(bonus);
+            }
+        }
+        if (!found) {
+            throw new IllegalStateException("No bonus of type " + type.name() + " available to use.");
+        }
+        this.availableBonuses = bonusesList.toArray(new String[0]);
+    }
 }

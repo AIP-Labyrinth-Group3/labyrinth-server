@@ -137,7 +137,7 @@ public class MessageHandler {
                     System.err.println(
                             "Failed to process start game request from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "Invalid command format");
+                            e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
@@ -192,7 +192,8 @@ public class MessageHandler {
                 }
             case "ROTATE_TILE":
                 try {
-                    RotateTileRequest rotateTileRequest = objectMapper.readValue(message, RotateTileRequest.class);
+                    // RotateTileRequest rotateTileRequest = objectMapper.readValue(message,
+                    // RotateTileRequest.class);
                     return gameManager.handleRotateTile(userId);
                 } catch (NotPlayersRotateTileExeption e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
@@ -200,19 +201,19 @@ public class MessageHandler {
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
-                }catch (NotPlayersTurnException e) {
+                } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
-                }catch (GameNotValidException e) {
+                } catch (GameNotValidException e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
-                }catch (NoValidActionException e) {
+                } catch (NoValidActionException e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
                             e.getMessage());
@@ -234,7 +235,7 @@ public class MessageHandler {
             case "MOVE_PAWN":
                 try {
                     MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
-                    return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId);
+                    return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId, false);
                 } catch (TargetCoordinateNullException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
@@ -267,6 +268,47 @@ public class MessageHandler {
                     return false;
                 } catch (JsonMappingException e) {
                     System.err.println("Failed to map move pawn command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
+            case "USE_BEAM":
+                try {
+                    UseBeamCommand useBeamCommand = objectMapper.readValue(message, UseBeamCommand.class);
+                    return gameManager.handleUseBeam(useBeamCommand.getTargetCoordinates(), userId);
+                } catch (TargetCoordinateNullException e) {
+                    System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NotPlayersTurnException e) {
+                    System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (GameNotValidException e) {
+                    System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NoValidActionException e) {
+                    System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (JsonMappingException e) {
+                    System.err.println("Failed to map use beam command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));

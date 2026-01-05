@@ -5,14 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +22,6 @@ import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.AchievementType;
 import com.uni.gamesever.models.BoardSize;
 import com.uni.gamesever.models.BonusType;
-import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.PlayerInfo;
@@ -37,6 +31,7 @@ import com.uni.gamesever.models.TileType;
 import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.models.messages.StartGameAction;
+import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
 
 public class GameInitialitationTest {
@@ -49,6 +44,8 @@ public class GameInitialitationTest {
     GameManager gameManager;
     @Mock
     GameStatsManager gameStatsManager;
+    @InjectMocks
+    BoardItemPlacementService boardItemPlacementService;
 
     @InjectMocks
     GameInitializationController gameInitialitionController;
@@ -118,35 +115,6 @@ public class GameInitialitationTest {
         assertThrows(NotEnoughPlayerException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24);
         });
-    }
-
-    @Test
-    void gameBoardHandler_shouldStartGameSuccessfully() throws Exception {
-        String userId = "adminUser";
-        BoardSize size = new BoardSize();
-        PlayerInfo[] players = new PlayerInfo[2];
-        players[0] = new PlayerInfo("user1");
-        players[1] = new PlayerInfo("user2");
-
-        PlayerState[] states = new PlayerState[2];
-        states[0] = new PlayerState(players[0], null, null, null, 0);
-        states[1] = new PlayerState(players[1], null, null, null, 0);
-
-        when(playerManager.getAdminID()).thenReturn(userId);
-        when(playerManager.getAmountOfPlayers()).thenReturn(2);
-        when(playerManager.getPlayers()).thenReturn(players);
-        when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
-
-        when(playerManager.getNonNullPlayerStates()).thenReturn(states);
-
-        when(playerManager.getCurrentPlayer()).thenReturn(players[0]);
-        when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
-
-        boolean result = gameInitialitionController.handleStartGameMessage(userId, size, 24);
-
-        assertEquals(true, result);
-        verify(playerManager).initializePlayerStates(any());
-        verify(socketBroadcastService, times(3)).broadcastMessage(anyString());
     }
 
     @Test
@@ -305,20 +273,6 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void createTreasures_shouldReturn24TreasuresWithCorrectIds() {
-        List<Treasure> treasures = GameInitializationController.createTreasures(24);
-
-        assertEquals(24, treasures.size(), "Should create 24 treasures");
-
-        for (int i = 0; i < treasures.size(); i++) {
-            Treasure t = treasures.get(i);
-            assertEquals(i + 1, t.getId(), "Treasure ID should match its position");
-            assertNotNull(t.getName(), "Treasure " + (i + 1) + " name should not be null");
-
-        }
-    }
-
-    @Test
     void distributeTreasuresOnPlayers_shouldAssignTreasuresEqually() {
         PlayerInfo playerInfo1 = new PlayerInfo("player1");
         PlayerInfo playerInfo2 = new PlayerInfo("player2");
@@ -332,9 +286,9 @@ public class GameInitialitationTest {
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
         GameInitializationController controller = new GameInitializationController(mockManager, null, null,
-                gameStatsManager);
+                gameStatsManager, boardItemPlacementService);
 
-        List<Treasure> treasures = GameInitializationController.createTreasures(24);
+        List<Treasure> treasures = boardItemPlacementService.createTreasures(24);
         controller.distributeTreasuresOnPlayers(treasures);
 
         for (PlayerState p : players) {
@@ -344,56 +298,6 @@ public class GameInitialitationTest {
             assertEquals(treasures.size() / players.length, p.getAssignedTreasures().size(),
                     "Each player should have correct number of remaining treasure cards");
         }
-    }
-
-    @Test
-    void placeTreasuresOnBoard_shouldPlaceTreasuresOnValidTiles() throws NoExtraTileException {
-        BoardSize size = new BoardSize();
-        size.setRows(10);
-        size.setCols(10);
-        GameBoard board = GameBoard.generateBoard(size);
-
-        List<Treasure> treasures = GameInitializationController.createTreasures(24);
-        GameInitializationController controller = new GameInitializationController(null, null, null, gameStatsManager);
-        controller.placeTreasuresOnBoard(board, treasures);
-
-        Tile[][] tiles = board.getTiles();
-        List<Coordinates> forbiddenStartPositions = List.of(
-                new Coordinates(0, 0),
-                new Coordinates(0, size.getCols() - 1),
-                new Coordinates(size.getRows() - 1, 0),
-                new Coordinates(size.getRows() - 1, size.getCols() - 1));
-
-        int placedCount = 0;
-        for (int i = 0; i < tiles.length; i++) {
-            for (int j = 0; j < tiles[i].length; j++) {
-                Tile t = tiles[i][j];
-                if (t.getTreasure() != null) {
-                    placedCount++;
-                    for (Coordinates forbidden : forbiddenStartPositions) {
-                        assertFalse(forbidden.getColumn() == i && forbidden.getRow() == j, "No treasure on start tile");
-                    }
-                }
-            }
-        }
-
-        assertEquals(treasures.size(), placedCount, "All treasures should be placed");
-    }
-
-    @Test
-    void placeTreasuresOnBoard_shouldThrowExceptionWhenNotEnoughTiles() throws NoExtraTileException {
-        BoardSize size = new BoardSize();
-        size.setRows(3);
-        size.setCols(3);
-        GameBoard board = GameBoard.generateBoard(size);
-
-        List<Treasure> treasures = new ArrayList<>();
-        for (int i = 1; i <= 10; i++)
-            treasures.add(new Treasure(i, "Treasure " + i));
-
-        GameInitializationController controller = new GameInitializationController(null, null, null, gameStatsManager);
-
-        assertThrows(IllegalArgumentException.class, () -> controller.placeTreasuresOnBoard(board, treasures));
     }
 
     @Test

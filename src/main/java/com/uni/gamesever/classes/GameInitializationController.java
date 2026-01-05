@@ -13,15 +13,14 @@ import com.uni.gamesever.exceptions.NoExtraTileException;
 import com.uni.gamesever.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.models.BoardSize;
-import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.GameBoard;
 import com.uni.gamesever.models.GameStarted;
 import com.uni.gamesever.models.GameStateUpdate;
 import com.uni.gamesever.models.PlayerState;
 import com.uni.gamesever.models.PlayerTurn;
-import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
+import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
@@ -32,13 +31,16 @@ public class GameInitializationController {
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     GameStatsManager gameStatsManager;
+    BoardItemPlacementService boardItemPlacementService;
 
     public GameInitializationController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
-            GameManager gameManager, GameStatsManager gameStatsManager) {
+            GameManager gameManager, GameStatsManager gameStatsManager,
+            BoardItemPlacementService boardItemPlacementService) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameManager = gameManager;
         this.gameStatsManager = gameStatsManager;
+        this.boardItemPlacementService = boardItemPlacementService;
     }
 
     public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures)
@@ -66,9 +68,13 @@ public class GameInitializationController {
 
         playerManager.initializePlayerStates(board);
 
-        List<Treasure> treasures = createTreasures(amountOfTreasures);
+        List<Treasure> treasures = boardItemPlacementService.createTreasures(amountOfTreasures);
+        boardItemPlacementService.placeTreasures(board, treasures);
         distributeTreasuresOnPlayers(treasures);
-        placeTreasuresOnBoard(board, treasures);
+
+        for (int i = 0; i < 4; i++) {
+            boardItemPlacementService.trySpawnBonus(board);
+        }
 
         if (board.getExtraTile() == null) {
             throw new NoExtraTileException("Extra tile was not set on the game board.");
@@ -90,15 +96,6 @@ public class GameInitializationController {
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
-    }
-
-    public static List<Treasure> createTreasures(int amountOfTreasures) {
-        List<Treasure> treasures = new ArrayList<>();
-        for (int i = 1; i <= amountOfTreasures; i++) {
-            treasures.add(new Treasure(i, "Treasure " + i));
-        }
-
-        return treasures;
     }
 
     public void distributeTreasuresOnPlayers(List<Treasure> treasures) {
@@ -123,46 +120,4 @@ public class GameInitializationController {
 
     }
 
-    public void placeTreasuresOnBoard(GameBoard board, List<Treasure> treasures) {
-        int rows = board.getSize().getRows();
-        int cols = board.getSize().getCols();
-        Tile[][] tiles = board.getTiles();
-
-        List<Tile> validTiles = new ArrayList<>();
-
-        List<Coordinates> forbiddenStartPositions = new ArrayList<>();
-        forbiddenStartPositions.add(new Coordinates(0, 0));
-        forbiddenStartPositions.add(new Coordinates(0, rows - 1));
-        forbiddenStartPositions.add(new Coordinates(cols - 1, 0));
-        forbiddenStartPositions.add(new Coordinates(cols - 1, rows - 1));
-
-        for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-            for (int colIndex = 0; colIndex < cols; colIndex++) {
-
-                boolean isStartField = false;
-                for (Coordinates start : forbiddenStartPositions) {
-                    if (start.getColumn() == colIndex && start.getRow() == rowIndex) {
-                        isStartField = true;
-                        break;
-                    }
-                }
-
-                if (!isStartField) {
-                    validTiles.add(tiles[rowIndex][colIndex]);
-                }
-            }
-        }
-
-        Collections.shuffle(validTiles);
-
-        int maxAssignable = Math.min(treasures.size(), validTiles.size());
-
-        for (int i = 0; i < maxAssignable; i++) {
-            validTiles.get(i).setTreasure(treasures.get(i));
-        }
-
-        if (treasures.size() > validTiles.size()) {
-            throw new IllegalArgumentException("Not enough valid tiles to place all treasures.");
-        }
-    }
 }

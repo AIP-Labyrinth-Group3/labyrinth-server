@@ -15,6 +15,7 @@ import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.exceptions.TargetCoordinateNullException;
+import com.uni.gamesever.models.BonusType;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
@@ -26,6 +27,7 @@ import com.uni.gamesever.models.PlayerTurn;
 import com.uni.gamesever.models.PushActionInfo;
 import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.TurnState;
+import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
@@ -41,12 +43,14 @@ public class GameManager {
             DirectionType.DOWN, new Coordinates(0, 1),
             DirectionType.LEFT, new Coordinates(-1, 0),
             DirectionType.RIGHT, new Coordinates(1, 0));
+    BoardItemPlacementService boardItemPlacementService;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
-            GameStatsManager gameStatsManager) {
+            GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameStatsManager = gameStatsManager;
+        this.boardItemPlacementService = boardItemPlacementService;
     }
 
     public GameBoard getCurrentBoard() {
@@ -93,10 +97,9 @@ public class GameManager {
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
         pushInfo.setDirections(direction.name());
         currentBoard.setLastPush(pushInfo);
+        setTurnState(TurnState.WAITING_FOR_MOVE);
         GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
-
-        setTurnState(TurnState.WAITING_FOR_MOVE);
 
         return true;
     }
@@ -150,7 +153,8 @@ public class GameManager {
         }
     }
 
-    public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved) throws GameNotValidException,
+    public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved, boolean useBeamBonus)
+            throws GameNotValidException,
             NotPlayersTurnException, NoValidActionException, JsonProcessingException, TargetCoordinateNullException {
         if (turnState != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
@@ -172,7 +176,7 @@ public class GameManager {
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         Coordinates currentPlayerCoordinates = currentPlayerState.getCurrentPosition();
 
-        if (!canPlayerMove(currentBoard, currentPlayerCoordinates, targetCoordinates)) {
+        if (!useBeamBonus && !canPlayerMove(currentBoard, currentPlayerCoordinates, targetCoordinates)) {
             throw new NoValidActionException("Player cannot move to the target coordinates.");
         }
 
@@ -208,8 +212,16 @@ public class GameManager {
             }
         }
 
+        if (targetTile != null && targetTile.getBonus() != null) {
+            if (currentPlayerState.getAvailableBonuses().length < 5) {
+                currentPlayerState.collectBonus(targetTile.getBonus());
+                currentBoard.removeBonusFromTile(targetCoordinates);
+            }
+        }
+
         setTurnState(TurnState.WAITING_FOR_PUSH);
         playerManager.setNextPlayerAsCurrent();
+        boardItemPlacementService.trySpawnBonus(currentBoard);
 
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
@@ -321,4 +333,33 @@ public class GameManager {
         return false;
     }
 
+    public boolean handleUseBeam(Coordinates targetCoordinates, String playerIdWhoUsedBeam)
+            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
+            TargetCoordinateNullException, JsonProcessingException {
+        if (turnState != TurnState.WAITING_FOR_MOVE) {
+            throw new GameNotValidException(
+                    "It is not the phase to use the beam.");
+        }
+        if (targetCoordinates == null) {
+            throw new TargetCoordinateNullException("Target coordinates cannot be null");
+        }
+        if (targetCoordinates.getColumn() < 0 || targetCoordinates.getRow() < 0 ||
+                targetCoordinates.getColumn() >= currentBoard.getCols()
+                || targetCoordinates.getRow() >= currentBoard.getRows()) {
+            throw new IllegalArgumentException("Target coordinates are out of board bounds.");
+        }
+        if (!playerIdWhoUsedBeam.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It is not your turn to use the beam.");
+        }
+
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+        if (!currentPlayerState.hasBonusOfType(BonusType.BEAM)) {
+            throw new NoValidActionException("Player does not have a BEAM bonus to use.");
+        }
+
+        currentPlayerState.useOneBonusOfType(BonusType.BEAM);
+
+        return handleMovePawn(targetCoordinates, playerIdWhoUsedBeam, true);
+    }
 }

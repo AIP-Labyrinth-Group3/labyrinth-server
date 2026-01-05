@@ -384,7 +384,7 @@ public class GameManagerTest {
         RankingEntry finalRanking = new RankingEntry(player1, 1, 100, endStats);
         when(gameStatsManager.getSortedRankings()).thenReturn(List.of(finalRanking));
 
-        boolean result = gameManager.handleMovePawn(new Coordinates(0, 1), player1.getId());
+        boolean result = gameManager.handleMovePawn(new Coordinates(0, 1), player1.getId(), false);
 
         assertTrue(result);
         verify(gameStatsManager).increaseTreasuresCollected(1, player1.getId());

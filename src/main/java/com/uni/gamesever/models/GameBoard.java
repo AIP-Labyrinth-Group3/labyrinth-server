@@ -19,7 +19,7 @@ public class GameBoard {
     private Tile extraTile;
     private static final int spacing = 2;
 
-    private GameBoard(BoardSize size) {
+    public GameBoard(BoardSize size) {
         this.size = size;
         this.rows = size.getRows();
         this.cols = size.getCols();
@@ -337,6 +337,13 @@ public class GameBoard {
         Tile tile = getTileAtCoordinate(coordinate);
         if (tile != null) {
             tile.setTreasure(null);
+        }
+    }
+
+    public void removeBonusFromTile(Coordinates coordinate) {
+        Tile tile = getTileAtCoordinate(coordinate);
+        if (tile != null) {
+            tile.setBonus(null);
         }
     }
 }
