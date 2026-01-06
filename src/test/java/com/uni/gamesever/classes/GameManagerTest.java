@@ -8,9 +8,12 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import com.uni.gamesever.exceptions.GameNotValidException;
+import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.models.BoardSize;
+import com.uni.gamesever.models.Bonus;
+import com.uni.gamesever.models.BonusType;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
 import com.uni.gamesever.models.GameBoard;
@@ -23,6 +26,7 @@ import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.TileType;
 import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
+import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +45,9 @@ public class GameManagerTest {
 
     @Mock
     GameStatsManager gameStatsManager;
+
+    @Mock
+    BoardItemPlacementService boardItemPlacementService;
 
     @InjectMocks
     GameManager gameManager;
@@ -66,6 +73,11 @@ public class GameManagerTest {
 
         board = GameBoard.generateBoard(new BoardSize());
         gameManager.setCurrentBoard(board);
+
+        when(playerManager.getCurrentPlayer()).thenReturn(player1);
+        when(playerManager.getCurrentPlayerState()).thenReturn(state1);
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
+
     }
 
     @Test
@@ -393,6 +405,137 @@ public class GameManagerTest {
                 argThat(message -> message.contains(player1.getId()) && message.contains("rank")));
 
         assertEquals(TurnState.NOT_STARTED, gameManager.getTurnState());
+    }
+
+    @Test
+    void handleUsePushTwice_shouldConsumeBonusAndAllowSecondPush() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        Bonus pushTwiceBonus = new Bonus();
+        pushTwiceBonus.setType(BonusType.PUSH_TWICE);
+        state1.collectBonus(pushTwiceBonus);
+
+        boolean result = gameManager.handleUsePushTwice(player1.getId());
+
+        assertTrue(result);
+        assertFalse(state1.hasBonusOfType(BonusType.PUSH_TWICE),
+                "Bonus should be consumed");
+    }
+
+    @Test
+    void handleUsePushTwice_shouldThrowIfNoBonus() {
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        assertThrows(NoValidActionException.class, () -> gameManager.handleUsePushTwice(player1.getId()));
+    }
+
+    @Test
+    void handleUsePushFixedTile_shouldConsumeBonusAndPushFixedTile() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+
+        state1.setCurrentPosition(new Coordinates(1, 1));
+        state2.setCurrentPosition(new Coordinates(3, 3));
+
+        Bonus pushFixedBonus = new Bonus();
+        pushFixedBonus.setType(BonusType.PUSH_FIXED);
+        state1.collectBonus(pushFixedBonus);
+        board.setExtraTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
+
+        boolean result = gameManager.handleUsePushFixedTile(
+                DirectionType.UP, 1, player1.getId());
+
+        assertTrue(result);
+        assertFalse(state1.hasBonusOfType(BonusType.PUSH_FIXED));
+    }
+
+    @Test
+    void handleUseSwap_shouldSwapPlayerPositions() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+        Bonus swapBonus = new Bonus();
+        swapBonus.setType(BonusType.SWAP);
+        state1.collectBonus(swapBonus);
+
+        state1.setCurrentPosition(new Coordinates(1, 1));
+        state2.setCurrentPosition(new Coordinates(3, 3));
+
+        when(playerManager.getPlayerStateById(player2.getId())).thenReturn(state2);
+
+        boolean result = gameManager.handleUseSwap(player2.getId(), player1.getId());
+
+        assertTrue(result);
+        assertEquals(state1.getCurrentPosition().getColumn(), 3);
+        assertEquals(state1.getCurrentPosition().getRow(), 3);
+        assertEquals(state2.getCurrentPosition().getColumn(), 1);
+        assertEquals(state2.getCurrentPosition().getRow(), 1);
+    }
+
+    @Test
+    void handleUseSwap_shouldThrowIfSwapWithSelf() {
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+        Bonus swapBonus = new Bonus();
+        swapBonus.setType(BonusType.SWAP);
+        state1.collectBonus(swapBonus);
+
+        assertThrows(NoValidActionException.class, () -> gameManager.handleUseSwap(player1.getId(), player1.getId()));
+    }
+
+    @Test
+    void handleUseBeam_shouldConsumeBonusAndMovePawn() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+        Bonus beamBonus = new Bonus();
+        beamBonus.setType(BonusType.BEAM);
+        state1.collectBonus(beamBonus);
+        state1.setCurrentPosition(new Coordinates(0, 0));
+
+        Tile start = new Tile(List.of(DirectionType.RIGHT), TileType.STRAIGHT);
+        Tile target = new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT);
+
+        board.setTile(0, 0, start);
+        board.setTile(0, 1, target);
+
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+
+        boolean result = gameManager.handleUseBeam(new Coordinates(1, 0), player1.getId());
+
+        assertTrue(result);
+        assertFalse(state1.hasBonusOfType(BonusType.BEAM));
+    }
+
+    @Test
+    void handleUseBeam_shouldThrowIfNoBeamBonus() {
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+
+        assertThrows(NoValidActionException.class,
+                () -> gameManager.handleUseBeam(new Coordinates(1, 1), player1.getId()));
+    }
+
+    @Test
+    void handleMovePawn_shouldNotCollectBonusIfPlayerAlreadyHasFive() throws Exception {
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+
+        for (int i = 0; i < 5; i++) {
+            Bonus bonus1 = new Bonus();
+            bonus1.setType(BonusType.BEAM);
+            state1.collectBonus(bonus1);
+        }
+
+        state1.setCurrentPosition(new Coordinates(0, 0));
+
+        Tile start = new Tile(List.of(DirectionType.RIGHT), TileType.STRAIGHT);
+        Tile target = new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT);
+        Bonus bonus2 = new Bonus();
+        bonus2.setType(BonusType.SWAP);
+        target.setBonus(bonus2);
+
+        board.setTile(0, 0, start);
+        board.setTile(0, 1, target);
+
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+
+        gameManager.handleMovePawn(new Coordinates(1, 0), player1.getId(), false);
+
+        assertEquals(5, state1.getAvailableBonuses().length,
+                "Player should not collect more than 5 bonuses");
     }
 
 }
