@@ -40,6 +40,7 @@ public class GameManager {
     private TurnState turnState = TurnState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
+    private boolean pushTwiceUsedInCurrentTurn = false;
     private final Map<DirectionType, Coordinates> DIRECTION_OFFSETS = Map.of(
             DirectionType.UP, new Coordinates(0, -1),
             DirectionType.DOWN, new Coordinates(0, 1),
@@ -100,7 +101,11 @@ public class GameManager {
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
         pushInfo.setDirections(direction.name());
         currentBoard.setLastPush(pushInfo);
-        setTurnState(TurnState.WAITING_FOR_MOVE);
+        if (pushTwiceUsedInCurrentTurn) {
+            pushTwiceUsedInCurrentTurn = false;
+        } else {
+            setTurnState(TurnState.WAITING_FOR_MOVE);
+        }
         GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
@@ -458,5 +463,29 @@ public class GameManager {
         currentPlayerState.useOneBonusOfType(BonusType.PUSH_FIXED);
 
         return handlePushTile(rowOrColIndex, direction, playerIdWhoUsedPushFixed, true);
+    }
+
+    public boolean handleUsePushTwice(String playerIdWhoUsedPushTwice)
+            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
+            JsonProcessingException {
+        if (!playerIdWhoUsedPushTwice.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It is not your turn to use the push twice bonus.");
+        }
+        if (turnState != TurnState.WAITING_FOR_PUSH) {
+            throw new GameNotValidException(
+                    "It is not the phase to use the push twice bonus.");
+        }
+
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+        if (!currentPlayerState.hasBonusOfType(BonusType.PUSH_TWICE)) {
+            throw new NoValidActionException("Player does not have a PUSH_TWICE bonus to use.");
+        }
+
+        currentPlayerState.useOneBonusOfType(BonusType.PUSH_TWICE);
+
+        pushTwiceUsedInCurrentTurn = true;
+
+        return true;
     }
 }

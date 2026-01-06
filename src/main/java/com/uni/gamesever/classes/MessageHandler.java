@@ -374,6 +374,28 @@ public class MessageHandler {
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
+            case "USE_PUSH_TWICE":
+                try {
+                    return gameManager.handleUsePushTwice(userId);
+                } catch (NotPlayersTurnException e) {
+                    System.err.println("Invalid use push twice command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NoValidActionException e) {
+                    System.err.println("Invalid use push twice command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (GameNotValidException e) {
+                    System.err.println("Invalid use push twice command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
             default:
                 return false;
         }
