@@ -42,7 +42,7 @@ public class GameStatsManager {
     }
 
     public void updateScoresForAllPlayers() {
-        for (var player : playerManager.getPlayers()) {
+        for (var player : playerManager.getNonNullPlayers()) {
             updateScoreForASinglePlayer(player.getId());
         }
     }
