@@ -89,7 +89,8 @@ public class GameInitializationController {
 
         gameStatsManager.initAllRankingStats(playerManager);
 
-        GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates());
+        GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates(),
+                playerManager.getCurrentPlayer().getId(), gameManager.getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
