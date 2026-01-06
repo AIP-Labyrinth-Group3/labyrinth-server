@@ -19,7 +19,7 @@ public class GameBoard {
     private Tile extraTile;
     private static final int spacing = 2;
 
-    private GameBoard(BoardSize size) {
+    public GameBoard(BoardSize size) {
         this.size = size;
         this.rows = size.getRows();
         this.cols = size.getCols();
@@ -76,7 +76,8 @@ public class GameBoard {
         return false;
     }
 
-    public void pushTile(int rowOrColIndex, DirectionType direction) throws NoExtraTileException {
+    public void pushTile(int rowOrColIndex, DirectionType direction, boolean isUsingPushFixed)
+            throws NoExtraTileException {
         if (extraTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");
         }
@@ -101,7 +102,7 @@ public class GameBoard {
             throw new IllegalArgumentException("No tile to be pushed out at the specified index and direction.");
         }
 
-        if (tileToBePushedOut.getIsFixed()) {
+        if (tileToBePushedOut.getIsFixed() && !isUsingPushFixed) {
             throw new IllegalArgumentException("Cannot push a fixed tile.");
         }
 
@@ -337,6 +338,13 @@ public class GameBoard {
         Tile tile = getTileAtCoordinate(coordinate);
         if (tile != null) {
             tile.setTreasure(null);
+        }
+    }
+
+    public void removeBonusFromTile(Coordinates coordinate) {
+        Tile tile = getTileAtCoordinate(coordinate);
+        if (tile != null) {
+            tile.setBonus(null);
         }
     }
 }

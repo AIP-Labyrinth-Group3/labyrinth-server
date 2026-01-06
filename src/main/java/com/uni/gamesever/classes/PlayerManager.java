@@ -107,6 +107,15 @@ public class PlayerManager {
         return playerStates;
     }
 
+    public PlayerState getPlayerStateById(String playerId) {
+        for (PlayerState state : playerStates) {
+            if (state != null && state.getPlayer().getId().equals(playerId)) {
+                return state;
+            }
+        }
+        return null;
+    }
+
     public PlayerState[] getNonNullPlayerStates() {
         return Arrays.stream(playerStates)
                 .filter(state -> state != null)
