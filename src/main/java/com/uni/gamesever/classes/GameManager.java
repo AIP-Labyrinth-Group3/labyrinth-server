@@ -1,5 +1,7 @@
 package com.uni.gamesever.classes;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -69,7 +71,8 @@ public class GameManager {
         this.turnState = turnState;
     }
 
-    public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed)
+    public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed,
+            boolean isUsingPushFixed)
             throws GameNotStartedException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
             IllegalArgumentException, NoExtraTileException, NoDirectionForPush {
         if (turnState != TurnState.WAITING_FOR_PUSH) {
@@ -91,7 +94,7 @@ public class GameManager {
             }
         }
 
-        currentBoard.pushTile(rowOrColIndex, direction);
+        currentBoard.pushTile(rowOrColIndex, direction, isUsingPushFixed);
         gameStatsManager.increaseTilesPushed(1, playerManager.getCurrentPlayer().getId());
         updatePlayerPositionsAfterPush(rowOrColIndex, direction, currentBoard.getRows(), currentBoard.getCols());
         PushActionInfo pushInfo = new PushActionInfo(rowOrColIndex);
@@ -411,5 +414,49 @@ public class GameManager {
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
+    }
+
+    public boolean handleUsePushFixedTile(DirectionType direction, int rowOrColIndex, String playerIdWhoUsedPushFixed)
+            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
+            JsonProcessingException, IllegalArgumentException, NoExtraTileException, NoDirectionForPush {
+        if (!playerIdWhoUsedPushFixed.equals(playerManager.getCurrentPlayer().getId())) {
+            throw new NotPlayersTurnException(
+                    "It is not your turn to use the push fixed tile bonus.");
+        }
+        if (turnState != TurnState.WAITING_FOR_PUSH) {
+            throw new GameNotValidException(
+                    "It is not the phase to use the push fixed tile bonus.");
+        }
+
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+        if (!currentPlayerState.hasBonusOfType(BonusType.PUSH_FIXED)) {
+            throw new NoValidActionException("Player does not have a bonus to push a fixed tile.");
+        }
+
+        if (direction == null) {
+            throw new NoDirectionForPush("Direction for push cannot be null");
+        }
+
+        GameBoard board = getCurrentBoard();
+        int rows = board.getRows();
+        int cols = board.getCols();
+
+        List<Coordinates> forbiddenStartPositions = new ArrayList<>();
+        forbiddenStartPositions.add(new Coordinates(0, 0));
+        forbiddenStartPositions.add(new Coordinates(0, rows - 1));
+        forbiddenStartPositions.add(new Coordinates(cols - 1, 0));
+        forbiddenStartPositions.add(new Coordinates(cols - 1, rows - 1));
+
+        if (forbiddenStartPositions.stream().anyMatch(
+                start -> (start.getColumn() == rowOrColIndex &&
+                        (rowOrColIndex == 0 || rowOrColIndex == cols - 1)) ||
+                        (start.getRow() == rowOrColIndex &&
+                                (rowOrColIndex == 0 || rowOrColIndex == rows - 1)))) {
+            throw new NoValidActionException("Cannot push on a forbidden start position.");
+        }
+
+        currentPlayerState.useOneBonusOfType(BonusType.PUSH_FIXED);
+
+        return handlePushTile(rowOrColIndex, direction, playerIdWhoUsedPushFixed, true);
     }
 }

@@ -76,7 +76,8 @@ public class GameBoard {
         return false;
     }
 
-    public void pushTile(int rowOrColIndex, DirectionType direction) throws NoExtraTileException {
+    public void pushTile(int rowOrColIndex, DirectionType direction, boolean isUsingPushFixed)
+            throws NoExtraTileException {
         if (extraTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");
         }
@@ -101,7 +102,7 @@ public class GameBoard {
             throw new IllegalArgumentException("No tile to be pushed out at the specified index and direction.");
         }
 
-        if (tileToBePushedOut.getIsFixed()) {
+        if (tileToBePushedOut.getIsFixed() && !isUsingPushFixed) {
             throw new IllegalArgumentException("Cannot push a fixed tile.");
         }
 

@@ -146,7 +146,7 @@ public class MessageHandler {
                 try {
                     PushTileCommand pushTileCommand = objectMapper.readValue(message, PushTileCommand.class);
                     return gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(),
-                            pushTileCommand.getDirection(), userId);
+                            pushTileCommand.getDirection(), userId, false);
                 } catch (PushNotValidException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_PUSH,
@@ -345,6 +345,31 @@ public class MessageHandler {
                 } catch (JsonMappingException e) {
                     System.err.println("Failed to map use swap command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
+            case "USE_PUSH_FIXED":
+                try {
+                    PushFixedTileCommand pushFixedTileCommand = objectMapper.readValue(message,
+                            PushFixedTileCommand.class);
+                    return gameManager.handleUsePushFixedTile(pushFixedTileCommand.getDirection(),
+                            pushFixedTileCommand.getRowOrColIndex(), userId);
+                } catch (NotPlayersTurnException e) {
+                    System.err.println("Invalid use push effect command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NoValidActionException e) {
+                    System.err.println("Invalid use push effect command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (GameNotValidException e) {
+                    System.err.println("Invalid use push effect command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;

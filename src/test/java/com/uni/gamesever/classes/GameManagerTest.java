@@ -78,7 +78,7 @@ public class GameManagerTest {
         state2.setCurrentPosition(new Coordinates(1, 1));
         when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
 
-        boolean result = gameManager.handlePushTile(rowOrColIndex, direction, player1.getId());
+        boolean result = gameManager.handlePushTile(rowOrColIndex, direction, player1.getId(), false);
 
         PushActionInfo lastPush = gameManager.getCurrentBoard().getLastPush();
 
@@ -94,7 +94,7 @@ public class GameManagerTest {
         gameManager.setTurnState(TurnState.NOT_STARTED);
 
         assertThrows(GameNotValidException.class, () -> {
-            gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
+            gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
         });
     }
 
@@ -102,7 +102,7 @@ public class GameManagerTest {
     void GameManagerTest_handlePushTile_shouldThrowIfNotPlayersTurn() {
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
         assertThrows(NotPlayersTurnException.class, () -> {
-            gameManager.handlePushTile(1, DirectionType.UP, "otherPlayer");
+            gameManager.handlePushTile(1, DirectionType.UP, "otherPlayer", false);
         });
     }
 
@@ -114,7 +114,7 @@ public class GameManagerTest {
         gameManager.getCurrentBoard().getLastPush().setDirections("UP");
 
         assertThrows(PushNotValidException.class, () -> {
-            gameManager.handlePushTile(index, DirectionType.DOWN, player1.getId());
+            gameManager.handlePushTile(index, DirectionType.DOWN, player1.getId(), false);
         });
     }
 
@@ -140,7 +140,7 @@ public class GameManagerTest {
         Tile topBefore = board.getTiles()[0][1];
         Tile extraBefore = board.getExtraTile();
 
-        board.pushTile(1, DirectionType.UP);
+        board.pushTile(1, DirectionType.UP, false);
 
         assertEquals(topBefore, board.getExtraTile(), "Top tile becomes extra");
         assertEquals(extraBefore, board.getTiles()[board.getRows() - 1][1], "Extra tile inserted at bottom");
@@ -150,7 +150,7 @@ public class GameManagerTest {
     void GameManagerTest_updateBoard_shouldThrowIfExtraTileNull() {
         board.setExtraTile(null);
 
-        assertThrows(Exception.class, () -> board.pushTile(1, DirectionType.UP));
+        assertThrows(Exception.class, () -> board.pushTile(1, DirectionType.UP, false));
     }
 
     @Test
@@ -158,15 +158,15 @@ public class GameManagerTest {
         board.getTiles()[0][1].setisFixed(true);
         board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
 
-        assertThrows(IllegalArgumentException.class, () -> board.pushTile(1, DirectionType.UP));
+        assertThrows(IllegalArgumentException.class, () -> board.pushTile(1, DirectionType.UP, false));
     }
 
     @Test
     void GameManagerTest_updateBoard_shouldThrowIfIndexOutOfBounds() {
         board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
 
-        assertThrows(IllegalArgumentException.class, () -> board.pushTile(-1, DirectionType.UP));
-        assertThrows(IllegalArgumentException.class, () -> board.pushTile(100, DirectionType.LEFT));
+        assertThrows(IllegalArgumentException.class, () -> board.pushTile(-1, DirectionType.UP, false));
+        assertThrows(IllegalArgumentException.class, () -> board.pushTile(100, DirectionType.LEFT, false));
     }
 
     @Test
@@ -272,7 +272,7 @@ public class GameManagerTest {
         board.setExtraTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
+        gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
         assertEquals(0, p.getCurrentPosition().getRow(),
                 "Player should move up by 1");
@@ -292,7 +292,7 @@ public class GameManagerTest {
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
+        gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
         assertEquals(rows - 1, p.getCurrentPosition().getRow(),
                 "Player pushed off top should reappear at bottom");
@@ -310,7 +310,7 @@ public class GameManagerTest {
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        gameManager.handlePushTile(3, DirectionType.DOWN, player1.getId());
+        gameManager.handlePushTile(3, DirectionType.DOWN, player1.getId(), false);
 
         assertEquals(2, p.getCurrentPosition().getRow());
         assertEquals(3, p.getCurrentPosition().getColumn());
@@ -328,7 +328,7 @@ public class GameManagerTest {
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        gameManager.handlePushTile(1, DirectionType.RIGHT, player1.getId());
+        gameManager.handlePushTile(1, DirectionType.RIGHT, player1.getId(), false);
 
         assertEquals(1, p.getCurrentPosition().getRow());
         assertEquals(0, p.getCurrentPosition().getColumn(),
@@ -346,7 +346,7 @@ public class GameManagerTest {
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        gameManager.handlePushTile(1, DirectionType.UP, player1.getId());
+        gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
         assertEquals(4, p.getCurrentPosition().getColumn());
         assertEquals(4, p.getCurrentPosition().getRow());
