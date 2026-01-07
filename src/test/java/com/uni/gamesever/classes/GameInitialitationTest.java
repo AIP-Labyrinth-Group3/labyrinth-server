@@ -99,7 +99,7 @@ public class GameInitialitationTest {
         when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(PlayerNotAdminException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size, 24);
+            gameInitialitionController.handleStartGameMessage(userId, size, 24, 0);
         });
     }
 
@@ -113,7 +113,7 @@ public class GameInitialitationTest {
         when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size, 24);
+            gameInitialitionController.handleStartGameMessage(userId, size, 24, 0);
         });
     }
 
