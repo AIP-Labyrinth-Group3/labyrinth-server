@@ -141,6 +141,12 @@ public class GameBoard {
 
             default:
                 throw new IllegalArgumentException("Invalid direction: " + direction);
+
+        }
+
+        if (isUsingPushFixed) {
+            recomputeFixedTilesAfterPush();
+            tileToBePushedOut.setisFixed(false);
         }
     }
 
@@ -347,4 +353,51 @@ public class GameBoard {
             tile.setBonus(null);
         }
     }
+
+    public void recomputeFixedTilesAfterPush() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                Tile tile = tiles[row][col];
+                if (tile != null) {
+                    tile.setisFixed(false);
+                }
+            }
+        }
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                Tile tile = tiles[row][col];
+                if (tile == null)
+                    continue;
+
+                if (isFixedPosition(row, col)) {
+                    tile.setisFixed(true);
+                }
+            }
+        }
+    }
+
+    private boolean isFixedPosition(int boardRow, int boardCol) {
+        if ((boardRow == 0 && boardCol == 0)
+                || (boardRow == 0 && boardCol == cols - 1)
+                || (boardRow == rows - 1 && boardCol == 0)
+                || (boardRow == rows - 1 && boardCol == cols - 1)) {
+            return true;
+        }
+        if ((boardRow == 0 || boardRow == rows - 1) && boardCol % 2 == 0) {
+            return true;
+        }
+        if ((boardCol == 0 || boardCol == cols - 1) && boardRow % 2 == 0) {
+            return true;
+        }
+        if (boardRow > 0 && boardRow < rows - 1
+                && boardCol > 0 && boardCol < cols - 1
+                && boardRow % spacing == 0
+                && boardCol % spacing == 0) {
+            return true;
+        }
+
+        return false;
+    }
+
 }

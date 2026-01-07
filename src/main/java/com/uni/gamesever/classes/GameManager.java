@@ -106,7 +106,8 @@ public class GameManager {
         } else {
             setTurnState(TurnState.WAITING_FOR_MOVE);
         }
-        GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
+                playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         return true;
@@ -231,7 +232,8 @@ public class GameManager {
         playerManager.setNextPlayerAsCurrent();
         boardItemPlacementService.trySpawnBonus(currentBoard);
 
-        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
+                playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
@@ -258,7 +260,8 @@ public class GameManager {
         currentBoard.setExtraTile(spareTile);
 
         setTurnState(TurnState.WAITING_FOR_PUSH);
-        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
+                playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
@@ -412,7 +415,8 @@ public class GameManager {
         playerManager.setNextPlayerAsCurrent();
         boardItemPlacementService.trySpawnBonus(currentBoard);
 
-        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates());
+        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
+                playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);

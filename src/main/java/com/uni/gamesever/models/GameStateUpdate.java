@@ -7,11 +7,11 @@ public class GameStateUpdate {
     private String currentPlayerId;
     private String currentTurnState;
 
-    public GameStateUpdate(GameBoard board, PlayerState[] players) {
+    public GameStateUpdate(GameBoard board, PlayerState[] players, String currentPlayerId, String currentTurnState) {
         this.board = board;
         this.players = players;
-        this.currentPlayerId = players[0].getPlayer().getId();
-        this.currentTurnState = TurnState.WAITING_FOR_PUSH.name();
+        this.currentPlayerId = currentPlayerId;
+        this.currentTurnState = currentTurnState;
     }
 
     public String getType() {
