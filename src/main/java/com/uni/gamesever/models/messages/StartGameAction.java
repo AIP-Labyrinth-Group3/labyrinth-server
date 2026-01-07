@@ -11,7 +11,7 @@ public class StartGameAction extends Message {
     public StartGameAction() {
         super("START_GAME");
         this.boardSize = new BoardSize(7, 7);
-        this.gameDurationInSeconds = 600;
+        this.gameDurationInSeconds = 3600;
         this.treasureCardCount = 24;
         this.totalBonusCount = 0;
     }
@@ -45,6 +45,13 @@ public class StartGameAction extends Message {
             throw new IllegalArgumentException("Treasure card count must be between 2 and 24.");
         }
         this.treasureCardCount = treasureCardCount;
+    }
+
+    public void setGameDurationInSeconds(int gameDurationInSeconds) {
+        if (gameDurationInSeconds < 0) {
+            throw new IllegalArgumentException("Game duration must be non-negative.");
+        }
+        this.gameDurationInSeconds = gameDurationInSeconds;
     }
 
 }

@@ -31,6 +31,8 @@ import com.uni.gamesever.models.Tile;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 
 @Service
 public class GameManager {
@@ -39,6 +41,7 @@ public class GameManager {
     private GameBoard currentBoard;
     private TurnState turnState = TurnState.NOT_STARTED;
     SocketMessageService socketBroadcastService;
+    GameTimerManager gameTimerManager;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private boolean pushTwiceUsedInCurrentTurn = false;
     private final Map<DirectionType, Coordinates> DIRECTION_OFFSETS = Map.of(
@@ -49,11 +52,13 @@ public class GameManager {
     BoardItemPlacementService boardItemPlacementService;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
-            GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService) {
+            GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
+            GameTimerManager gameTimerManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameStatsManager = gameStatsManager;
         this.boardItemPlacementService = boardItemPlacementService;
+        this.gameTimerManager = gameTimerManager;
     }
 
     public GameBoard getCurrentBoard() {
@@ -203,16 +208,7 @@ public class GameManager {
                     socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
                             objectMapper.writeValueAsString(nextTreasureEvent));
                 } else {
-                    gameStatsManager.updateScoresForAllPlayers();
-                    gameStatsManager.updateRankForAllPlayersBasedOnAmountOfTreasures();
-                    GameOver gameOver = new GameOver(gameStatsManager.getSortedRankings());
-                    if (gameOver.getWinnerId() != null) {
-                        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
-                        setTurnState(TurnState.NOT_STARTED);
-                        return true;
-                    } else {
-                        throw new IllegalStateException("Winner ID is null despite all treasures being collected.");
-                    }
+                    return endGameByTimeoutOrAfterCollectingAllTreasures();
                 }
 
             } catch (IllegalStateException e) {
@@ -487,5 +483,30 @@ public class GameManager {
         pushTwiceUsedInCurrentTurn = true;
 
         return true;
+    }
+
+    @EventListener
+    public void onGameTimeout(GameTimeoutEvent event) {
+        try {
+            System.out.println("[GameManager] Game ended due to timeout (event)");
+            endGameByTimeoutOrAfterCollectingAllTreasures();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean endGameByTimeoutOrAfterCollectingAllTreasures() throws JsonProcessingException {
+        System.out.println("[GameManager] Game ended due to timeout");
+        gameTimerManager.stop();
+        gameStatsManager.updateScoresForAllPlayers();
+        gameStatsManager.updateRankForAllPlayersBasedOnAmountOfTreasures();
+        GameOver gameOver = new GameOver(gameStatsManager.getSortedRankings());
+        if (gameOver.getWinnerId() != null) {
+            socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
+            setTurnState(TurnState.NOT_STARTED);
+            return true;
+        } else {
+            throw new IllegalStateException("Winner ID is null despite all treasures being collected.");
+        }
     }
 }
