@@ -49,6 +49,9 @@ public class GameManagerTest {
     @Mock
     BoardItemPlacementService boardItemPlacementService;
 
+    @Mock
+    GameTimerManager gameTimerManager;
+
     @InjectMocks
     GameManager gameManager;
 
@@ -391,6 +394,7 @@ public class GameManagerTest {
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1 });
         when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        doNothing().when(gameTimerManager).stop();
 
         PlayerGameStats endStats = new PlayerGameStats(10, 5, 1);
         RankingEntry finalRanking = new RankingEntry(player1, 1, 100, endStats);

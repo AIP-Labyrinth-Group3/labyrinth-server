@@ -101,8 +101,7 @@ public class MessageHandler {
             case "START_GAME":
                 try {
                     StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
-                    return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(),
-                            startGameReq.getTreasureCardCount(), startGameReq.getTotalBonusCount());
+                    return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(), startGameReq.getTreasureCardCount(), startGameReq.getGameDurationInSeconds(), startGameReq.getTotalBonusCount());
                 } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
@@ -138,6 +137,14 @@ public class MessageHandler {
                             "Failed to process start game request from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                             e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (Exception e) {
+                    System.err.println(
+                            "Unexpected error processing start game request from user " + userId + ": "
+                                    + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "An unexpected error occurred");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
