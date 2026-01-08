@@ -22,28 +22,34 @@ import com.uni.gamesever.models.Treasure;
 import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 public class GameInitializationController {
-    // hier kommt die ganze Gameboard generierung hin
     PlayerManager playerManager;
     GameManager gameManager;
     SocketMessageService socketBroadcastService;
     ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     GameStatsManager gameStatsManager;
     BoardItemPlacementService boardItemPlacementService;
+    GameTimerManager gameTimerManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     public GameInitializationController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameManager gameManager, GameStatsManager gameStatsManager,
-            BoardItemPlacementService boardItemPlacementService) {
+            BoardItemPlacementService boardItemPlacementService, GameTimerManager gameTimerManager,
+            ApplicationEventPublisher eventPublisher) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameManager = gameManager;
         this.gameStatsManager = gameStatsManager;
         this.boardItemPlacementService = boardItemPlacementService;
+        this.gameTimerManager = gameTimerManager;
+        this.eventPublisher = eventPublisher;
+
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures)
+    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures, long gameDuration)
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
@@ -95,6 +101,10 @@ public class GameInitializationController {
 
         PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+
+        gameTimerManager.start(gameDuration, () -> {
+            eventPublisher.publishEvent(new GameTimeoutEvent());
+        });
 
         return true;
     }
