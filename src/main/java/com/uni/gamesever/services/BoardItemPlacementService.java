@@ -49,7 +49,11 @@ public class BoardItemPlacementService {
         }
     }
 
-    public boolean trySpawnBonus(GameBoard board) {
+    public boolean trySpawnBonus(GameBoard board, int totalBonusCountsOnBoard) {
+        if (totalBonusCountsOnBoard <= 0) {
+            return false;
+        }
+
         int bonusCount = countBonusesOnBoard(board);
         double chance = getSpawnChance(bonusCount);
 
@@ -60,6 +64,7 @@ public class BoardItemPlacementService {
             return false;
 
         Bonus bonus = createRandomBonus();
+
         placeOneBonus(board, bonus);
         return true;
     }

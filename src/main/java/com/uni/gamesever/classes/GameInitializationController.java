@@ -49,7 +49,7 @@ public class GameInitializationController {
 
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures, long gameDuration)
+    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures, long gameDuration, int totalBonusCount)
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
@@ -70,6 +70,8 @@ public class GameInitializationController {
 
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 
+        gameManager.setTotalBonusCountsOnBoard(totalBonusCount);
+
         GameBoard board = GameBoard.generateBoard(size);
 
         playerManager.initializePlayerStates(board);
@@ -79,7 +81,9 @@ public class GameInitializationController {
         distributeTreasuresOnPlayers(treasures);
 
         for (int i = 0; i < 4; i++) {
-            boardItemPlacementService.trySpawnBonus(board);
+            if (boardItemPlacementService.trySpawnBonus(board, gameManager.getTotalBonusCountsOnBoard())) {
+                gameManager.reduceTotalBonusCountsOnBoard(1);
+            }
         }
 
         if (board.getExtraTile() == null) {

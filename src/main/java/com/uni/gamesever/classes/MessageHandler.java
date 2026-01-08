@@ -101,8 +101,7 @@ public class MessageHandler {
             case "START_GAME":
                 try {
                     StartGameAction startGameReq = objectMapper.readValue(message, StartGameAction.class);
-                    return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(),
-                            startGameReq.getTreasureCardCount(), startGameReq.getGameDurationInSeconds());
+                    return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(), startGameReq.getTreasureCardCount(), startGameReq.getGameDurationInSeconds(), startGameReq.getTotalBonusCount());
                 } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,

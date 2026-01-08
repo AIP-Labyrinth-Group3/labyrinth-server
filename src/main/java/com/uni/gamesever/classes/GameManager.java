@@ -40,6 +40,7 @@ public class GameManager {
     GameStatsManager gameStatsManager;
     private GameBoard currentBoard;
     private TurnState turnState = TurnState.NOT_STARTED;
+    private int totalBonusCountsOnBoard = 0;
     SocketMessageService socketBroadcastService;
     GameTimerManager gameTimerManager;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
@@ -69,12 +70,27 @@ public class GameManager {
         this.currentBoard = currentBoard;
     }
 
+    public void reduceTotalBonusCountsOnBoard(int amount) {
+        this.totalBonusCountsOnBoard -= amount;
+        if (this.totalBonusCountsOnBoard < 0) {
+            this.totalBonusCountsOnBoard = 0;
+        }
+    }
+
     public TurnState getTurnState() {
         return turnState;
     }
 
     public void setTurnState(TurnState turnState) {
         this.turnState = turnState;
+    }
+
+    public int getTotalBonusCountsOnBoard() {
+        return totalBonusCountsOnBoard;
+    }
+
+    public void setTotalBonusCountsOnBoard(int totalBonusCountsOnBoard) {
+        this.totalBonusCountsOnBoard = totalBonusCountsOnBoard;
     }
 
     public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed,
@@ -226,7 +242,9 @@ public class GameManager {
 
         setTurnState(TurnState.WAITING_FOR_PUSH);
         playerManager.setNextPlayerAsCurrent();
-        boardItemPlacementService.trySpawnBonus(currentBoard);
+        if (boardItemPlacementService.trySpawnBonus(currentBoard, getTotalBonusCountsOnBoard())) {
+            reduceTotalBonusCountsOnBoard(1);
+        }
 
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
                 playerManager.getCurrentPlayer().getId(), getTurnState().name());
@@ -409,7 +427,9 @@ public class GameManager {
 
         setTurnState(TurnState.WAITING_FOR_PUSH);
         playerManager.setNextPlayerAsCurrent();
-        boardItemPlacementService.trySpawnBonus(currentBoard);
+        if (boardItemPlacementService.trySpawnBonus(currentBoard, getTotalBonusCountsOnBoard())) {
+            reduceTotalBonusCountsOnBoard(1);
+        }
 
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
                 playerManager.getCurrentPlayer().getId(), getTurnState().name());
