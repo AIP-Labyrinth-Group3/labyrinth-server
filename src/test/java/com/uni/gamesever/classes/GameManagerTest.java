@@ -371,45 +371,61 @@ public class GameManagerTest {
     }
 
     @Test
-    void GameManagerTest_handleMovePawn_shouldBroadcastGameOverWhenLastTreasureCollected() throws Exception {
+    void handleMovePawn_shouldEndGameOnlyAfterReturningHomeWithNoTreasure() throws Exception {
         gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
 
-        for (int r = 0; r < board.getRows(); r++) {
-            for (int c = 0; c < board.getCols(); c++) {
-                board.setTile(r, c, null);
-            }
-        }
+        gameManager.setCurrentBoard(board);
 
-        Coordinates startPos = new Coordinates(0, 0);
-        state1.setCurrentPosition(startPos);
+        Coordinates home = new Coordinates(0, 0);
+        Coordinates treasurePos = new Coordinates(0, 1);
 
-        Treasure targetTreasure = new Treasure(1, "Treasure 1");
-        state1.setCurrentTreasure(targetTreasure);
+        state1.setHomePosition(home);
+        state1.setCurrentPosition(home);
 
-        Tile startTile = new Tile(List.of(DirectionType.DOWN), TileType.STRAIGHT);
-        Tile targetTile = new Tile(List.of(DirectionType.UP), TileType.STRAIGHT);
-        targetTile.setTreasure(targetTreasure);
+        Treasure treasure = new Treasure(1, "Last Treasure");
+        state1.setCurrentTreasure(treasure);
 
-        board.setTile(0, 0, startTile);
-        board.setTile(1, 0, targetTile);
+        Tile homeTile = new Tile(
+                List.of(DirectionType.DOWN, DirectionType.RIGHT),
+                TileType.CORNER);
+
+        Tile treasureTile = new Tile(
+                List.of(DirectionType.UP, DirectionType.DOWN),
+                TileType.STRAIGHT);
+        treasureTile.setTreasure(treasure);
+
+        board.setTile(0, 0, homeTile);
+        board.setTile(1, 0, treasureTile);
 
         when(playerManager.getCurrentPlayerState()).thenReturn(state1);
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1 });
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
-        doNothing().when(gameTimerManager).stop();
+        when(playerManager.getNonNullPlayerStates())
+                .thenReturn(new PlayerState[] { state1 });
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn())
+                .thenReturn(new PlayerState[] {});
 
-        PlayerGameStats endStats = new PlayerGameStats(10, 5, 1);
+        PlayerGameStats endStats = new PlayerGameStats(2, 0, 1);
         RankingEntry finalRanking = new RankingEntry(player1, 1, 100, endStats);
         when(gameStatsManager.getSortedRankings()).thenReturn(List.of(finalRanking));
 
-        boolean result = gameManager.handleMovePawn(new Coordinates(0, 1), player1.getId(), false);
+        boolean movedToTreasure = gameManager.handleMovePawn(treasurePos, player1.getId(), false);
 
-        assertTrue(result);
-        verify(gameStatsManager).increaseTreasuresCollected(1, player1.getId());
-        verify(gameStatsManager).updateScoresForAllPlayers();
-        verify(socketBroadcastService, atLeastOnce()).broadcastMessage(
-                argThat(message -> message.contains(player1.getId()) && message.contains("rank")));
+        assertTrue(movedToTreasure);
+        verify(gameStatsManager)
+                .increaseTreasuresCollected(1, player1.getId());
+
+        verify(socketBroadcastService, never())
+                .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
+
+        gameManager.setTurnState(TurnState.WAITING_FOR_MOVE);
+        when(playerManager.getCurrentPlayer()).thenReturn(player1);
+
+        boolean movedHome = gameManager.handleMovePawn(home, player1.getId(), false);
+
+        assertTrue(movedHome);
+
+        verify(socketBroadcastService, atLeastOnce())
+                .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
 
         assertEquals(TurnState.NOT_STARTED, gameManager.getTurnState());
     }
@@ -493,6 +509,7 @@ public class GameManagerTest {
         beamBonus.setType(BonusType.BEAM);
         state1.collectBonus(beamBonus);
         state1.setCurrentPosition(new Coordinates(0, 0));
+        state1.setHomePosition(new Coordinates(0, 0));
 
         Tile start = new Tile(List.of(DirectionType.RIGHT), TileType.STRAIGHT);
         Tile target = new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT);
@@ -527,6 +544,7 @@ public class GameManagerTest {
         }
 
         state1.setCurrentPosition(new Coordinates(0, 0));
+        state1.setHomePosition(new Coordinates(0, 0));
 
         Tile start = new Tile(List.of(DirectionType.RIGHT), TileType.STRAIGHT);
         Tile target = new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT);
