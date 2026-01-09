@@ -387,9 +387,6 @@ class PlayerManagerTest {
 
         @Test
         void initializePlayerStates_shouldInitializeEmptyArraysAndPoints() throws UsernameAlreadyTakenException {
-            // GIVEN
-            PlayerState player1 = new PlayerState(mockPlayer1, null, null, null, 0);
-            player1.setAchievements(null);
             playerManager.addPlayer(mockPlayer1);
 
             when(mockBoard.getSize()).thenReturn(new BoardSize(7, 7));

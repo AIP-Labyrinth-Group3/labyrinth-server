@@ -80,6 +80,8 @@ public class Tile {
                 case LEFT:
                     entrances.set(i, DirectionType.UP);
                     break;
+                default:
+                    break;
             }
         }
     }

@@ -17,6 +17,7 @@ import com.uni.gamesever.exceptions.NoValidActionException;
 import com.uni.gamesever.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.exceptions.PushNotValidException;
 import com.uni.gamesever.exceptions.TargetCoordinateNullException;
+import com.uni.gamesever.models.AchievementContext;
 import com.uni.gamesever.models.BonusType;
 import com.uni.gamesever.models.Coordinates;
 import com.uni.gamesever.models.DirectionType;
@@ -32,7 +33,6 @@ import com.uni.gamesever.models.TurnState;
 import com.uni.gamesever.services.BoardItemPlacementService;
 import com.uni.gamesever.services.SocketMessageService;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 
 @Service
 public class GameManager {
@@ -51,15 +51,17 @@ public class GameManager {
             DirectionType.LEFT, new Coordinates(-1, 0),
             DirectionType.RIGHT, new Coordinates(1, 0));
     BoardItemPlacementService boardItemPlacementService;
+    AchievementManager achievementManager;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
-            GameTimerManager gameTimerManager) {
+            GameTimerManager gameTimerManager, AchievementManager achievementManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameStatsManager = gameStatsManager;
         this.boardItemPlacementService = boardItemPlacementService;
         this.gameTimerManager = gameTimerManager;
+        this.achievementManager = achievementManager;
     }
 
     public GameBoard getCurrentBoard() {
@@ -148,6 +150,7 @@ public class GameManager {
                         rowOfPlayer -= 1;
                         if (rowOfPlayer < 0) {
                             rowOfPlayer = rows - 1;
+                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -157,6 +160,7 @@ public class GameManager {
                         rowOfPlayer += 1;
                         if (rowOfPlayer >= rows) {
                             rowOfPlayer = 0;
+                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -166,6 +170,7 @@ public class GameManager {
                         colOfPlayer -= 1;
                         if (colOfPlayer < 0) {
                             colOfPlayer = cols - 1;
+                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -175,9 +180,12 @@ public class GameManager {
                         colOfPlayer += 1;
                         if (colOfPlayer >= cols) {
                             colOfPlayer = 0;
+                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
+                    break;
+                default:
                     break;
             }
         }
@@ -246,11 +254,21 @@ public class GameManager {
             reduceTotalBonusCountsOnBoard(1);
         }
 
+        AchievementContext ctx = new AchievementContext(currentPlayerState.getStepsTakenThisTurn(),
+                currentPlayerState.getWasPushedOutLastRound(),
+                currentPlayerState.getHasCollectedTreasureThisTurn());
+
+        achievementManager.check(currentPlayerState, ctx);
+
+        currentPlayerState.setStepsTakenThisTurn(0);
+        currentPlayerState.consumePushedOutFlag();
+        currentPlayerState.consumeCollectedTreasureFlag();
+
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
                 playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getSpareTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
@@ -269,16 +287,16 @@ public class GameManager {
                     "It is not the phase to rotate tiles.");
         }
 
-        Tile spareTile = currentBoard.getExtraTile();
+        Tile spareTile = currentBoard.getSpareTile();
         spareTile.rotateClockwise();
-        currentBoard.setExtraTile(spareTile);
+        currentBoard.setSpareTile(spareTile);
 
         setTurnState(TurnState.WAITING_FOR_PUSH);
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
                 playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getSpareTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
@@ -309,6 +327,7 @@ public class GameManager {
         int boardRows = board.getRows();
         int boardCols = board.getCols();
         Map<Coordinates, Integer> stepsMap = new java.util.HashMap<>();
+        playerManager.getCurrentPlayerState().setStepsTakenThisTurn(0);
 
         boolean[][] visited = new boolean[boardRows][boardCols];
         Queue<Coordinates> queue = new java.util.LinkedList<>();
@@ -348,6 +367,7 @@ public class GameManager {
                 if (neighbor.getColumn() == target.getColumn() && neighbor.getRow() == target.getRow()) {
                     gameStatsManager.increaseStepsTaken(stepsMap.get(current) + 1,
                             playerManager.getCurrentPlayer().getId());
+                    playerManager.getCurrentPlayerState().setStepsTakenThisTurn(stepsMap.get(current) + 1);
                     return true;
                 }
                 queue.add(neighbor);
@@ -435,7 +455,7 @@ public class GameManager {
                 playerManager.getCurrentPlayer().getId(), getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getExtraTile(), 60);
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), currentBoard.getSpareTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;

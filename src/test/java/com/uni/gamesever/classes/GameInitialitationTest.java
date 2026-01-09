@@ -322,12 +322,12 @@ public class GameInitialitationTest {
 
         assertEquals(size.getRows() * size.getCols(), nonNullCount, "All board tiles should be placed");
 
-        Tile extraTile = board.getExtraTile();
-        assertNotNull(extraTile, "Extra tile must not be null");
+        Tile spareTile = board.getSpareTile();
+        assertNotNull(spareTile, "Spare tile must not be null");
         boolean isOnBoard = false;
         for (Tile[] row : tiles) {
             for (Tile t : row) {
-                if (t == extraTile) {
+                if (t == spareTile) {
                     isOnBoard = true;
                     break;
                 }
