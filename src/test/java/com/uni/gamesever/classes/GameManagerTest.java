@@ -52,6 +52,9 @@ public class GameManagerTest {
     @Mock
     GameTimerManager gameTimerManager;
 
+    @Mock
+    AchievementManager achievementManager;
+
     @InjectMocks
     GameManager gameManager;
 
