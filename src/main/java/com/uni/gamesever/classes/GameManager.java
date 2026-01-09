@@ -221,24 +221,28 @@ public class GameManager {
         currentPlayerState.setCurrentPosition(targetCoordinates);
 
         Tile targetTile = currentBoard.getTileAtCoordinate(targetCoordinates);
+
         if (targetTile != null && targetTile.getTreasure() != null &&
                 targetTile.getTreasure().equals(currentPlayerState.getCurrentTreasure())) {
             try {
                 currentPlayerState.collectCurrentTreasure();
-                currentBoard.removeTreasureFromTile(targetCoordinates);
                 gameStatsManager.increaseTreasuresCollected(1, playerIdWhoMoved);
                 if (currentPlayerState.getCurrentTreasure() != null) {
                     NextTreasureCardEvent nextTreasureEvent = new NextTreasureCardEvent(
                             currentPlayerState.getCurrentTreasure());
                     socketBroadcastService.sendMessageToSession(playerIdWhoMoved,
                             objectMapper.writeValueAsString(nextTreasureEvent));
-                } else {
-                    return endGameByTimeoutOrAfterCollectingAllTreasures();
                 }
 
             } catch (IllegalStateException e) {
                 throw new GameNotValidException(e.getMessage());
             }
+        }
+
+        if (currentPlayerState.getHomePosition().getColumn() == targetCoordinates.getColumn() &&
+                currentPlayerState.getHomePosition().getRow() == targetCoordinates.getRow() &&
+                currentPlayerState.getCurrentTreasure() == null) {
+            return endGameByTimeoutOrAfterCollectingAllTreasures();
         }
 
         if (targetTile != null && targetTile.getBonus() != null) {
