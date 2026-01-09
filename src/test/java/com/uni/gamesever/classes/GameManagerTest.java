@@ -151,19 +151,19 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updateBoard_shouldShiftColumnUpCorrectly() throws Exception {
-        board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
         Tile topBefore = board.getTiles()[0][1];
-        Tile extraBefore = board.getExtraTile();
+        Tile spareBefore = board.getSpareTile();
 
         board.pushTile(1, DirectionType.UP, false);
 
-        assertEquals(topBefore, board.getExtraTile(), "Top tile becomes extra");
-        assertEquals(extraBefore, board.getTiles()[board.getRows() - 1][1], "Extra tile inserted at bottom");
+        assertEquals(topBefore, board.getSpareTile(), "Top tile becomes spare");
+        assertEquals(spareBefore, board.getTiles()[board.getRows() - 1][1], "Spare tile inserted at bottom");
     }
 
     @Test
     void GameManagerTest_updateBoard_shouldThrowIfExtraTileNull() {
-        board.setExtraTile(null);
+        board.setSpareTile(null);
 
         assertThrows(Exception.class, () -> board.pushTile(1, DirectionType.UP, false));
     }
@@ -171,14 +171,14 @@ public class GameManagerTest {
     @Test
     void GameManagerTest_updateBoard_shouldThrowIfFixedTile() {
         board.getTiles()[0][1].setisFixed(true);
-        board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
 
         assertThrows(IllegalArgumentException.class, () -> board.pushTile(1, DirectionType.UP, false));
     }
 
     @Test
     void GameManagerTest_updateBoard_shouldThrowIfIndexOutOfBounds() {
-        board.setExtraTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP, DirectionType.RIGHT), TileType.CORNER));
 
         assertThrows(IllegalArgumentException.class, () -> board.pushTile(-1, DirectionType.UP, false));
         assertThrows(IllegalArgumentException.class, () -> board.pushTile(100, DirectionType.LEFT, false));
@@ -284,7 +284,7 @@ public class GameManagerTest {
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
         gameManager.setCurrentBoard(board);
-        board.setExtraTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
@@ -303,7 +303,7 @@ public class GameManagerTest {
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
-        board.setExtraTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
@@ -321,7 +321,7 @@ public class GameManagerTest {
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
-        board.setExtraTile(new Tile(List.of(DirectionType.DOWN), TileType.STRAIGHT));
+        board.setSpareTile(new Tile(List.of(DirectionType.DOWN), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
@@ -339,7 +339,7 @@ public class GameManagerTest {
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
-        board.setExtraTile(new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT));
+        board.setSpareTile(new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
@@ -357,7 +357,7 @@ public class GameManagerTest {
 
         when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
 
-        board.setExtraTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
@@ -443,7 +443,7 @@ public class GameManagerTest {
         Bonus pushFixedBonus = new Bonus();
         pushFixedBonus.setType(BonusType.PUSH_FIXED);
         state1.collectBonus(pushFixedBonus);
-        board.setExtraTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
+        board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
 
         boolean result = gameManager.handleUsePushFixedTile(
                 DirectionType.UP, 1, player1.getId());

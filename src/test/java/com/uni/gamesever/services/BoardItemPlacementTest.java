@@ -18,12 +18,11 @@ import com.uni.gamesever.models.Coordinates;
 public class BoardItemPlacementTest {
 
     private BoardItemPlacementService boardItemPlacementService;
-    private GameBoard board;
 
     @BeforeEach
     void setUp() throws Throwable {
         boardItemPlacementService = new BoardItemPlacementService();
-        board = GameBoard.generateBoard(new BoardSize());
+        GameBoard.generateBoard(new BoardSize());
     }
 
     @Test

@@ -49,7 +49,8 @@ public class GameInitializationController {
 
     }
 
-    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures, long gameDuration, int totalBonusCount)
+    public boolean handleStartGameMessage(String userID, BoardSize size, int amountOfTreasures, long gameDuration,
+            int totalBonusCount)
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
@@ -86,8 +87,8 @@ public class GameInitializationController {
             }
         }
 
-        if (board.getExtraTile() == null) {
-            throw new NoExtraTileException("Extra tile was not set on the game board.");
+        if (board.getSpareTile() == null) {
+            throw new NoExtraTileException("Spare tile was not set on the game board.");
         }
 
         GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
@@ -103,7 +104,7 @@ public class GameInitializationController {
                 playerManager.getCurrentPlayer().getId(), gameManager.getTurnState().name());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
-        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getExtraTile(), 60);
+        PlayerTurn turn = new PlayerTurn(playerManager.getCurrentPlayer().getId(), board.getSpareTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         gameTimerManager.start(gameDuration, () -> {

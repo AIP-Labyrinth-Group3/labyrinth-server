@@ -15,8 +15,7 @@ public class GameBoard {
     private PushActionInfo lastPush;
     @JsonIgnore
     private BoardSize size;
-    @JsonIgnore
-    private Tile extraTile;
+    private Tile spareTile;
     private static final int spacing = 2;
 
     public GameBoard(BoardSize size) {
@@ -54,12 +53,12 @@ public class GameBoard {
         this.lastPush = lastPush;
     }
 
-    public Tile getExtraTile() {
-        return extraTile;
+    public Tile getSpareTile() {
+        return spareTile;
     }
 
-    public void setExtraTile(Tile extraTile) {
-        this.extraTile = extraTile;
+    public void setSpareTile(Tile spareTile) {
+        this.spareTile = spareTile;
     }
 
     public Tile getTileAtCoordinate(Coordinates coordinate) {
@@ -78,7 +77,7 @@ public class GameBoard {
 
     public void pushTile(int rowOrColIndex, DirectionType direction, boolean isUsingPushFixed)
             throws NoExtraTileException {
-        if (extraTile == null) {
+        if (spareTile == null) {
             throw new NoExtraTileException("Extra tile is not set.");
         }
 
@@ -111,32 +110,32 @@ public class GameBoard {
                 for (int r = 0; r < rows - 1; r++) {
                     tiles[r][rowOrColIndex] = tiles[r + 1][rowOrColIndex];
                 }
-                tiles[rows - 1][rowOrColIndex] = extraTile;
-                extraTile = tileToBePushedOut;
+                tiles[rows - 1][rowOrColIndex] = spareTile;
+                spareTile = tileToBePushedOut;
                 break;
 
             case DOWN:
                 for (int r = rows - 1; r > 0; r--) {
                     tiles[r][rowOrColIndex] = tiles[r - 1][rowOrColIndex];
                 }
-                tiles[0][rowOrColIndex] = extraTile;
-                extraTile = tileToBePushedOut;
+                tiles[0][rowOrColIndex] = spareTile;
+                spareTile = tileToBePushedOut;
                 break;
 
             case LEFT:
                 for (int c = 0; c < cols - 1; c++) {
                     tiles[rowOrColIndex][c] = tiles[rowOrColIndex][c + 1];
                 }
-                tiles[rowOrColIndex][cols - 1] = extraTile;
-                extraTile = tileToBePushedOut;
+                tiles[rowOrColIndex][cols - 1] = spareTile;
+                spareTile = tileToBePushedOut;
                 break;
 
             case RIGHT:
                 for (int c = cols - 1; c > 0; c--) {
                     tiles[rowOrColIndex][c] = tiles[rowOrColIndex][c - 1];
                 }
-                tiles[rowOrColIndex][0] = extraTile;
-                extraTile = tileToBePushedOut;
+                tiles[rowOrColIndex][0] = spareTile;
+                spareTile = tileToBePushedOut;
                 break;
 
             default:
@@ -257,7 +256,7 @@ public class GameBoard {
         if (!remainingTiles.isEmpty()) {
             TileType extraTileType = remainingTiles.remove(remainingTiles.size() - 1);
             Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
-            board.setExtraTile(extraTile);
+            board.setSpareTile(extraTile);
         } else {
             throw new NoExtraTileException("No tiles available to assign as extra tile.");
         }
