@@ -226,7 +226,6 @@ public class GameManager {
                 targetTile.getTreasure().equals(currentPlayerState.getCurrentTreasure())) {
             try {
                 currentPlayerState.collectCurrentTreasure();
-                currentBoard.removeTreasureFromTile(targetCoordinates);
                 gameStatsManager.increaseTreasuresCollected(1, playerIdWhoMoved);
                 if (currentPlayerState.getCurrentTreasure() != null) {
                     NextTreasureCardEvent nextTreasureEvent = new NextTreasureCardEvent(
