@@ -222,12 +222,6 @@ public class GameManager {
 
         Tile targetTile = currentBoard.getTileAtCoordinate(targetCoordinates);
 
-        if (currentPlayerState.getHomePosition().getColumn() == targetCoordinates.getColumn() &&
-                currentPlayerState.getHomePosition().getRow() == targetCoordinates.getRow() &&
-                currentPlayerState.getCurrentTreasure() == null) {
-            return endGameByTimeoutOrAfterCollectingAllTreasures();
-        }
-
         if (targetTile != null && targetTile.getTreasure() != null &&
                 targetTile.getTreasure().equals(currentPlayerState.getCurrentTreasure())) {
             try {
@@ -244,6 +238,12 @@ public class GameManager {
             } catch (IllegalStateException e) {
                 throw new GameNotValidException(e.getMessage());
             }
+        }
+
+        if (currentPlayerState.getHomePosition().getColumn() == targetCoordinates.getColumn() &&
+                currentPlayerState.getHomePosition().getRow() == targetCoordinates.getRow() &&
+                currentPlayerState.getCurrentTreasure() == null) {
+            return endGameByTimeoutOrAfterCollectingAllTreasures();
         }
 
         if (targetTile != null && targetTile.getBonus() != null) {
