@@ -1,8 +1,0 @@
-package com.uni.gamesever.exceptions;
-
-public class NotPlayersRotateTileExeption extends NoValidActionException {
-    public NotPlayersRotateTileExeption(String message) {
-        super(message);
-    }
-
-}

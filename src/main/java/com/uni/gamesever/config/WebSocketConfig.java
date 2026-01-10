@@ -5,12 +5,12 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import com.uni.gamesever.controller.SocketConnectionHandler;
+import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
 
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig
-    implements WebSocketConfigurer {
+        implements WebSocketConfigurer {
 
     private final SocketConnectionHandler socketConnectionHandler;
 
@@ -20,11 +20,10 @@ public class WebSocketConfig
 
     @Override
     public void registerWebSocketHandlers(
-        WebSocketHandlerRegistry webSocketHandlerRegistry)
-    {
-        
+            WebSocketHandlerRegistry webSocketHandlerRegistry) {
+
         webSocketHandlerRegistry
-        .addHandler(socketConnectionHandler,"/game")
-        .setAllowedOrigins("*");
+                .addHandler(socketConnectionHandler, "/game")
+                .setAllowedOrigins("*");
     }
 }

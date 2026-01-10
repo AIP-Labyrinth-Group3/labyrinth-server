@@ -1,6 +1,6 @@
 package com.uni.gamesever.controller;
 
-import com.uni.gamesever.classes.MessageHandler;
+import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
 import com.uni.gamesever.services.SocketMessageService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +18,7 @@ import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.uni.gamesever.interfaces.Websocket.MessageHandler;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -63,17 +64,20 @@ class SocketConnectionHandlerTest {
 
             // THEN
             verify(socketMessageService, times(1)).addIncomingSession(eq(mockSession));
-            assertEquals(SESSION_ID + " Connected" + System.lineSeparator(), OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte die korrekte 'Connected' Meldung enthalten.");
+            assertEquals(SESSION_ID + " Connected" + System.lineSeparator(), OUTPUT_STREAM.toString(),
+                    "Die Konsolenausgabe sollte die korrekte 'Connected' Meldung enthalten.");
         }
 
         @Test
         void afterConnectionEstablished_shouldThrowException() {
             // GIVEN
-            doThrow(new RuntimeException("Simulated Service Error")).when(socketMessageService).addIncomingSession(any());
+            doThrow(new RuntimeException("Simulated Service Error")).when(socketMessageService)
+                    .addIncomingSession(any());
 
             // WHEN / THEN
             assertThrows(RuntimeException.class, () -> socketConnectionHandler.afterConnectionEstablished(mockSession));
-            assertEquals("", OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
+            assertEquals("", OUTPUT_STREAM.toString(),
+                    "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
         }
     }
 
@@ -90,17 +94,21 @@ class SocketConnectionHandlerTest {
 
             // THEN
             verify(socketMessageService, times(1)).removeDisconnectedSession(eq(mockSession));
-            assertEquals(SESSION_ID + " DisConnected" + System.lineSeparator(), OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte die korrekte 'Disconnected' Meldung enthalten.");
+            assertEquals(SESSION_ID + " DisConnected" + System.lineSeparator(), OUTPUT_STREAM.toString(),
+                    "Die Konsolenausgabe sollte die korrekte 'Disconnected' Meldung enthalten.");
         }
 
         @Test
         void afterConnectionClosed_shouldThrowException() {
             // GIVEN
-            doThrow(new RuntimeException("Simulated Removal Error")).when(socketMessageService).removeDisconnectedSession(any());
+            doThrow(new RuntimeException("Simulated Removal Error")).when(socketMessageService)
+                    .removeDisconnectedSession(any());
 
             // WHEN / THEN
-            assertThrows(RuntimeException.class, () -> socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus));
-            assertEquals("", OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
+            assertThrows(RuntimeException.class,
+                    () -> socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus));
+            assertEquals("", OUTPUT_STREAM.toString(),
+                    "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
         }
     }
 
@@ -119,25 +127,30 @@ class SocketConnectionHandlerTest {
         @Test
         void handleMessage_shouldSuccessAndPrint() throws Exception {
             // GIVEN
-            String expectedLog = "Message Received from user " + SESSION_ID + ": " + RAW_PAYLOAD + System.lineSeparator();
+            String expectedLog = "Message Received from user " + SESSION_ID + ": " + RAW_PAYLOAD
+                    + System.lineSeparator();
 
             // WHEN
             socketConnectionHandler.handleMessage(mockSession, mockTextMessage);
 
             // THEN
             verify(messageHandler, times(1)).handleClientMessage(eq(RAW_PAYLOAD), eq(SESSION_ID));
-            assertEquals(expectedLog, OUTPUT_STREAM.toString(), "Die Ausgabe muss die korrekte 'Message Received' Meldung enthalten.");
+            assertEquals(expectedLog, OUTPUT_STREAM.toString(),
+                    "Die Ausgabe muss die korrekte 'Message Received' Meldung enthalten.");
         }
 
         @Test
         void handleMessage_shouldThrowExceptionAndPrint() throws Exception {
             // GIVEN
-            doThrow(new IllegalStateException("Simulated Error")).when(messageHandler).handleClientMessage(anyString(), anyString());
+            doThrow(new IllegalStateException("Simulated Error")).when(messageHandler).handleClientMessage(anyString(),
+                    anyString());
             String expectedLogPart = "Message Received from user " + SESSION_ID;
 
             // WHEN / THEN
-            assertThrows(IllegalStateException.class, () -> socketConnectionHandler.handleMessage(mockSession, mockTextMessage));
-            assertTrue(OUTPUT_STREAM.toString().contains(expectedLogPart), "Der 'Message Received' Log sollte trotz der Ausnahme des Handlers gedruckt werden.");
+            assertThrows(IllegalStateException.class,
+                    () -> socketConnectionHandler.handleMessage(mockSession, mockTextMessage));
+            assertTrue(OUTPUT_STREAM.toString().contains(expectedLogPart),
+                    "Der 'Message Received' Log sollte trotz der Ausnahme des Handlers gedruckt werden.");
         }
     }
 }

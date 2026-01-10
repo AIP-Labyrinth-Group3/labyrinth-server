@@ -1,8 +1,13 @@
 package com.uni.gamesever.classes;
 
-import com.uni.gamesever.exceptions.UserNotFoundException;
-import com.uni.gamesever.exceptions.UsernameAlreadyTakenException;
-import com.uni.gamesever.models.*;
+import com.uni.gamesever.domain.exceptions.UserNotFoundException;
+import com.uni.gamesever.domain.exceptions.UsernameAlreadyTakenException;
+import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.BoardSize;
+import com.uni.gamesever.domain.model.Coordinates;
+import com.uni.gamesever.domain.model.GameBoard;
+import com.uni.gamesever.domain.model.PlayerInfo;
+import com.uni.gamesever.domain.model.PlayerState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
