@@ -6,14 +6,16 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.uni.gamesever.exceptions.NoExtraTileException;
-import com.uni.gamesever.models.BoardSize;
-import com.uni.gamesever.models.Bonus;
-import com.uni.gamesever.models.BonusType;
-import com.uni.gamesever.models.GameBoard;
-import com.uni.gamesever.models.Tile;
-import com.uni.gamesever.models.Treasure;
-import com.uni.gamesever.models.Coordinates;
+
+import com.uni.gamesever.domain.enums.BonusType;
+import com.uni.gamesever.domain.exceptions.NoExtraTileException;
+import com.uni.gamesever.domain.game.BoardItemPlacementService;
+import com.uni.gamesever.domain.model.BoardSize;
+import com.uni.gamesever.domain.model.Bonus;
+import com.uni.gamesever.domain.model.Coordinates;
+import com.uni.gamesever.domain.model.GameBoard;
+import com.uni.gamesever.domain.model.Tile;
+import com.uni.gamesever.domain.model.Treasure;
 
 public class BoardItemPlacementTest {
 

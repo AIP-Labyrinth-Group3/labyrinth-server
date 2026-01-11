@@ -14,11 +14,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.uni.gamesever.models.BoardSize;
-import com.uni.gamesever.models.GameBoard;
-import com.uni.gamesever.models.PlayerInfo;
-import com.uni.gamesever.models.PlayerState;
-import com.uni.gamesever.models.Treasure;
+import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.BoardSize;
+import com.uni.gamesever.domain.model.GameBoard;
+import com.uni.gamesever.domain.model.PlayerInfo;
+import com.uni.gamesever.domain.model.PlayerState;
+import com.uni.gamesever.domain.model.Treasure;
 import com.uni.gamesever.services.SocketMessageService;
 
 public class PlayerStateTest {

@@ -11,8 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.uni.gamesever.models.PlayerInfo;
-import com.uni.gamesever.models.RankingEntry;
+import com.uni.gamesever.domain.game.GameStatsManager;
+import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.PlayerInfo;
+import com.uni.gamesever.domain.model.RankingEntry;
 
 public class GameStatsTest {
 

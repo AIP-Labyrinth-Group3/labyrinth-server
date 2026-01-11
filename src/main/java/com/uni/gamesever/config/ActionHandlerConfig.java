@@ -3,8 +3,8 @@ package com.uni.gamesever.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.uni.gamesever.classes.MessageHandler;
-import com.uni.gamesever.controller.SocketConnectionHandler;
+import com.uni.gamesever.interfaces.Websocket.MessageHandler;
+import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Configuration
@@ -17,7 +17,7 @@ public class ActionHandlerConfig {
         this.messageHandler = messageHandler;
         this.socketBroadcastService = socketBroadcastService;
     }
-    
+
     @Bean
     public SocketConnectionHandler socketConnectionHandler() {
         return new SocketConnectionHandler(socketBroadcastService, messageHandler);

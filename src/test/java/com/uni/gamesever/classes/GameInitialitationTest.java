@@ -16,22 +16,27 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.uni.gamesever.exceptions.NoExtraTileException;
-import com.uni.gamesever.exceptions.NotEnoughPlayerException;
-import com.uni.gamesever.exceptions.PlayerNotAdminException;
-import com.uni.gamesever.models.AchievementType;
-import com.uni.gamesever.models.BoardSize;
-import com.uni.gamesever.models.BonusType;
-import com.uni.gamesever.models.DirectionType;
-import com.uni.gamesever.models.GameBoard;
-import com.uni.gamesever.models.PlayerInfo;
-import com.uni.gamesever.models.PlayerState;
-import com.uni.gamesever.models.Tile;
-import com.uni.gamesever.models.TileType;
-import com.uni.gamesever.models.Treasure;
-import com.uni.gamesever.models.TurnState;
-import com.uni.gamesever.models.messages.StartGameAction;
-import com.uni.gamesever.services.BoardItemPlacementService;
+import com.uni.gamesever.domain.enums.AchievementType;
+import com.uni.gamesever.domain.enums.BonusType;
+import com.uni.gamesever.domain.enums.DirectionType;
+import com.uni.gamesever.domain.enums.TileType;
+import com.uni.gamesever.domain.exceptions.NoExtraTileException;
+import com.uni.gamesever.domain.exceptions.NotEnoughPlayerException;
+import com.uni.gamesever.domain.exceptions.PlayerNotAdminException;
+import com.uni.gamesever.domain.game.BoardItemPlacementService;
+import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.game.GameStatsManager;
+import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.BoardSize;
+import com.uni.gamesever.domain.model.GameBoard;
+import com.uni.gamesever.domain.model.PlayerInfo;
+import com.uni.gamesever.domain.model.PlayerState;
+import com.uni.gamesever.domain.model.Tile;
+import com.uni.gamesever.domain.model.Treasure;
+import com.uni.gamesever.domain.model.TurnState;
+import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.interfaces.Websocket.GameInitializationController;
+import com.uni.gamesever.interfaces.Websocket.messages.client.StartGameRequest;
 import com.uni.gamesever.services.SocketMessageService;
 
 public class GameInitialitationTest {
@@ -60,7 +65,7 @@ public class GameInitialitationTest {
     @Test
     void startGameAction_shouldHaveDefaultValues() {
         BoardSize size = new BoardSize();
-        StartGameAction action = new StartGameAction(500, size, 24, 0);
+        StartGameRequest action = new StartGameRequest(500, size, 24, 0);
 
         assertEquals(500, action.getGameDurationInSeconds(), "Game duration should be 500 seconds");
         assertEquals(7, action.getBoardSize().getRows(), "Board rows should be 7");
@@ -71,7 +76,7 @@ public class GameInitialitationTest {
 
     @Test
     void startGameAction_shouldThrowExceptionOnInvalidTreasureCount() {
-        StartGameAction action = new StartGameAction();
+        StartGameRequest action = new StartGameRequest();
         assertThrows(IllegalArgumentException.class,
                 () -> action.setTreasureCardCount(1));
         assertThrows(IllegalArgumentException.class,
