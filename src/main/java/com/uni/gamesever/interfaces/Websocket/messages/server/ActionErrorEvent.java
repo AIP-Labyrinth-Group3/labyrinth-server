@@ -1,19 +1,16 @@
 package com.uni.gamesever.interfaces.Websocket.messages.server;
 
 import com.uni.gamesever.domain.model.ErrorCode;
+import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
-public class ActionErrorEvent {
-    private String type = "ACTION_ERROR";
+public class ActionErrorEvent extends Message {
     private ErrorCode errorCode;
     private String message;
 
     public ActionErrorEvent(ErrorCode errorCode, String message) {
+        super("ACTION_ERROR");
         this.errorCode = errorCode;
         this.message = message;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public ErrorCode getErrorCode() {

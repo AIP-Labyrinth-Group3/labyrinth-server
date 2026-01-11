@@ -1,19 +1,16 @@
 package com.uni.gamesever.interfaces.Websocket.messages.server;
 
 import com.uni.gamesever.domain.enums.AchievementType;
+import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
-public class AchievementEvent {
-    private String type = "ACHIEVEMENT_UNLOCKED";
+public class AchievementEvent extends Message {
     private String playerId;
     private AchievementType achievement;
 
     public AchievementEvent(String playerId, AchievementType achievement) {
+        super("ACHIEVEMENT_UNLOCKED");
         this.playerId = playerId;
         this.achievement = achievement;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public String getPlayerId() {
