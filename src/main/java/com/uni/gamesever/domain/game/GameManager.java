@@ -26,6 +26,7 @@ import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.PushActionInfo;
 import com.uni.gamesever.domain.model.Tile;
+import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
@@ -54,6 +55,8 @@ public class GameManager {
             DirectionType.RIGHT, new Coordinates(1, 0));
     BoardItemPlacementService boardItemPlacementService;
     AchievementManager achievementManager;
+    private TurnInfo turnInfo;
+    private String gameEndTime;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
@@ -64,6 +67,7 @@ public class GameManager {
         this.boardItemPlacementService = boardItemPlacementService;
         this.gameTimerManager = gameTimerManager;
         this.achievementManager = achievementManager;
+        this.turnInfo = new TurnInfo(null, TurnState.NOT_STARTED);
     }
 
     public GameBoard getCurrentBoard() {
@@ -95,6 +99,18 @@ public class GameManager {
 
     public void setTotalBonusCountsOnBoard(int totalBonusCountsOnBoard) {
         this.totalBonusCountsOnBoard = totalBonusCountsOnBoard;
+    }
+
+    public TurnInfo getTurnInfo() {
+        return turnInfo;
+    }
+
+    public String getGameEndTime() {
+        return gameEndTime;
+    }
+
+    public void setGameEndTime(String gameEndTime) {
+        this.gameEndTime = gameEndTime;
     }
 
     public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed,

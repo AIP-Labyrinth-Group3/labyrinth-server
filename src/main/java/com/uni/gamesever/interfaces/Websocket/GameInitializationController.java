@@ -1,5 +1,8 @@
 package com.uni.gamesever.interfaces.Websocket;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +24,7 @@ import com.uni.gamesever.domain.model.BoardSize;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.Treasure;
+import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStarted;
@@ -96,14 +100,27 @@ public class GameInitializationController {
             throw new NoExtraTileException("Spare tile was not set on the game board.");
         }
 
-        GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
-
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
         gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
 
         gameStatsManager.initAllRankingStats(playerManager);
+
+        gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().updateTurnEndTime();
+
+        gameManager
+                .setGameEndTime(OffsetDateTime.now().plusSeconds(gameDuration).toString());
+
+        gameTimerManager.start(gameDuration, () -> {
+            eventPublisher.publishEvent(new GameTimeoutEvent());
+        });
+
+        GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates(),
+                gameManager.getTurnInfo(),
+                gameManager.getGameEndTime());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
 
         GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates(),
                 playerManager.getCurrentPlayer().getId(), gameManager.getTurnState().name());
@@ -111,10 +128,6 @@ public class GameInitializationController {
 
         PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(), board.getSpareTile(), 60);
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
-
-        gameTimerManager.start(gameDuration, () -> {
-            eventPublisher.publishEvent(new GameTimeoutEvent());
-        });
 
         return true;
     }

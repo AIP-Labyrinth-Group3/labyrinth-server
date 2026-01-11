@@ -111,7 +111,7 @@ public class PlayerManager {
 
     public PlayerState getPlayerStateById(String playerId) {
         for (PlayerState state : playerStates) {
-            if (state != null && state.getPlayer().getId().equals(playerId)) {
+            if (state != null && state.getPlayerInfo().getId().equals(playerId)) {
                 return state;
             }
         }
@@ -127,7 +127,7 @@ public class PlayerManager {
     public PlayerState[] getPlayerStatesOfPlayersNotOnTurn() {
         List<PlayerState> otherPlayerStates = new ArrayList<>();
         for (PlayerState state : playerStates) {
-            if (state != null && !state.getPlayer().getId().equals(this.currentPlayer.getId())) {
+            if (state != null && !state.getPlayerInfo().getId().equals(this.currentPlayer.getId())) {
                 otherPlayerStates.add(state);
             }
         }
@@ -139,7 +139,7 @@ public class PlayerManager {
             return null;
         }
         for (PlayerState state : playerStates) {
-            if (state != null && state.getPlayer().getId().equals(this.currentPlayer.getId())) {
+            if (state != null && state.getPlayerInfo().getId().equals(this.currentPlayer.getId())) {
                 return state;
             }
         }

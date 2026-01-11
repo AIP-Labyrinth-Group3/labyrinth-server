@@ -59,7 +59,7 @@ public class AchievementManager {
 
     private void unlock(PlayerState player, AchievementType achievement) throws JsonProcessingException {
         player.unlockAchievement(achievement);
-        AchievementEvent achievementEvent = new AchievementEvent(player.getPlayer().getId(), achievement);
+        AchievementEvent achievementEvent = new AchievementEvent(player.getPlayerInfo().getId(), achievement);
         socketMessageService.broadcastMessage(objectMapper.writeValueAsString(achievementEvent));
     }
 }

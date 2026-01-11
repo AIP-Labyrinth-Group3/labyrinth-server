@@ -8,10 +8,11 @@ import com.uni.gamesever.domain.enums.AchievementType;
 import com.uni.gamesever.domain.enums.BonusType;
 
 public class PlayerState {
-    private PlayerInfo player;
+    private PlayerInfo playerInfo;
     private Coordinates currentPosition;
     private Coordinates homePosition;
     private List<Treasure> treasuresFound;
+    @JsonIgnore
     private Treasure currentTreasure;
     private int remainingTreasureCount;
     private String[] achievements;
@@ -29,7 +30,7 @@ public class PlayerState {
 
     public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homePosition,
             Treasure currentTreasure, int remainingTreasureCount) {
-        this.player = player;
+        this.playerInfo = player;
         this.currentPosition = currentPosition;
         this.homePosition = homePosition;
         this.treasuresFound = new ArrayList<>();
@@ -51,8 +52,8 @@ public class PlayerState {
         return achievements;
     }
 
-    public PlayerInfo getPlayer() {
-        return player;
+    public PlayerInfo getPlayerInfo() {
+        return playerInfo;
     }
 
     public Coordinates getHomePosition() {
@@ -83,8 +84,8 @@ public class PlayerState {
         this.treasuresFound = treasuresFound;
     }
 
-    public void setPlayer(PlayerInfo player) {
-        this.player = player;
+    public void setPlayerInfo(PlayerInfo player) {
+        this.playerInfo = player;
     }
 
     public void setHomePosition(Coordinates homePosition) {
