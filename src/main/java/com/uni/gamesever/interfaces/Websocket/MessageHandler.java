@@ -11,7 +11,7 @@ import com.uni.gamesever.domain.model.ErrorCode;
 import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 import com.uni.gamesever.interfaces.Websocket.messages.client.MovePawnRequest;
-import com.uni.gamesever.interfaces.Websocket.messages.client.PushFixedTileRequest;
+import com.uni.gamesever.interfaces.Websocket.messages.client.UsePushFixedTileRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.PushTileRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.StartGameRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.UseBeamRequest;
@@ -366,8 +366,8 @@ public class MessageHandler {
                 }
             case "USE_PUSH_FIXED":
                 try {
-                    PushFixedTileRequest pushFixedTileCommand = objectMapper.readValue(message,
-                            PushFixedTileRequest.class);
+                    UsePushFixedTileRequest pushFixedTileCommand = objectMapper.readValue(message,
+                            UsePushFixedTileRequest.class);
                     return gameManager.handleUsePushFixedTile(pushFixedTileCommand.getDirection(),
                             pushFixedTileCommand.getRowOrColIndex(), userId);
                 } catch (NotPlayersTurnException e) {

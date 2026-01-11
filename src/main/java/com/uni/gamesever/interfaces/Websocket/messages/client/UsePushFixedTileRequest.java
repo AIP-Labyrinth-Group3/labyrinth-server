@@ -2,17 +2,17 @@ package com.uni.gamesever.interfaces.Websocket.messages.client;
 
 import com.uni.gamesever.domain.enums.DirectionType;
 
-public class PushFixedTileRequest extends Message {
+public class UsePushFixedTileRequest extends Message {
     public int rowOrColIndex;
     public DirectionType direction;
 
-    public PushFixedTileRequest() {
-        super("USE_PUSHED_FIXED");
+    public UsePushFixedTileRequest() {
+        super("USE_PUSH_FIXED");
         this.rowOrColIndex = -1;
         this.direction = DirectionType.NONE;
     }
 
-    public PushFixedTileRequest(int rowOrColIndex, DirectionType direction) {
+    public UsePushFixedTileRequest(int rowOrColIndex, DirectionType direction) {
         super("USE_PUSHED_FIXED");
         this.rowOrColIndex = rowOrColIndex;
         this.direction = direction;
