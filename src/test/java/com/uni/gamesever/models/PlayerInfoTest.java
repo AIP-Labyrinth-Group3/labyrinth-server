@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.uni.gamesever.domain.enums.Color;
 import com.uni.gamesever.domain.model.PlayerInfo;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -83,15 +84,11 @@ class PlayerInfoTest {
         void PlayerInfo_setColor_shouldThrowExceptionForInvalidColor() {
             // GIVEN
             PlayerInfo p = new PlayerInfo(TEST_ID);
-            String invalidColor = "purple";
+            Color invalidColor = null;
             // WHEN & THEN
-            Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            assertThrows(IllegalArgumentException.class, () -> {
                 p.setColor(invalidColor);
             });
-            String expectedMessage = "Invalid color. Available colors are: RED, BLUE, GREEN, YELLOW.";
-            String actualMessage = exception.getMessage();
-            assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
-
         }
     }
 

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.uni.gamesever.domain.enums.Color;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.exceptions.UsernameAlreadyTakenException;
 import com.uni.gamesever.domain.model.Coordinates;
@@ -19,7 +20,8 @@ public class PlayerManager {
     private PlayerInfo[] players = new PlayerInfo[MAX_PLAYERS];
     private PlayerState[] playerStates = new PlayerState[MAX_PLAYERS];
     private boolean hasAdministrator = false;
-    private List<String> currentAvailableColors = new ArrayList<>(Arrays.asList("RED", "BLUE", "GREEN", "YELLOW"));
+    private List<Color> currentAvailableColors = new ArrayList<>(
+            Arrays.asList(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW));
     private PlayerInfo currentPlayer = null;
 
     public int getAmountOfPlayers() {

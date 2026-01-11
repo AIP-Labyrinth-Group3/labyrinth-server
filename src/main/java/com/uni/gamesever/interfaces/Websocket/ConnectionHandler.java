@@ -36,7 +36,7 @@ public class ConnectionHandler {
         newPlayer.setName(request.getUsername());
         if (playerManager.addPlayer(newPlayer)) {
             System.out.println("User " + userId + " connected as " + request.getUsername());
-            ConnectAck connectionAck = new ConnectAck(newPlayer.getId());
+            ConnectAck connectionAck = new ConnectAck(newPlayer.getId(), newPlayer.getId());
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
 
             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
