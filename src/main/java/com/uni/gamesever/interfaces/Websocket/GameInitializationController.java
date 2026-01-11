@@ -1,8 +1,6 @@
 package com.uni.gamesever.interfaces.Websocket;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +22,6 @@ import com.uni.gamesever.domain.model.BoardSize;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.Treasure;
-import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStarted;
@@ -63,7 +60,7 @@ public class GameInitializationController {
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
-        if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
+        if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
             throw new GameAlreadyStartedException("Game has already been started.");
         }
 
@@ -102,7 +99,7 @@ public class GameInitializationController {
 
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
-        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
 
         gameStatsManager.initAllRankingStats(playerManager);
 
@@ -123,7 +120,7 @@ public class GameInitializationController {
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
 
         GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates(),
-                playerManager.getCurrentPlayer().getId(), gameManager.getTurnState().name());
+                gameManager.getTurnInfo(), gameManager.getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(), board.getSpareTile(), 60);

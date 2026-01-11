@@ -1,6 +1,5 @@
 package com.uni.gamesever.domain.model;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 
 public class TurnInfo {

@@ -1,6 +1,6 @@
 package com.uni.gamesever.interfaces.Websocket;
 
-import java.time.Instant;
+import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.CloseStatus;
@@ -39,7 +39,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         try {
             socketBroadcastService.addIncomingSession(session);
             System.out.println(session.getId() + " Connected");
-            ServerInfoEvent serverInfoEvent = new ServerInfoEvent(Instant.now().toString(), serverVersion,
+            ServerInfoEvent serverInfoEvent = new ServerInfoEvent(OffsetDateTime.now().toString(), serverVersion,
                     protocolVersion, serverMotd);
             socketBroadcastService.sendMessageToSession(session.getId(),
                     objectmapper.writeValueAsString(serverInfoEvent));

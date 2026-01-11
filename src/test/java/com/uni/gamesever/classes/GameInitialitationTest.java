@@ -33,6 +33,7 @@ import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.Tile;
 import com.uni.gamesever.domain.model.Treasure;
+import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.GameInitializationController;
@@ -53,6 +54,8 @@ public class GameInitialitationTest {
     BoardItemPlacementService boardItemPlacementService;
     @Mock
     GameTimerManager gameTimerManager;
+    @Mock
+    TurnInfo turnInfo;
 
     @InjectMocks
     GameInitializationController gameInitialitionController;
@@ -103,7 +106,8 @@ public class GameInitialitationTest {
         BoardSize size = new BoardSize();
 
         when(playerManager.getAdminID()).thenReturn("adminUser");
-        when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
+        when(gameManager.getTurnInfo()).thenReturn(turnInfo);
+        when(turnInfo.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(PlayerNotAdminException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24, 0, 1);
@@ -117,7 +121,8 @@ public class GameInitialitationTest {
 
         when(playerManager.getAdminID()).thenReturn("adminUser");
         when(playerManager.getAmountOfPlayers()).thenReturn(1);
-        when(gameManager.getTurnState()).thenReturn(TurnState.NOT_STARTED);
+        when(gameManager.getTurnInfo()).thenReturn(turnInfo);
+        when(turnInfo.getTurnState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24, 0, 1);
