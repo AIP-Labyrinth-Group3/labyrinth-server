@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.enums.BonusType;
 import com.uni.gamesever.domain.enums.DirectionType;
 import com.uni.gamesever.domain.events.GameTimeoutEvent;
+import com.uni.gamesever.domain.exceptions.BonusNotAvailable;
 import com.uni.gamesever.domain.exceptions.GameNotStartedException;
 import com.uni.gamesever.domain.exceptions.GameNotValidException;
 import com.uni.gamesever.domain.exceptions.NoDirectionForPush;
@@ -21,6 +22,7 @@ import com.uni.gamesever.domain.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.domain.exceptions.PushNotValidException;
 import com.uni.gamesever.domain.exceptions.TargetCoordinateNullException;
 import com.uni.gamesever.domain.model.AchievementContext;
+import com.uni.gamesever.domain.model.Bonus;
 import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
@@ -398,7 +400,7 @@ public class GameManager {
 
     public boolean handleUseBeam(Coordinates targetCoordinates, String playerIdWhoUsedBeam)
             throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            TargetCoordinateNullException, JsonProcessingException {
+            TargetCoordinateNullException, JsonProcessingException, BonusNotAvailable {
         if (turnInfo.getTurnState() != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
                     "It is not the phase to use the beam.");
@@ -418,7 +420,7 @@ public class GameManager {
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.BEAM)) {
-            throw new NoValidActionException("Player does not have a BEAM bonus to use.");
+            throw new BonusNotAvailable("Player does not have a BEAM bonus to use.");
         }
 
         currentPlayerState.useOneBonusOfType(BonusType.BEAM);
@@ -428,7 +430,7 @@ public class GameManager {
 
     public boolean handleUseSwap(String targetPlayerId, String playerIdWhoUsedSwap)
             throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            TargetCoordinateNullException, JsonProcessingException {
+            TargetCoordinateNullException, JsonProcessingException, BonusNotAvailable {
         if (!playerIdWhoUsedSwap.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
                     "It is not your turn to use the swap bonus.");
@@ -447,7 +449,7 @@ public class GameManager {
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.SWAP)) {
-            throw new NoValidActionException("Player does not have a SWAP bonus to use.");
+            throw new BonusNotAvailable("Player does not have a SWAP bonus to use.");
         }
 
         PlayerState targetPlayerState = playerManager.getPlayerStateById(targetPlayerId);
@@ -482,8 +484,8 @@ public class GameManager {
     }
 
     public boolean handleUsePushFixedTile(DirectionType direction, int rowOrColIndex, String playerIdWhoUsedPushFixed)
-            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            JsonProcessingException, IllegalArgumentException, NoExtraTileException, NoDirectionForPush {
+            throws GameNotValidException, IllegalArgumentException, NoExtraTileException,
+            BonusNotAvailable, NoValidActionException, JsonProcessingException {
         if (!playerIdWhoUsedPushFixed.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
                     "It is not your turn to use the push fixed tile bonus.");
@@ -495,7 +497,7 @@ public class GameManager {
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.PUSH_FIXED)) {
-            throw new NoValidActionException("Player does not have a bonus to push a fixed tile.");
+            throw new BonusNotAvailable("Player does not have a bonus to push a fixed tile.");
         }
 
         if (direction == null) {
@@ -526,8 +528,7 @@ public class GameManager {
     }
 
     public boolean handleUsePushTwice(String playerIdWhoUsedPushTwice)
-            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            JsonProcessingException {
+            throws GameNotValidException, NotPlayersTurnException, BonusNotAvailable {
         if (!playerIdWhoUsedPushTwice.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
                     "It is not your turn to use the push twice bonus.");
@@ -539,7 +540,7 @@ public class GameManager {
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.PUSH_TWICE)) {
-            throw new NoValidActionException("Player does not have a PUSH_TWICE bonus to use.");
+            throw new BonusNotAvailable("Player does not have a PUSH_TWICE bonus to use.");
         }
 
         currentPlayerState.useOneBonusOfType(BonusType.PUSH_TWICE);
