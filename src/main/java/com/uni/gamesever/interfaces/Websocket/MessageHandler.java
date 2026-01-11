@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.exceptions.*;
+import com.uni.gamesever.domain.game.GameInitializationController;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.model.ErrorCode;
 import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;

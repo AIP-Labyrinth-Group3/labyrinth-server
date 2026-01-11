@@ -24,6 +24,7 @@ import com.uni.gamesever.domain.exceptions.NoExtraTileException;
 import com.uni.gamesever.domain.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.domain.exceptions.PlayerNotAdminException;
 import com.uni.gamesever.domain.game.BoardItemPlacementService;
+import com.uni.gamesever.domain.game.GameInitializationController;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.GameStatsManager;
 import com.uni.gamesever.domain.game.PlayerManager;
@@ -36,7 +37,6 @@ import com.uni.gamesever.domain.model.Treasure;
 import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
-import com.uni.gamesever.interfaces.Websocket.GameInitializationController;
 import com.uni.gamesever.interfaces.Websocket.messages.client.StartGameRequest;
 import com.uni.gamesever.services.SocketMessageService;
 

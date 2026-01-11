@@ -10,6 +10,7 @@ import java.util.List;
 import com.uni.gamesever.domain.enums.BonusType;
 import com.uni.gamesever.domain.enums.DirectionType;
 import com.uni.gamesever.domain.enums.TileType;
+import com.uni.gamesever.domain.exceptions.BonusNotAvailable;
 import com.uni.gamesever.domain.exceptions.GameNotValidException;
 import com.uni.gamesever.domain.exceptions.NoValidActionException;
 import com.uni.gamesever.domain.exceptions.NotPlayersTurnException;
@@ -454,7 +455,7 @@ public class GameManagerTest {
     void handleUsePushTwice_shouldThrowIfNoBonus() {
         gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        assertThrows(NoValidActionException.class, () -> gameManager.handleUsePushTwice(player1.getId()));
+        assertThrows(BonusNotAvailable.class, () -> gameManager.handleUsePushTwice(player1.getId()));
     }
 
     @Test
@@ -534,7 +535,7 @@ public class GameManagerTest {
     void handleUseBeam_shouldThrowIfNoBeamBonus() {
         gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
 
-        assertThrows(NoValidActionException.class,
+        assertThrows(BonusNotAvailable.class,
                 () -> gameManager.handleUseBeam(new Coordinates(1, 1), player1.getId()));
     }
 
