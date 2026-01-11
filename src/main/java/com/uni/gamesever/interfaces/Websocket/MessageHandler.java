@@ -209,8 +209,6 @@ public class MessageHandler {
                 }
             case "ROTATE_TILE":
                 try {
-                    // RotateTileRequest rotateTileRequest = objectMapper.readValue(message,
-                    // RotateTileRequest.class);
                     return gameManager.handleRotateTile(userId);
                 } catch (NotPlayersRotateTileExeption e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
