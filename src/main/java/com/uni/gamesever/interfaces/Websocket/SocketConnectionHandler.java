@@ -9,6 +9,10 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.TurnState;
+import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
 import com.uni.gamesever.interfaces.Websocket.messages.server.ServerInfoEvent;
 import com.uni.gamesever.services.SocketMessageService;
 
@@ -23,10 +27,15 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     @Value("${server.motd}")
     private String serverMotd;
     private final ObjectMapper objectmapper = new ObjectMapper();
+    private final GameManager gameManager;
+    private final PlayerManager playerManager;
 
-    public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler) {
+    public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
+            GameManager gameManager, PlayerManager playerManager) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
+        this.gameManager = gameManager;
+        this.playerManager = playerManager;
     }
 
     // This method is executed when client tries to connect
@@ -56,7 +65,14 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         super.afterConnectionClosed(session, status);
         try {
             socketBroadcastService.removeDisconnectedSession(session);
-            System.out.println(session.getId() + " DisConnected");
+            if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+                playerManager.disconnectPlayer(session.getId());
+            } else {
+                playerManager.removePlayer(session.getId());
+                LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+                socketBroadcastService.broadcastMessage(
+                        objectmapper.writeValueAsString(lobbyState));
+            }
         } catch (Exception e) {
             throw e;
         }

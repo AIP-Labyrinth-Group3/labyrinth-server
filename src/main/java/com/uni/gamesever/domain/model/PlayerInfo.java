@@ -19,6 +19,10 @@ public class PlayerInfo {
         this.isConnected = true;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getId() {
         return id;
     }

@@ -13,6 +13,7 @@ import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.server.ConnectAck;
 import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
+import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerUpdateEvent;
 import com.uni.gamesever.services.SocketMessageService;
 
 @Service
@@ -28,9 +29,21 @@ public class ConnectionHandler {
 
     public boolean handleConnectMessage(ConnectRequest request, String userId)
             throws JsonProcessingException, GameFullException, IllegalArgumentException, UsernameNullOrEmptyException,
-            UsernameAlreadyTakenException {
+            UsernameAlreadyTakenException, UserNotFoundException {
         if (request.getUsername() == null || request.getUsername().isEmpty()) {
             throw new UsernameNullOrEmptyException("Username cannot be null or empty.");
+        }
+        if (request.getIdentifierToken() != null && !request.getIdentifierToken().isEmpty()) {
+            if (playerManager.reconnectPlayer(request.getIdentifierToken(), userId)) {
+                System.out.println("User " + userId + " reconnected as " + request.getUsername());
+                ConnectAck connectionAck = new ConnectAck(userId, userId);
+                socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
+
+                PlayerUpdateEvent playerUpdateEvent = new PlayerUpdateEvent(
+                        playerManager.getPlayerById(userId));
+                socketMessageService.broadcastMessage(objectMapper.writeValueAsString(playerUpdateEvent));
+                return true;
+            }
         }
         PlayerInfo newPlayer = new PlayerInfo(userId);
         newPlayer.setName(request.getUsername());
@@ -62,9 +75,17 @@ public class ConnectionHandler {
         return true;
     }
 
-    public void processGameAction(String action, String userId) {
-        // Implement game action processing logic here
-        System.out.println("Processing action: " + action + " for user: " + userId);
+    public boolean handleSituationWhereTheConnectionIsLost(String userId)
+            throws IllegalArgumentException, UserNotFoundException, JsonProcessingException {
+        if (userId == null || userId.isEmpty()) {
+            throw new UserNotFoundException("User ID cannot be null or empty.");
+        }
+        playerManager.disconnectPlayer(userId);
+        PlayerUpdateEvent playerUpdateEvent = new PlayerUpdateEvent(
+                playerManager.getPlayerById(userId));
+        socketMessageService.broadcastMessage(objectMapper.writeValueAsString(playerUpdateEvent));
+
+        return true;
     }
 
 }

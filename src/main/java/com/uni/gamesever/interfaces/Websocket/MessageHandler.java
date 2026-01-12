@@ -75,6 +75,12 @@ public class MessageHandler {
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
+                } catch (UserNotFoundException e) {
+                    System.err.println(e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.PLAYER_NOT_FOUND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (JsonProcessingException e) {
                     System.err.println(
                             "Failed to process connect request from user " + userId + ": " + e.getMessage());
