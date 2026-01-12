@@ -1,14 +1,22 @@
 package com.uni.gamesever.interfaces.Websocket.messages.server;
 
-public class ConnectAck {
-    public String type = "CONNECT_ACK";
-    public String playerId;
+import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
-    public ConnectAck(String playerId) {
+public class ConnectAck extends Message {
+    public String playerId;
+    private String identifierToken;
+
+    public ConnectAck(String playerId, String identifierToken) {
+        super("CONNECT_ACK");
         this.playerId = playerId;
+        this.identifierToken = identifierToken;
     }
 
     public String getPlayerId() {
         return playerId;
+    }
+
+    public String getIdentifierToken() {
+        return identifierToken;
     }
 }

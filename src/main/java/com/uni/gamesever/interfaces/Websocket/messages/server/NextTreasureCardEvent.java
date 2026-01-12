@@ -1,17 +1,14 @@
 package com.uni.gamesever.interfaces.Websocket.messages.server;
 
 import com.uni.gamesever.domain.model.Treasure;
+import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
-public class NextTreasureCardEvent {
-    private String type = "NEXT_TREASURE";
+public class NextTreasureCardEvent extends Message {
     private Treasure treasure;
 
     public NextTreasureCardEvent(Treasure treasure) {
+        super("NEXT_TREASURE");
         this.treasure = treasure;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public Treasure getTreasure() {

@@ -2,24 +2,21 @@ package com.uni.gamesever.interfaces.Websocket.messages.server;
 
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
-import com.uni.gamesever.domain.model.TurnState;
+import com.uni.gamesever.domain.model.TurnInfo;
+import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
-public class GameStateUpdate {
-    private String type = "GAME_STATE_UPDATE";
+public class GameStateUpdate extends Message {
     private GameBoard board;
     private PlayerState[] players;
-    private String currentPlayerId;
-    private String currentTurnState;
+    private TurnInfo currentTurnInfo;
+    private String gameEndTime;
 
-    public GameStateUpdate(GameBoard board, PlayerState[] players, String currentPlayerId, String currentTurnState) {
+    public GameStateUpdate(GameBoard board, PlayerState[] players, TurnInfo currentTurnInfo, String gameEndTime) {
+        super("GAME_STATE_UPDATE");
         this.board = board;
         this.players = players;
-        this.currentPlayerId = currentPlayerId;
-        this.currentTurnState = currentTurnState;
-    }
-
-    public String getType() {
-        return type;
+        this.currentTurnInfo = currentTurnInfo;
+        this.gameEndTime = gameEndTime;
     }
 
     public GameBoard getBoard() {
@@ -30,33 +27,12 @@ public class GameStateUpdate {
         return players;
     }
 
-    public String getCurrentPlayerId() {
-        return currentPlayerId;
+    public TurnInfo getCurrentTurnInfo() {
+        return currentTurnInfo;
     }
 
-    public void setCurrentPlayerId(String currentPlayerId) {
-        this.currentPlayerId = currentPlayerId;
-    }
-
-    public String getCurrentTurnState() {
-        return currentTurnState;
-    }
-
-    public void setCurrentTurnState(String currentTurnState) {
-        try {
-            TurnState.valueOf(currentTurnState);
-            this.currentTurnState = currentTurnState;
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid turn state: " + currentTurnState);
-        }
-    }
-
-    public void setBoard(GameBoard board) {
-        this.board = board;
-    }
-
-    public void setPlayerState(PlayerState[] players) {
-        this.players = players;
+    public String getGameEndTime() {
+        return gameEndTime;
     }
 
 }

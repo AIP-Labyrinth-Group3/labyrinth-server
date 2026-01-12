@@ -6,12 +6,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.exceptions.*;
+import com.uni.gamesever.domain.game.GameInitializationController;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.model.ErrorCode;
 import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 import com.uni.gamesever.interfaces.Websocket.messages.client.MovePawnRequest;
-import com.uni.gamesever.interfaces.Websocket.messages.client.PushFixedTileRequest;
+import com.uni.gamesever.interfaces.Websocket.messages.client.UsePushFixedTileRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.PushTileRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.StartGameRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.UseBeamRequest;
@@ -88,7 +89,7 @@ public class MessageHandler {
                     return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
                 } catch (UserNotFoundException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.PLAYER_NOT_FOUND,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
@@ -209,8 +210,6 @@ public class MessageHandler {
                 }
             case "ROTATE_TILE":
                 try {
-                    // RotateTileRequest rotateTileRequest = objectMapper.readValue(message,
-                    // RotateTileRequest.class);
                     return gameManager.handleRotateTile(userId);
                 } catch (NotPlayersRotateTileExeption e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
@@ -232,7 +231,7 @@ public class MessageHandler {
                     return false;
                 } catch (NoValidActionException e) {
                     System.err.println("Invalid rotate tile command from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
@@ -314,7 +313,13 @@ public class MessageHandler {
                     return false;
                 } catch (NoValidActionException e) {
                     System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (BonusNotAvailable e) {
+                    System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
@@ -343,7 +348,13 @@ public class MessageHandler {
                     return false;
                 } catch (NoValidActionException e) {
                     System.err.println("Invalid use swap command from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (BonusNotAvailable e) {
+                    System.err.println("Invalid use swap command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
@@ -368,26 +379,68 @@ public class MessageHandler {
                 }
             case "USE_PUSH_FIXED":
                 try {
-                    PushFixedTileRequest pushFixedTileCommand = objectMapper.readValue(message,
-                            PushFixedTileRequest.class);
+                    UsePushFixedTileRequest pushFixedTileCommand = objectMapper.readValue(message,
+                            UsePushFixedTileRequest.class);
                     return gameManager.handleUsePushFixedTile(pushFixedTileCommand.getDirection(),
                             pushFixedTileCommand.getRowOrColIndex(), userId);
+                } catch (PushNotValidException e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_PUSH,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NoDirectionForPush e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (NotPlayersTurnException e) {
-                    System.err.println("Invalid use push effect command from user " + userId + ": " + e.getMessage());
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
-                } catch (NoValidActionException e) {
-                    System.err.println("Invalid use push effect command from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                } catch (NoExtraTileException e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (GameNotStartedException e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (GameNotValidException e) {
-                    System.err.println("Invalid use push effect command from user " + userId + ": " + e.getMessage());
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (NoValidActionException e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (BonusNotAvailable e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (JsonMappingException e) {
+                    System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            "Invalid command format");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
@@ -400,9 +453,9 @@ public class MessageHandler {
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
-                } catch (NoValidActionException e) {
+                } catch (BonusNotAvailable e) {
                     System.err.println("Invalid use push twice command from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;

@@ -1,12 +1,14 @@
 package com.uni.gamesever.domain.model;
 
+import com.uni.gamesever.domain.enums.Color;
+
 public class PlayerInfo {
     private String id;
     private String name;
-    private String color;
+    private Color color;
     private boolean isAdmin;
     private boolean isAiControlled;
-    private String[] availableColors = { "RED", "BLUE", "GREEN", "YELLOW" };
+    private boolean isConnected;
 
     public PlayerInfo() {
     }
@@ -14,6 +16,7 @@ public class PlayerInfo {
     public PlayerInfo(String id) {
         this.id = id;
         this.isAiControlled = false;
+        this.isConnected = true;
     }
 
     public String getId() {
@@ -24,7 +27,7 @@ public class PlayerInfo {
         return name;
     }
 
-    public String getColor() {
+    public Color getColor() {
         return color;
     }
 
@@ -47,17 +50,22 @@ public class PlayerInfo {
         this.name = name;
     }
 
-    public void setColor(String color) throws IllegalArgumentException {
-        for (String availableColor : availableColors) {
-            if (availableColor.equalsIgnoreCase(color)) {
-                this.color = color.toUpperCase();
-                return;
-            }
+    public void setColor(Color color) throws IllegalArgumentException {
+        if (color == null) {
+            throw new IllegalArgumentException("Invalid color.");
         }
-        throw new IllegalArgumentException("Invalid color. Available colors are: RED, BLUE, GREEN, YELLOW.");
+        this.color = color;
     }
 
     public void setIsAiControlled(boolean isAiControlled) {
         this.isAiControlled = isAiControlled;
+    }
+
+    public boolean getIsConnected() {
+        return isConnected;
+    }
+
+    public void setIsConnected(boolean isConnected) {
+        this.isConnected = isConnected;
     }
 }

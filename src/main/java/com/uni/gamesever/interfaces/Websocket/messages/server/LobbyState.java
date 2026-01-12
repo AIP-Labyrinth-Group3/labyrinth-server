@@ -1,25 +1,18 @@
 package com.uni.gamesever.interfaces.Websocket.messages.server;
 
 import com.uni.gamesever.domain.model.PlayerInfo;
+import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
-public class LobbyState {
-    private String type = "LOBBY_STATE";
+public class LobbyState extends Message {
     private PlayerInfo[] players;
 
     public LobbyState(PlayerInfo[] players) {
+        super("LOBBY_STATE");
         this.players = players;
-    }
-
-    public String getType() {
-        return type;
     }
 
     public PlayerInfo[] getPlayers() {
         return players;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public void setPlayers(PlayerInfo[] players) {

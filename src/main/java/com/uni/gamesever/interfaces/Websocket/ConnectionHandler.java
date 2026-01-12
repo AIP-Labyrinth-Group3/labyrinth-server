@@ -36,7 +36,7 @@ public class ConnectionHandler {
         newPlayer.setName(request.getUsername());
         if (playerManager.addPlayer(newPlayer)) {
             System.out.println("User " + userId + " connected as " + request.getUsername());
-            ConnectAck connectionAck = new ConnectAck(newPlayer.getId());
+            ConnectAck connectionAck = new ConnectAck(newPlayer.getId(), newPlayer.getId());
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
 
             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
@@ -51,12 +51,13 @@ public class ConnectionHandler {
 
     public boolean handleDisconnectRequest(ConnectRequest request, String userId)
             throws IllegalArgumentException, UserNotFoundException, JsonProcessingException {
+        if (userId == null || userId.isEmpty()) {
+            throw new UserNotFoundException("User ID cannot be null or empty.");
+        }
         if (playerManager.removePlayer(userId)) {
             System.out.println("User " + userId + " disconnected " + request.getUsername());
             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
             socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
-        } else {
-            throw new IllegalArgumentException("Username can not be null or empty.");
         }
         return true;
     }

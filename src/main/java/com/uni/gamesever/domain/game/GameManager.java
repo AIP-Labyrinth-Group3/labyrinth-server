@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.enums.BonusType;
 import com.uni.gamesever.domain.enums.DirectionType;
 import com.uni.gamesever.domain.events.GameTimeoutEvent;
+import com.uni.gamesever.domain.exceptions.BonusNotAvailable;
 import com.uni.gamesever.domain.exceptions.GameNotStartedException;
 import com.uni.gamesever.domain.exceptions.GameNotValidException;
 import com.uni.gamesever.domain.exceptions.NoDirectionForPush;
@@ -21,11 +22,13 @@ import com.uni.gamesever.domain.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.domain.exceptions.PushNotValidException;
 import com.uni.gamesever.domain.exceptions.TargetCoordinateNullException;
 import com.uni.gamesever.domain.model.AchievementContext;
+import com.uni.gamesever.domain.model.Bonus;
 import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.PushActionInfo;
 import com.uni.gamesever.domain.model.Tile;
+import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
@@ -41,7 +44,6 @@ public class GameManager {
     PlayerManager playerManager;
     GameStatsManager gameStatsManager;
     private GameBoard currentBoard;
-    private TurnState turnState = TurnState.NOT_STARTED;
     private int totalBonusCountsOnBoard = 0;
     SocketMessageService socketBroadcastService;
     GameTimerManager gameTimerManager;
@@ -54,6 +56,8 @@ public class GameManager {
             DirectionType.RIGHT, new Coordinates(1, 0));
     BoardItemPlacementService boardItemPlacementService;
     AchievementManager achievementManager;
+    private TurnInfo turnInfo;
+    private String gameEndTime;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
@@ -64,6 +68,7 @@ public class GameManager {
         this.boardItemPlacementService = boardItemPlacementService;
         this.gameTimerManager = gameTimerManager;
         this.achievementManager = achievementManager;
+        this.turnInfo = new TurnInfo(null, TurnState.NOT_STARTED);
     }
 
     public GameBoard getCurrentBoard() {
@@ -81,14 +86,6 @@ public class GameManager {
         }
     }
 
-    public TurnState getTurnState() {
-        return turnState;
-    }
-
-    public void setTurnState(TurnState turnState) {
-        this.turnState = turnState;
-    }
-
     public int getTotalBonusCountsOnBoard() {
         return totalBonusCountsOnBoard;
     }
@@ -97,11 +94,23 @@ public class GameManager {
         this.totalBonusCountsOnBoard = totalBonusCountsOnBoard;
     }
 
+    public TurnInfo getTurnInfo() {
+        return turnInfo;
+    }
+
+    public String getGameEndTime() {
+        return gameEndTime;
+    }
+
+    public void setGameEndTime(String gameEndTime) {
+        this.gameEndTime = gameEndTime;
+    }
+
     public boolean handlePushTile(int rowOrColIndex, DirectionType direction, String playerIdWhoPushed,
             boolean isUsingPushFixed)
             throws GameNotStartedException, NotPlayersTurnException, PushNotValidException, JsonProcessingException,
             IllegalArgumentException, NoExtraTileException, NoDirectionForPush {
-        if (turnState != TurnState.WAITING_FOR_PUSH) {
+        if (getTurnInfo().getTurnState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotStartedException("Game is not active. Cannot push tile.");
         }
         if (!playerIdWhoPushed.equals(playerManager.getCurrentPlayer().getId())) {
@@ -129,10 +138,10 @@ public class GameManager {
         if (pushTwiceUsedInCurrentTurn) {
             pushTwiceUsedInCurrentTurn = false;
         } else {
-            setTurnState(TurnState.WAITING_FOR_MOVE);
+            getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
         }
         GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                playerManager.getCurrentPlayer().getId(), getTurnState().name());
+                getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
         return true;
@@ -196,7 +205,7 @@ public class GameManager {
     public boolean handleMovePawn(Coordinates targetCoordinates, String playerIdWhoMoved, boolean useBeamBonus)
             throws GameNotValidException,
             NotPlayersTurnException, NoValidActionException, JsonProcessingException, TargetCoordinateNullException {
-        if (turnState != TurnState.WAITING_FOR_MOVE) {
+        if (getTurnInfo().getTurnState() != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
                     "It is not the phase to move the pawn.");
         }
@@ -254,7 +263,6 @@ public class GameManager {
             }
         }
 
-        setTurnState(TurnState.WAITING_FOR_PUSH);
         playerManager.setNextPlayerAsCurrent();
         if (boardItemPlacementService.trySpawnBonus(currentBoard, getTotalBonusCountsOnBoard())) {
             reduceTotalBonusCountsOnBoard(1);
@@ -270,8 +278,12 @@ public class GameManager {
         currentPlayerState.consumePushedOutFlag();
         currentPlayerState.consumeCollectedTreasureFlag();
 
+        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+        getTurnInfo().updateTurnEndTime();
+
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                playerManager.getCurrentPlayer().getId(), getTurnState().name());
+                getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
@@ -289,7 +301,7 @@ public class GameManager {
                     "It is not your turn to rotate tiles.");
         }
 
-        if (turnState != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "It is not the phase to rotate tiles.");
         }
@@ -298,9 +310,9 @@ public class GameManager {
         spareTile.rotateClockwise();
         currentBoard.setSpareTile(spareTile);
 
-        setTurnState(TurnState.WAITING_FOR_PUSH);
+        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                playerManager.getCurrentPlayer().getId(), getTurnState().name());
+                getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
@@ -388,8 +400,8 @@ public class GameManager {
 
     public boolean handleUseBeam(Coordinates targetCoordinates, String playerIdWhoUsedBeam)
             throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            TargetCoordinateNullException, JsonProcessingException {
-        if (turnState != TurnState.WAITING_FOR_MOVE) {
+            TargetCoordinateNullException, JsonProcessingException, BonusNotAvailable {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
                     "It is not the phase to use the beam.");
         }
@@ -408,7 +420,7 @@ public class GameManager {
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.BEAM)) {
-            throw new NoValidActionException("Player does not have a BEAM bonus to use.");
+            throw new BonusNotAvailable("Player does not have a BEAM bonus to use.");
         }
 
         currentPlayerState.useOneBonusOfType(BonusType.BEAM);
@@ -418,12 +430,12 @@ public class GameManager {
 
     public boolean handleUseSwap(String targetPlayerId, String playerIdWhoUsedSwap)
             throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            TargetCoordinateNullException, JsonProcessingException {
+            TargetCoordinateNullException, JsonProcessingException, BonusNotAvailable {
         if (!playerIdWhoUsedSwap.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
                     "It is not your turn to use the swap bonus.");
         }
-        if (turnState != TurnState.WAITING_FOR_MOVE) {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_MOVE) {
             throw new GameNotValidException(
                     "It is not the phase to use the swap bonus.");
         }
@@ -437,7 +449,7 @@ public class GameManager {
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.SWAP)) {
-            throw new NoValidActionException("Player does not have a SWAP bonus to use.");
+            throw new BonusNotAvailable("Player does not have a SWAP bonus to use.");
         }
 
         PlayerState targetPlayerState = playerManager.getPlayerStateById(targetPlayerId);
@@ -453,14 +465,15 @@ public class GameManager {
         currentPlayerState.setCurrentPosition(targetPlayerPosition);
         targetPlayerState.setCurrentPosition(currentPlayerPosition);
 
-        setTurnState(TurnState.WAITING_FOR_PUSH);
         playerManager.setNextPlayerAsCurrent();
         if (boardItemPlacementService.trySpawnBonus(currentBoard, getTotalBonusCountsOnBoard())) {
             reduceTotalBonusCountsOnBoard(1);
         }
 
+        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                playerManager.getCurrentPlayer().getId(), getTurnState().name());
+                getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
         PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
@@ -471,20 +484,20 @@ public class GameManager {
     }
 
     public boolean handleUsePushFixedTile(DirectionType direction, int rowOrColIndex, String playerIdWhoUsedPushFixed)
-            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            JsonProcessingException, IllegalArgumentException, NoExtraTileException, NoDirectionForPush {
+            throws GameNotValidException, IllegalArgumentException, NoExtraTileException,
+            BonusNotAvailable, NoValidActionException, JsonProcessingException {
         if (!playerIdWhoUsedPushFixed.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
                     "It is not your turn to use the push fixed tile bonus.");
         }
-        if (turnState != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "It is not the phase to use the push fixed tile bonus.");
         }
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.PUSH_FIXED)) {
-            throw new NoValidActionException("Player does not have a bonus to push a fixed tile.");
+            throw new BonusNotAvailable("Player does not have a bonus to push a fixed tile.");
         }
 
         if (direction == null) {
@@ -515,20 +528,19 @@ public class GameManager {
     }
 
     public boolean handleUsePushTwice(String playerIdWhoUsedPushTwice)
-            throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
-            JsonProcessingException {
+            throws GameNotValidException, NotPlayersTurnException, BonusNotAvailable {
         if (!playerIdWhoUsedPushTwice.equals(playerManager.getCurrentPlayer().getId())) {
             throw new NotPlayersTurnException(
                     "It is not your turn to use the push twice bonus.");
         }
-        if (turnState != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "It is not the phase to use the push twice bonus.");
         }
 
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         if (!currentPlayerState.hasBonusOfType(BonusType.PUSH_TWICE)) {
-            throw new NoValidActionException("Player does not have a PUSH_TWICE bonus to use.");
+            throw new BonusNotAvailable("Player does not have a PUSH_TWICE bonus to use.");
         }
 
         currentPlayerState.useOneBonusOfType(BonusType.PUSH_TWICE);
@@ -556,7 +568,7 @@ public class GameManager {
         GameOverEvent gameOver = new GameOverEvent(gameStatsManager.getSortedRankings());
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
-            setTurnState(TurnState.NOT_STARTED);
+            getTurnInfo().setTurnState(TurnState.NOT_STARTED);
             return true;
         } else {
             throw new IllegalStateException("Winner ID is null despite all treasures being collected.");

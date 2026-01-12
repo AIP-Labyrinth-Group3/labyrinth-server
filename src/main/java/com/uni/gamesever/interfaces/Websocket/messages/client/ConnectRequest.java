@@ -2,8 +2,10 @@ package com.uni.gamesever.interfaces.Websocket.messages.client;
 
 public class ConnectRequest extends Message {
     private String username;
+    private String identifierToken;
 
     public ConnectRequest() {
+        super("CONNECT");
         this.username = "";
     }
 

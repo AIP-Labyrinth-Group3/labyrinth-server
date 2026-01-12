@@ -333,7 +333,7 @@ class PlayerManagerTest {
 
             // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
-            assertEquals(player1, states[0].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
+            assertEquals(player1, states[0].getPlayerInfo(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
             assertEquals(expectedPos1.getColumn(), states[0].getCurrentPosition().getColumn(),
                     "Die X Koordinate sollte 0 sein.");
             assertEquals(expectedPos1.getRow(), states[0].getCurrentPosition().getRow(),
@@ -341,7 +341,7 @@ class PlayerManagerTest {
 
             // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
-            assertEquals(player3, states[1].getPlayer(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
+            assertEquals(player3, states[1].getPlayerInfo(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
             assertEquals(expectedPos2.getColumn(), states[1].getCurrentPosition().getColumn(),
                     "Die X Koordinate sollte 0 sein.");
             assertEquals(expectedPos2.getRow(), states[1].getCurrentPosition().getRow(),

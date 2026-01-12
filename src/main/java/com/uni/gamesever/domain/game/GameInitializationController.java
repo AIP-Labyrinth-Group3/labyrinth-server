@@ -1,5 +1,6 @@
-package com.uni.gamesever.interfaces.Websocket;
+package com.uni.gamesever.domain.game;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,18 +14,16 @@ import com.uni.gamesever.domain.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.domain.exceptions.NoExtraTileException;
 import com.uni.gamesever.domain.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.domain.exceptions.PlayerNotAdminException;
-import com.uni.gamesever.domain.game.BoardItemPlacementService;
-import com.uni.gamesever.domain.game.GameManager;
-import com.uni.gamesever.domain.game.GameStatsManager;
-import com.uni.gamesever.domain.game.PlayerManager;
 import com.uni.gamesever.domain.model.BoardSize;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.Treasure;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStarted;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
+import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.services.SocketMessageService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -59,7 +58,7 @@ public class GameInitializationController {
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
-        if (gameManager.getTurnState() != TurnState.NOT_STARTED) {
+        if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
             throw new GameAlreadyStartedException("Game has already been started.");
         }
 
@@ -96,25 +95,40 @@ public class GameInitializationController {
             throw new NoExtraTileException("Spare tile was not set on the game board.");
         }
 
-        GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
-
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
-        gameManager.setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
 
         gameStatsManager.initAllRankingStats(playerManager);
 
-        GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates(),
-                playerManager.getCurrentPlayer().getId(), gameManager.getTurnState().name());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
+        gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().updateTurnEndTime();
 
-        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(), board.getSpareTile(), 60);
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+        gameManager
+                .setGameEndTime(OffsetDateTime.now().plusSeconds(gameDuration).toString());
 
         gameTimerManager.start(gameDuration, () -> {
             eventPublisher.publishEvent(new GameTimeoutEvent());
         });
+
+        GameStarted startedEvent = new GameStarted(board, playerManager.getNonNullPlayerStates(),
+                gameManager.getTurnInfo(),
+                gameManager.getGameEndTime());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(startedEvent));
+
+        for (PlayerState state : playerManager.getNonNullPlayerStates()) {
+            NextTreasureCardEvent nextTreasureCardEvent = new NextTreasureCardEvent(state.getCurrentTreasure());
+            socketBroadcastService.sendMessageToSession(state.getPlayerInfo().getId(),
+                    objectMapper.writeValueAsString(nextTreasureCardEvent));
+        }
+
+        GameStateUpdate gameStateUpdate = new GameStateUpdate(board, playerManager.getNonNullPlayerStates(),
+                gameManager.getTurnInfo(), gameManager.getGameEndTime());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
+
+        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(), board.getSpareTile(), 60);
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
     }

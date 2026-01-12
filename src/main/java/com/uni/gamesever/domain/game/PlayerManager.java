@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.uni.gamesever.domain.enums.Color;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.exceptions.UsernameAlreadyTakenException;
 import com.uni.gamesever.domain.model.Coordinates;
@@ -19,7 +20,8 @@ public class PlayerManager {
     private PlayerInfo[] players = new PlayerInfo[MAX_PLAYERS];
     private PlayerState[] playerStates = new PlayerState[MAX_PLAYERS];
     private boolean hasAdministrator = false;
-    private List<String> currentAvailableColors = new ArrayList<>(Arrays.asList("RED", "BLUE", "GREEN", "YELLOW"));
+    private List<Color> currentAvailableColors = new ArrayList<>(
+            Arrays.asList(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW));
     private PlayerInfo currentPlayer = null;
 
     public int getAmountOfPlayers() {
@@ -109,7 +111,7 @@ public class PlayerManager {
 
     public PlayerState getPlayerStateById(String playerId) {
         for (PlayerState state : playerStates) {
-            if (state != null && state.getPlayer().getId().equals(playerId)) {
+            if (state != null && state.getPlayerInfo().getId().equals(playerId)) {
                 return state;
             }
         }
@@ -125,7 +127,7 @@ public class PlayerManager {
     public PlayerState[] getPlayerStatesOfPlayersNotOnTurn() {
         List<PlayerState> otherPlayerStates = new ArrayList<>();
         for (PlayerState state : playerStates) {
-            if (state != null && !state.getPlayer().getId().equals(this.currentPlayer.getId())) {
+            if (state != null && !state.getPlayerInfo().getId().equals(this.currentPlayer.getId())) {
                 otherPlayerStates.add(state);
             }
         }
@@ -137,7 +139,7 @@ public class PlayerManager {
             return null;
         }
         for (PlayerState state : playerStates) {
-            if (state != null && state.getPlayer().getId().equals(this.currentPlayer.getId())) {
+            if (state != null && state.getPlayerInfo().getId().equals(this.currentPlayer.getId())) {
                 return state;
             }
         }
