@@ -122,6 +122,7 @@ public class PlayerManager {
         }
         this.players = newPlayers;
         this.playerStates = newPlayerStates;
+
         return true;
     }
 
