@@ -274,13 +274,7 @@ public class GameManager {
 
         achievementManager.check(currentPlayerState, ctx);
 
-        currentPlayerState.setStepsTakenThisTurn(0);
-        currentPlayerState.consumePushedOutFlag();
-        currentPlayerState.consumeCollectedTreasureFlag();
-
-        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
-        getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
-        getTurnInfo().updateTurnEndTime();
+        resetAllVariablesForNextTurn();
 
         GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
                 getTurnInfo(), getGameEndTime());
@@ -291,6 +285,19 @@ public class GameManager {
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
         return true;
+    }
+
+    public void resetAllVariablesForNextTurn() throws JsonProcessingException {
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+
+        currentPlayerState.setStepsTakenThisTurn(0);
+        currentPlayerState.consumePushedOutFlag();
+        currentPlayerState.consumeCollectedTreasureFlag();
+
+        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+        getTurnInfo().updateTurnEndTime();
+
     }
 
     public boolean handleRotateTile(String playerIdWhoRotated) throws GameNotValidException,

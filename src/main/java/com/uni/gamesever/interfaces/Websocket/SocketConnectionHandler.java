@@ -10,6 +10,7 @@ import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.events.GameTimeoutEvent;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
@@ -33,20 +34,22 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     private String serverMotd;
     private final ObjectMapper objectmapper = new ObjectMapper();
     private final GameManager gameManager;
-    private final PlayerManager playerManager;
+    private final ConnectionHandler connectionHandler;
     private final GameTimerManager gameTimerManager;
     private final ApplicationEventPublisher eventPublisher;
+    private final PlayerManager playerManager;
     private final long playerReconnectionTimeout = 30;
 
     public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
-            GameManager gameManager, PlayerManager playerManager, GameTimerManager gameTimerManager,
-            ApplicationEventPublisher eventPublisher) {
+            GameManager gameManager, ConnectionHandler connectionHandler, GameTimerManager gameTimerManager,
+            ApplicationEventPublisher eventPublisher, PlayerManager playerManager) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
         this.gameManager = gameManager;
-        this.playerManager = playerManager;
+        this.connectionHandler = connectionHandler;
         this.gameTimerManager = gameTimerManager;
         this.eventPublisher = eventPublisher;
+        this.playerManager = playerManager;
     }
 
     // This method is executed when client tries to connect
@@ -77,18 +80,25 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         try {
             socketBroadcastService.removeDisconnectedSession(session);
             if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
-                playerManager.disconnectPlayer(session.getId());
+                connectionHandler.handleSituationWhenTheConnectionIsLost(session.getId());
 
                 gameTimerManager.start(playerReconnectionTimeout, () -> {
+                    if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
+                        return;
+                    }
                     try {
                         System.out.println("Player " + session.getId() + " failed to reconnect in time.");
-                        eventPublisher.publishEvent(playerManager.removePlayer(session.getId()));
+                        eventPublisher.publishEvent(
+                                connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
                     } catch (UserNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (JsonProcessingException e) {
                         e.printStackTrace();
                     }
                 });
             } else {
-                playerManager.removePlayer(session.getId());
+                eventPublisher
+                        .publishEvent(connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
                 LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
                 socketBroadcastService.broadcastMessage(
                         objectmapper.writeValueAsString(lobbyState));

@@ -75,6 +75,12 @@ public class MessageHandler {
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
+                } catch (GameAlreadyStartedException e) {
+                    System.err.println(e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
                 } catch (UserNotFoundException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.PLAYER_NOT_FOUND,
@@ -91,8 +97,7 @@ public class MessageHandler {
                 }
             case "DISCONNECT":
                 try {
-                    ConnectRequest disconnectRequest = objectMapper.readValue(message, ConnectRequest.class);
-                    return connectionHandler.handleDisconnectRequest(disconnectRequest, userId);
+                    return connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(userId);
                 } catch (UserNotFoundException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.PLAYER_NOT_FOUND,
