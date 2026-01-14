@@ -23,28 +23,66 @@ public class GameStatsManager {
         }
     }
 
-    public void updateRankForAllPlayersBasedOnAmountOfTreasures() {
-        rankings.sort(
-                (a, b) -> Integer.compare(b.getStats().getTreasuresCollected(), a.getStats().getTreasuresCollected()));
+    public void updateRankForAllPlayersBasedOnScore() {
+        rankings.sort((a, b) -> {
+            int scoreA = a.getScore();
+            int scoreB = b.getScore();
+
+            if (scoreA != scoreB) {
+                return Integer.compare(scoreB, scoreA);
+            }
+
+            int treasuresA = a.getStats().getTreasuresCollected();
+            int treasuresB = b.getStats().getTreasuresCollected();
+            if (treasuresA != treasuresB) {
+                return Integer.compare(treasuresB, treasuresA);
+            }
+
+            int stepsA = a.getStats().getStepsTaken();
+            int stepsB = b.getStats().getStepsTaken();
+            if (stepsA != stepsB) {
+                return Integer.compare(stepsA, stepsB);
+            }
+
+            int tilesA = a.getStats().getTilesPushed();
+            int tilesB = b.getStats().getTilesPushed();
+
+            if (tilesA != tilesB) {
+                return Integer.compare(tilesA, tilesB);
+            }
+            return 0;
+        });
+
         for (int i = 0; i < rankings.size(); i++) {
             rankings.get(i).setRank(i + 1);
         }
+
     }
 
-    public void updateScoreForASinglePlayer(String playerId) {
+    public void addAmountToScoreForASinglePlayer(String playerId, int amount) {
         for (var entry : rankings) {
             if (entry.getPlayerId().equals(playerId)) {
-                int score = entry.getStats().getTreasuresCollected() + entry.getStats().getStepsTaken()
-                        + entry.getStats().getTilesPushed();
-                entry.setScore(score);
+                int newScore = entry.getScore() + amount;
+                entry.setScore(newScore);
                 return;
             }
         }
     }
 
-    public void updateScoresForAllPlayers() {
+    public void updateScoreForEndGameForASinglePlayer(String playerId) {
+        for (var entry : rankings) {
+            if (entry.getPlayerId().equals(playerId)) {
+                int score = entry.getStats().getTreasuresCollected() * 10;
+
+                entry.setScore(entry.getScore() + score);
+                return;
+            }
+        }
+    }
+
+    public void updateScoresForAllPlayersAtTheEndOfTheGame() {
         for (var player : playerManager.getNonNullPlayers()) {
-            updateScoreForASinglePlayer(player.getId());
+            updateScoreForEndGameForASinglePlayer(player.getId());
         }
     }
 

@@ -70,32 +70,32 @@ public class GameStatsTest {
     }
 
     @Test
-    void GameStatsTest_UpdateScoreForASinglePlayer_shouldCalculateCorrectSum() {
+    void GameStatsTest_UpdateScoreForEndGameForASinglePlayer_shouldCalculateCorrectScore() {
         String p1Id = player1.getId();
 
         gameStatsManager.increaseStepsTaken(10, p1Id);
         gameStatsManager.increaseTilesPushed(5, p1Id);
-        gameStatsManager.increaseTreasuresCollected(2, p1Id);
+        gameStatsManager.increaseTreasuresCollected(4, p1Id);
 
-        gameStatsManager.updateScoreForASinglePlayer(p1Id);
+        gameStatsManager.updateScoreForEndGameForASinglePlayer(p1Id);
 
         RankingEntry entry = gameStatsManager.getSortedRankings().stream()
                 .filter(e -> e.getPlayerId().equals(p1Id))
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals(17, entry.getScore(), "Score should be sum of steps, tiles and treasures (10+5+2)");
+        assertEquals(40, entry.getScore(), "Score should be 40 from treasures collected (4 treasures * 10 points)");
     }
 
     @Test
-    void GameStatsTest_UpdateRankForAllPlayers_shouldSortByTreasures() {
+    void GameStatsTest_UpdateRankForAllPlayersBasedOnAmountOfTreasures_shouldSortByTreasures() {
         String p1Id = player1.getId();
         String p2Id = player2.getId();
 
         gameStatsManager.increaseTreasuresCollected(1, p1Id);
         gameStatsManager.increaseTreasuresCollected(5, p2Id);
 
-        gameStatsManager.updateRankForAllPlayersBasedOnAmountOfTreasures();
+        gameStatsManager.updateRankForAllPlayersBasedOnScore();
 
         List<RankingEntry> results = gameStatsManager.getSortedRankings();
 
@@ -119,13 +119,14 @@ public class GameStatsTest {
         gameStatsManager.increaseStepsTaken(4, p2Id);
         gameStatsManager.increaseTreasuresCollected(0, p2Id);
 
-        gameStatsManager.updateScoresForAllPlayers();
-        gameStatsManager.updateRankForAllPlayersBasedOnAmountOfTreasures();
+        gameStatsManager.updateScoresForAllPlayersAtTheEndOfTheGame();
+        gameStatsManager.updateRankForAllPlayersBasedOnScore();
 
         RankingEntry entry = gameStatsManager.getSortedRankings().get(0);
 
         assertEquals(p1Id, entry.getPlayerId());
-        assertEquals(5, entry.getScore(), "Total score should be 1+3+1=5");
+        assertEquals(10, entry.getScore(),
+                "Total score should be 10 from treasures collected (1 treasure * 10 points)");
         assertEquals(1, entry.getStats().getTreasuresCollected());
         assertEquals(1, entry.getRank());
     }

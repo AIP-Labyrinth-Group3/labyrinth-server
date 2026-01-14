@@ -267,6 +267,7 @@ public class GameManager {
         if (currentPlayerState.getHomePosition().getColumn() == targetCoordinates.getColumn() &&
                 currentPlayerState.getHomePosition().getRow() == targetCoordinates.getRow() &&
                 currentPlayerState.getCurrentTreasure() == null) {
+            gameStatsManager.addAmountToScoreForASinglePlayer(playerIdWhoMoved, 20);
             return endGameByTimeoutOrAfterCollectingAllTreasures();
         }
 
@@ -574,7 +575,6 @@ public class GameManager {
     @EventListener
     public void onGameTimeout(GameTimeoutEvent event) {
         try {
-            System.out.println("[GameManager] Game ended due to timeout (event)");
             endGameByTimeoutOrAfterCollectingAllTreasures();
         } catch (Exception e) {
             e.printStackTrace();
@@ -582,10 +582,9 @@ public class GameManager {
     }
 
     public boolean endGameByTimeoutOrAfterCollectingAllTreasures() throws JsonProcessingException {
-        System.out.println("[GameManager] Game ended due to timeout");
         gameTimerManager.stop();
-        gameStatsManager.updateScoresForAllPlayers();
-        gameStatsManager.updateRankForAllPlayersBasedOnAmountOfTreasures();
+        gameStatsManager.updateScoresForAllPlayersAtTheEndOfTheGame();
+        gameStatsManager.updateRankForAllPlayersBasedOnScore();
         GameOverEvent gameOver = new GameOverEvent(gameStatsManager.getSortedRankings());
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));

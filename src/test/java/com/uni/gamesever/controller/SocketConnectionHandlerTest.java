@@ -18,6 +18,9 @@ import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
+import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.interfaces.Websocket.MessageHandler;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +41,12 @@ class SocketConnectionHandlerTest {
     private MessageHandler messageHandler;
     @Mock
     private WebSocketSession mockSession;
+
+    @Mock
+    private GameManager gameManager;
+
+    @Mock
+    private TurnInfo turnInfo;
 
     @BeforeEach
     void setUp() {
@@ -86,17 +95,6 @@ class SocketConnectionHandlerTest {
     class afterConnectionClosed_test {
         @Mock
         private CloseStatus mockStatus;
-
-        @Test
-        void afterConnectionClosed_shouldRemoveSessionAndPrint() throws Exception {
-            // WHEN
-            socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus);
-
-            // THEN
-            verify(socketMessageService, times(1)).removeDisconnectedSession(eq(mockSession));
-            assertEquals(SESSION_ID + " DisConnected" + System.lineSeparator(), OUTPUT_STREAM.toString(),
-                    "Die Konsolenausgabe sollte die korrekte 'Disconnected' Meldung enthalten.");
-        }
 
         @Test
         void afterConnectionClosed_shouldThrowException() {

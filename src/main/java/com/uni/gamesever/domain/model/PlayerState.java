@@ -243,4 +243,11 @@ public class PlayerState {
         achievementList.add(type.name());
         this.achievements = achievementList.toArray(new String[0]);
     }
+
+    public int getAmountOfAchievements() {
+        if (achievements != null) {
+            return achievements.length;
+        }
+        return 0;
+    }
 }
