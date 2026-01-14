@@ -28,14 +28,14 @@ public class PushTileRequest extends Message {
 
     public void setRowOrColIndex(int rowOrColIndex) {
         if (rowOrColIndex < 0) {
-            throw new IllegalArgumentException("No valid row or column index provided for push");
+            throw new IllegalArgumentException("Keine gültige Zeilen- oder Spaltenindex für Push angegeben");
         }
         this.rowOrColIndex = rowOrColIndex;
     }
 
     public void setDirection(DirectionType direction) {
         if (direction == null) {
-            throw new IllegalArgumentException("No valid direction provided for push");
+            throw new IllegalArgumentException("Keine gültige Richtung für Push angegeben");
         }
         this.direction = direction;
     }

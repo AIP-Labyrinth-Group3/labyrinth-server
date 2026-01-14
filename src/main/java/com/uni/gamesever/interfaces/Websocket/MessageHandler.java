@@ -48,7 +48,8 @@ public class MessageHandler {
             request = objectMapper.readValue(message, Message.class);
         } catch (JsonProcessingException e) {
             System.err.println("Failed to parse message from user " + userId + ": " + e.getMessage());
-            ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND, "Invalid command format");
+            ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                    "Ungültiges Nachrichtenformat");
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
             return false;
         }
@@ -60,7 +61,7 @@ public class MessageHandler {
                     return connectionHandler.handleConnectMessage(connectReq, userId);
                 } catch (GameFullException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.LOBBY_FULL, "Game is full");
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.LOBBY_FULL, "Spiel ist bereits voll!");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (UsernameNullOrEmptyException e) {
@@ -91,7 +92,7 @@ public class MessageHandler {
                     System.err.println(
                             "Failed to process connect request from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "Invalid command format");
+                            "Ungültiges Nachrichtenformat");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
@@ -114,7 +115,7 @@ public class MessageHandler {
                     System.err.println(
                             "Failed to process disconnect request from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "Invalid command format");
+                            "Ungültiges Nachrichtenformat");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
@@ -127,25 +128,25 @@ public class MessageHandler {
                 } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
-                            "The game has already started");
+                            "Das Spiel hat bereits begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (PlayerNotAdminException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_ADMIN,
-                            "Only the admin player can start the game");
+                            "Nur der Admin-Spieler kann das Spiel starten.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (NotEnoughPlayerException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Not enough players to start the game");
+                            "Nicht genügend Spieler, um das Spiel zu starten.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (NoExtraTileException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "There was a problem with the extra tile");
+                            "Es gab ein Problem mit der Extra-Kachel");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (IllegalArgumentException e) {
@@ -166,7 +167,7 @@ public class MessageHandler {
                             "Unexpected error processing start game request from user " + userId + ": "
                                     + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "An unexpected error occurred");
+                            "Ein unerwarteter Fehler ist aufgetreten.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
@@ -215,7 +216,7 @@ public class MessageHandler {
                 } catch (JsonMappingException e) {
                     System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "Invalid command format");
+                            "Ungültiges Nachrichtenformat");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }
@@ -451,7 +452,7 @@ public class MessageHandler {
                 } catch (JsonMappingException e) {
                     System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "Invalid command format");
+                            "Ungültiges Nachrichtenformat");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 }

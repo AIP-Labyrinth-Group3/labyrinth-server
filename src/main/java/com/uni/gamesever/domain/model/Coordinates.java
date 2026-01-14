@@ -24,14 +24,14 @@ public class Coordinates {
 
     public void setColumn(int c) {
         if (c < 0) {
-            throw new IllegalArgumentException("Column coordinate cannot be negative");
+            throw new IllegalArgumentException("Die Anzahl der Spalten darf nicht negativ sein");
         }
         this.column = c;
     }
 
     public void setRow(int r) {
         if (r < 0) {
-            throw new IllegalArgumentException("Row coordinate cannot be negative");
+            throw new IllegalArgumentException("Die Anzahl der Reihen darf nicht negativ sein");
         }
         this.row = r;
     }
