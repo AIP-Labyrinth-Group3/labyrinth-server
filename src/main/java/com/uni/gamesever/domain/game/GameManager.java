@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import com.uni.gamesever.domain.enums.LobbyStateEnum;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,6 +46,7 @@ public class GameManager {
     GameStatsManager gameStatsManager;
     private GameBoard currentBoard;
     private int totalBonusCountsOnBoard = 0;
+    private LobbyStateEnum lobbyState = LobbyStateEnum.LOBBY;
     SocketMessageService socketBroadcastService;
     GameTimerManager gameTimerManager;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
@@ -92,6 +94,18 @@ public class GameManager {
 
     public void setTotalBonusCountsOnBoard(int totalBonusCountsOnBoard) {
         this.totalBonusCountsOnBoard = totalBonusCountsOnBoard;
+    }
+
+    public int getPlayerCount() {
+        return playerManager.getAmountOfPlayers();
+    }
+
+    public LobbyStateEnum getLobbyState() {
+        return this.lobbyState;
+    }
+
+    public void setLobbyState(LobbyStateEnum lobbyState) {
+        this.lobbyState = lobbyState;
     }
 
     public TurnInfo getTurnInfo() {
@@ -576,6 +590,7 @@ public class GameManager {
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
             getTurnInfo().setTurnState(TurnState.NOT_STARTED);
+            setLobbyState(LobbyStateEnum.FINISHED);
             return true;
         } else {
             throw new IllegalStateException("Winner ID is null despite all treasures being collected.");

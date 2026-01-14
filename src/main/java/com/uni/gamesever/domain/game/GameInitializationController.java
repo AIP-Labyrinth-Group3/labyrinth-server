@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.domain.enums.LobbyStateEnum;
 import com.uni.gamesever.domain.events.GameTimeoutEvent;
 import com.uni.gamesever.domain.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.domain.exceptions.NoExtraTileException;
@@ -98,6 +99,7 @@ public class GameInitializationController {
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
         gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.setLobbyState(LobbyStateEnum.IN_GAME);
 
         gameStatsManager.initAllRankingStats(playerManager);
 
