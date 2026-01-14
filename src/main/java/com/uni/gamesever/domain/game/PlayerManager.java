@@ -66,13 +66,28 @@ public class PlayerManager {
         return false;
     }
 
+    public boolean disconnectPlayer(String playerId) {
+        if (playerId == null) {
+            return false;
+        }
+
+        PlayerInfo player = getPlayerById(playerId);
+        if (player == null) {
+            return false;
+        }
+        player.setIsConnected(false);
+        return true;
+    }
+
     public boolean removePlayer(String userID) throws UserNotFoundException {
         if (userID == null || userID.isEmpty()) {
             return false;
         }
+        boolean playerFound = false;
         hasAdministrator = false;
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (players[i] != null && players[i].getId().equals(userID)) {
+                playerFound = true;
                 if (players[i].getIsAdmin()) {
                     for (int j = 0; j < MAX_PLAYERS; j++) {
                         if (players[j] != null && j != i) {
@@ -88,11 +103,38 @@ public class PlayerManager {
                 if (this.getAmountOfPlayers() == 0) {
                     hasAdministrator = false;
                 }
+            }
+        }
 
+        if (!playerFound) {
+            throw new UserNotFoundException("User not found.");
+        }
+
+        PlayerInfo[] newPlayers = new PlayerInfo[MAX_PLAYERS];
+        PlayerState[] newPlayerStates = new PlayerState[MAX_PLAYERS];
+        int index = 0;
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (players[i] != null) {
+                newPlayers[index] = players[i];
+                newPlayerStates[index] = playerStates[i];
+                index++;
+            }
+        }
+        this.players = newPlayers;
+        this.playerStates = newPlayerStates;
+
+        return true;
+    }
+
+    public boolean reconnectPlayer(String identifierToken, String id) throws UserNotFoundException {
+        for (PlayerInfo player : players) {
+            if (player != null && player.getId().equals(identifierToken)) {
+                player.setIsConnected(true);
+                player.setId(id);
                 return true;
             }
         }
-        throw new UserNotFoundException("User not found.");
+        throw new UserNotFoundException("Es wurde kein Benutzer zum Verbinden gefunden!");
     }
 
     public PlayerInfo[] getPlayers() {
@@ -113,6 +155,15 @@ public class PlayerManager {
         for (PlayerState state : playerStates) {
             if (state != null && state.getPlayerInfo().getId().equals(playerId)) {
                 return state;
+            }
+        }
+        return null;
+    }
+
+    public PlayerInfo getPlayerById(String playerId) {
+        for (PlayerInfo player : players) {
+            if (player != null && player.getId().equals(playerId)) {
+                return player;
             }
         }
         return null;

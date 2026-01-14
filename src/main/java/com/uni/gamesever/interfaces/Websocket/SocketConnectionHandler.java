@@ -1,14 +1,24 @@
 package com.uni.gamesever.interfaces.Websocket;
 
+import java.io.Console;
 import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.domain.events.GameTimeoutEvent;
+import com.uni.gamesever.domain.exceptions.UserNotFoundException;
+import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.TurnState;
+import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
 import com.uni.gamesever.interfaces.Websocket.messages.server.ServerInfoEvent;
 import com.uni.gamesever.services.SocketMessageService;
 
@@ -23,10 +33,23 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     @Value("${server.motd}")
     private String serverMotd;
     private final ObjectMapper objectmapper = new ObjectMapper();
+    private final GameManager gameManager;
+    private final ConnectionHandler connectionHandler;
+    private final GameTimerManager gameTimerManager;
+    private final ApplicationEventPublisher eventPublisher;
+    private final PlayerManager playerManager;
+    private final long playerReconnectionTimeout = 30;
 
-    public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler) {
+    public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
+            GameManager gameManager, ConnectionHandler connectionHandler, GameTimerManager gameTimerManager,
+            ApplicationEventPublisher eventPublisher, PlayerManager playerManager) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
+        this.gameManager = gameManager;
+        this.connectionHandler = connectionHandler;
+        this.gameTimerManager = gameTimerManager;
+        this.eventPublisher = eventPublisher;
+        this.playerManager = playerManager;
     }
 
     // This method is executed when client tries to connect
@@ -56,7 +79,30 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         super.afterConnectionClosed(session, status);
         try {
             socketBroadcastService.removeDisconnectedSession(session);
-            System.out.println(session.getId() + " DisConnected");
+            if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+                connectionHandler.handleSituationWhenTheConnectionIsLost(session.getId());
+
+                gameTimerManager.start(playerReconnectionTimeout, () -> {
+                    if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
+                        return;
+                    }
+                    try {
+                        System.out.println("Player " + session.getId() + " failed to reconnect in time.");
+                        eventPublisher.publishEvent(
+                                connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
+                    } catch (UserNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                });
+            } else {
+                eventPublisher
+                        .publishEvent(connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
+                LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+                socketBroadcastService.broadcastMessage(
+                        objectmapper.writeValueAsString(lobbyState));
+            }
         } catch (Exception e) {
             throw e;
         }
