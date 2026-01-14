@@ -95,10 +95,17 @@ public class GameManager {
     public void setTotalBonusCountsOnBoard(int totalBonusCountsOnBoard) {
         this.totalBonusCountsOnBoard = totalBonusCountsOnBoard;
     }
-    public int getPlayerCount() {return playerManager.getAmountOfPlayers();}
+
+    public int getPlayerCount() {
+        return playerManager.getAmountOfPlayers();
+    }
 
     public LobbyStateEnum getLobbyState() {
         return this.lobbyState;
+    }
+
+    public void setLobbyState(LobbyStateEnum lobbyState) {
+        this.lobbyState = lobbyState;
     }
 
     public TurnInfo getTurnInfo() {
@@ -576,6 +583,7 @@ public class GameManager {
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
             getTurnInfo().setTurnState(TurnState.NOT_STARTED);
+            setLobbyState(LobbyStateEnum.FINISHED);
             return true;
         } else {
             throw new IllegalStateException("Winner ID is null despite all treasures being collected.");
