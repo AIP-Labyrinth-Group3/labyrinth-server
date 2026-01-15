@@ -26,6 +26,7 @@ import com.uni.gamesever.domain.model.AchievementContext;
 import com.uni.gamesever.domain.model.Bonus;
 import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
+import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.domain.model.PushActionInfo;
 import com.uni.gamesever.domain.model.Tile;
@@ -35,6 +36,7 @@ import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameOverEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
+import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
 import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.services.SocketMessageService;
@@ -590,14 +592,22 @@ public class GameManager {
         gameTimerManager.stop();
         gameStatsManager.updateScoresForAllPlayersAtTheEndOfTheGame();
         gameStatsManager.updateRankForAllPlayersBasedOnScore();
+        GameStateUpdate finalGameState = new GameStateUpdate(currentBoard,
+                playerManager.getNonNullPlayerStates(), getTurnInfo(), getGameEndTime());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(finalGameState));
         GameOverEvent gameOver = new GameOverEvent(gameStatsManager.getSortedRankings());
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
             getTurnInfo().setTurnState(TurnState.NOT_STARTED);
             setLobbyState(LobbyStateEnum.FINISHED);
-            return true;
         } else {
             throw new IllegalStateException("Die Gewinner-ID ist null, obwohl alle Schätze gesammelt wurden.");
         }
+        for (PlayerInfo player : playerManager.getNonNullPlayers()) {
+            achievementManager.broadCastAchievementsFromPlayerWithId(player.getId());
+        }
+        LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
+        return true;
     }
 }
