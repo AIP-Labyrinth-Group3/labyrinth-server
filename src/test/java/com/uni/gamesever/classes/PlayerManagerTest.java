@@ -186,7 +186,7 @@ class PlayerManagerTest {
             Exception exception = assertThrows(UsernameAlreadyTakenException.class, () -> {
                 playerManager.addPlayer(duplicatePlayer);
             });
-            String expectedMessage = "Username already taken.";
+            String expectedMessage = "Der Benutzername ist bereits vergeben.";
             String actualMessage = exception.getMessage();
             assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
 

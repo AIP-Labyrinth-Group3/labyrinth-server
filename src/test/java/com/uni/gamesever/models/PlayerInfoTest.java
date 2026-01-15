@@ -59,7 +59,7 @@ class PlayerInfoTest {
                 p.setName(invalidName1);
             });
 
-            String expectedMessage = "Name must be between 1 and 50 characters.";
+            String expectedMessage = "Der Benutzername muss zwischen 1 und 50 Zeichen lang sein.";
             String actualMessage = exception.getMessage();
 
             assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
@@ -74,7 +74,7 @@ class PlayerInfoTest {
                 PlayerInfo p = new PlayerInfo(TEST_ID);
                 p.setName(invalidName2);
             });
-            String expectedMessage = "Name must be between 1 and 50 characters.";
+            String expectedMessage = "Der Benutzername muss zwischen 1 und 50 Zeichen lang sein.";
             String actualMessage = exception.getMessage();
             assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
 
