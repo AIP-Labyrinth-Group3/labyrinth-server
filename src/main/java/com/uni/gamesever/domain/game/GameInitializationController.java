@@ -73,6 +73,10 @@ public class GameInitializationController {
         if (amountOfTreasures < 1 || amountOfTreasures > 24) {
             throw new IllegalArgumentException("Die Anzahl der Schätze muss zwischen 1 und 24 liegen.");
         }
+        if (amountOfTreasures < playerManager.getAmountOfPlayers()) {
+            throw new IllegalArgumentException(
+                    "Die Anzahl der Schätze muss mindestens so groß sein wie die Anzahl der Spieler.");
+        }
 
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
 

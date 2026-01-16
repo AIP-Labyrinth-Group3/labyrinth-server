@@ -9,6 +9,7 @@ import com.uni.gamesever.domain.exceptions.*;
 import com.uni.gamesever.domain.game.GameInitializationController;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.model.ErrorCode;
+import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 import com.uni.gamesever.interfaces.Websocket.messages.client.MovePawnRequest;
@@ -53,6 +54,17 @@ public class MessageHandler {
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
             return false;
         }
+
+        if (request.getType() == null || request.getType().isBlank()) {
+            ActionErrorEvent errorEvent = new ActionErrorEvent(
+                    ErrorCode.INVALID_COMMAND,
+                    "Missing message type");
+            socketMessageService.sendMessageToSession(
+                    userId,
+                    objectMapper.writeValueAsString(errorEvent));
+            return false;
+        }
+
         switch (request.getType()) {
             // connect action from client
             case "CONNECT":
@@ -65,6 +77,12 @@ public class MessageHandler {
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     return false;
                 } catch (UsernameNullOrEmptyException e) {
+                    System.err.println(e.getMessage());
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                            e.getMessage());
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                } catch (IllegalArgumentException e) {
                     System.err.println(e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                             e.getMessage());
@@ -122,6 +140,22 @@ public class MessageHandler {
             case "START_GAME":
                 try {
                     StartGameRequest startGameReq = objectMapper.readValue(message, StartGameRequest.class);
+                    if (startGameReq.getTreasureCardCount() < 2 || startGameReq.getTreasureCardCount() > 24) {
+                        throw new IllegalArgumentException(
+                                "Die Anzahl der Schatzkarten muss zwischen 2 und 24 liegen.");
+                    }
+                    if (startGameReq.getGameDurationInSeconds() < 0) {
+                        throw new IllegalArgumentException("Die Spieldauer muss positiv sein.");
+                    }
+                    if (startGameReq.getTotalBonusCount() < 0 || startGameReq.getTotalBonusCount() > 20) {
+                        throw new IllegalArgumentException(
+                                "Die Anzahl der Bonusse darf nicht negativ oder größer als 20 sein.");
+                    }
+                    System.out.println("Start game request: " + startGameReq.getBoardSize().getRows() + "x"
+                            + startGameReq.getBoardSize().getCols() + ", Treasures: "
+                            + startGameReq.getTreasureCardCount() + ", Duration: "
+                            + startGameReq.getGameDurationInSeconds() + "s, Bonuses: "
+                            + startGameReq.getTotalBonusCount());
                     return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(),
                             startGameReq.getTreasureCardCount(), startGameReq.getGameDurationInSeconds(),
                             startGameReq.getTotalBonusCount());
@@ -173,8 +207,22 @@ public class MessageHandler {
                 }
 
             case "PUSH_TILE":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     PushTileRequest pushTileCommand = objectMapper.readValue(message, PushTileRequest.class);
+                    if (pushTileCommand.getRowOrColIndex() < 0) {
+                        throw new IllegalArgumentException(
+                                "Keine gültige Zeilen- oder Spaltenindex für Push angegeben");
+                    }
+                    if (pushTileCommand.getDirection() == null) {
+                        throw new IllegalArgumentException("Keine gültige Richtung für Push angegeben");
+                    }
                     return gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(),
                             pushTileCommand.getDirection(), userId, false);
                 } catch (PushNotValidException e) {
@@ -221,6 +269,13 @@ public class MessageHandler {
                     return false;
                 }
             case "ROTATE_TILE":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     return gameManager.handleRotateTile(userId);
                 } catch (NotPlayersRotateTileExeption e) {
@@ -261,8 +316,21 @@ public class MessageHandler {
                     return false;
                 }
             case "MOVE_PAWN":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
+                    if (movePawnRequest.getTargetCoordinates().getColumn() < 0) {
+                        throw new IllegalArgumentException("Die Anzahl der Spalten darf nicht negativ sein");
+                    }
+                    if (movePawnRequest.getTargetCoordinates().getRow() < 0) {
+                        throw new IllegalArgumentException("Die Anzahl der Reihen darf nicht negativ sein");
+                    }
                     return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId, false);
                 } catch (TargetCoordinateNullException e) {
                     System.err.println("Invalid move pawn command from user " + userId + ": " + e.getMessage());
@@ -302,8 +370,21 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_BEAM":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     UseBeamRequest useBeamCommand = objectMapper.readValue(message, UseBeamRequest.class);
+                    if (useBeamCommand.getTargetCoordinates().getColumn() < 0) {
+                        throw new IllegalArgumentException("Die Anzahl der Spalten darf nicht negativ sein");
+                    }
+                    if (useBeamCommand.getTargetCoordinates().getRow() < 0) {
+                        throw new IllegalArgumentException("Die Anzahl der Reihen darf nicht negativ sein");
+                    }
                     return gameManager.handleUseBeam(useBeamCommand.getTargetCoordinates(), userId);
                 } catch (TargetCoordinateNullException e) {
                     System.err.println("Invalid use beam command from user " + userId + ": " + e.getMessage());
@@ -349,8 +430,18 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_SWAP":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     UseSwapRequest useSwapCommand = objectMapper.readValue(message, UseSwapRequest.class);
+                    if (useSwapCommand.getTargetPlayerId() == null || useSwapCommand.getTargetPlayerId().isBlank()) {
+                        throw new IllegalArgumentException("Keine gültige Zielspieler-ID für Swap angegeben");
+                    }
                     return gameManager.handleUseSwap(useSwapCommand.getTargetPlayerId(), userId);
                 } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid use swap command from user " + userId + ": " + e.getMessage());
@@ -390,9 +481,23 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_PUSH_FIXED":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     UsePushFixedTileRequest pushFixedTileCommand = objectMapper.readValue(message,
                             UsePushFixedTileRequest.class);
+                    if (pushFixedTileCommand.getRowOrColIndex() < 0) {
+                        throw new IllegalArgumentException(
+                                "Keine gültige Zeilen- oder Spaltenindex für Push angegeben");
+                    }
+                    if (pushFixedTileCommand.getDirection() == null) {
+                        throw new IllegalArgumentException("Keine gültige Richtung für Push angegeben");
+                    }
                     return gameManager.handleUsePushFixedTile(pushFixedTileCommand.getDirection(),
                             pushFixedTileCommand.getRowOrColIndex(), userId);
                 } catch (PushNotValidException e) {
@@ -457,6 +562,13 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_PUSH_TWICE":
+                if (gameManager.getTurnInfo().getTurnState() == null
+                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                            "Das Spiel hat noch nicht begonnen.");
+                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    return false;
+                }
                 try {
                     return gameManager.handleUsePushTwice(userId);
                 } catch (NotPlayersTurnException e) {
