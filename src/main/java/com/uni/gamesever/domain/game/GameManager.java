@@ -33,6 +33,7 @@ import com.uni.gamesever.domain.model.Tile;
 import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.infrastructure.TurnTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameOverEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
@@ -62,10 +63,12 @@ public class GameManager {
     AchievementManager achievementManager;
     private TurnInfo turnInfo;
     private String gameEndTime;
+    private TurnTimerManager turnTimerManager;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
-            GameTimerManager gameTimerManager, AchievementManager achievementManager) {
+            GameTimerManager gameTimerManager, AchievementManager achievementManager,
+            TurnTimerManager turnTimerManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameStatsManager = gameStatsManager;
@@ -73,6 +76,7 @@ public class GameManager {
         this.gameTimerManager = gameTimerManager;
         this.achievementManager = achievementManager;
         this.turnInfo = new TurnInfo(null, TurnState.NOT_STARTED);
+        this.turnTimerManager = turnTimerManager;
     }
 
     public GameBoard getCurrentBoard() {
@@ -599,7 +603,7 @@ public class GameManager {
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
             getTurnInfo().setTurnState(TurnState.NOT_STARTED);
-            setLobbyState(LobbyStateEnum.FINISHED);
+            setLobbyState(LobbyStateEnum.LOBBY);
         } else {
             throw new IllegalStateException("Die Gewinner-ID ist null, obwohl alle Schätze gesammelt wurden.");
         }
@@ -609,5 +613,12 @@ public class GameManager {
         LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
         return true;
+    }
+
+    public void resetTurnTimerForCurrentPlayer() {
+        turnTimerManager.stop();
+        turnTimerManager.start(60, () -> {
+            playerManager.setNextPlayerAsCurrent();
+        });
     }
 }

@@ -3,8 +3,7 @@ package com.uni.gamesever.infrastructure;
 import org.springframework.stereotype.Service;
 
 @Service
-public class GameTimerManager extends AbstractTimerManager {
-
+public class TurnTimerManager extends AbstractTimerManager {
     public void start(long durationInSeconds, Runnable onTimeout) {
         startInternal(durationInSeconds, onTimeout);
     }
@@ -16,5 +15,4 @@ public class GameTimerManager extends AbstractTimerManager {
     public boolean isRunning() {
         return super.isRunning();
     }
-
 }
