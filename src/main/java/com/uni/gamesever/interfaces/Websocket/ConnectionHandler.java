@@ -90,6 +90,10 @@ public class ConnectionHandler {
             if (playerManager.getCurrentPlayer().getId().equals(userId)) {
                 playerManager.setNextPlayerAsCurrent();
                 playerManager.removePlayer(userId);
+                if (playerManager.getNonNullPlayers().length == 0) {
+                    gameManager.endGameByTimeoutOrAfterCollectingAllTreasures();
+                    return true;
+                }
                 gameManager.resetAllVariablesForNextTurn();
                 GameStateUpdate gameStatUpdate = new GameStateUpdate(gameManager.getCurrentBoard(),
                         playerManager.getNonNullPlayerStates(),

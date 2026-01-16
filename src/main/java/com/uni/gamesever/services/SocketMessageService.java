@@ -17,6 +17,10 @@ public class SocketMessageService {
         webSocketSessions.add(session);
     }
 
+    public void removeDisconnectedSessionWithID(String sessionId) {
+        webSocketSessions.removeIf(session -> session.getId().equals(sessionId));
+    }
+
     public void removeDisconnectedSession(WebSocketSession session) {
         webSocketSessions.remove(session);
     }

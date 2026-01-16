@@ -9,6 +9,7 @@ import com.uni.gamesever.domain.game.PlayerManager;
 import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ConnectionHandler;
 import com.uni.gamesever.interfaces.Websocket.MessageHandler;
+import com.uni.gamesever.interfaces.Websocket.ShutdownState;
 import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
 import com.uni.gamesever.services.SocketMessageService;
 
@@ -22,12 +23,13 @@ public class ActionHandlerConfig {
     private final ReconnectTimerManager reconnectTimerManager;
     private final ApplicationEventPublisher eventPublisher;
     private final ConnectionHandler playerConnectionHandler;
+    private final ShutdownState shutdownState;
 
     public ActionHandlerConfig(MessageHandler messageHandler, SocketMessageService socketBroadcastService,
             GameManager gameManager,
             PlayerManager playerManager, ReconnectTimerManager reconnectTimerManager,
             ApplicationEventPublisher eventPublisher,
-            ConnectionHandler playerConnectionHandler) {
+            ConnectionHandler playerConnectionHandler, ShutdownState shutdownState) {
         this.messageHandler = messageHandler;
         this.socketBroadcastService = socketBroadcastService;
         this.gameManager = gameManager;
@@ -35,6 +37,7 @@ public class ActionHandlerConfig {
         this.reconnectTimerManager = reconnectTimerManager;
         this.eventPublisher = eventPublisher;
         this.playerConnectionHandler = playerConnectionHandler;
+        this.shutdownState = shutdownState;
     }
 
     @Bean
@@ -42,6 +45,6 @@ public class ActionHandlerConfig {
         return new SocketConnectionHandler(socketBroadcastService, messageHandler, gameManager,
                 playerConnectionHandler,
                 reconnectTimerManager,
-                eventPublisher, playerManager);
+                eventPublisher, playerManager, shutdownState);
     }
 }

@@ -8,6 +8,8 @@ import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.PlayerState;
+import com.uni.gamesever.services.SocketMessageService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -61,12 +63,15 @@ class PlayerManagerTest {
     @Mock
     private BoardSize mockSize;
 
+    @Mock
+    SocketMessageService mockSocketMessageService;
+
     // Setzt den Manager vor jedem Test in einen sauberen Zustand zurück.
     // Da @InjectMocks eine neue Instanz pro Test erstellt, sind die internen Arrays
     // leer (null-initialisiert).
     @BeforeEach
     void setUp() {
-        playerManager = new PlayerManager();
+        playerManager = new PlayerManager(mockSocketMessageService);
     }
 
     @Nested
