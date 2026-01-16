@@ -39,7 +39,7 @@ public class ConnectionHandler {
             throws JsonProcessingException, GameFullException, IllegalArgumentException, UsernameNullOrEmptyException,
             UsernameAlreadyTakenException, UserNotFoundException, GameAlreadyStartedException {
         if (request.getUsername() == null || request.getUsername().isEmpty()) {
-            throw new UsernameNullOrEmptyException("Username cannot be null or empty.");
+            throw new UsernameNullOrEmptyException("Der Benutzername darf nicht leer sein.");
         }
         if (request.getIdentifierToken() != null && !request.getIdentifierToken().isEmpty()) {
             if (playerManager.reconnectPlayer(request.getIdentifierToken(), userId)) {
@@ -61,7 +61,8 @@ public class ConnectionHandler {
             }
         }
         if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
-            throw new GameAlreadyStartedException("Game already started. Cannot join now.");
+            throw new GameAlreadyStartedException(
+                    "Das Spiel hat bereits begonnen. Ein Beitritt ist nicht mehr möglich.");
         }
         PlayerInfo newPlayer = new PlayerInfo(userId);
         newPlayer.setName(request.getUsername());
@@ -74,7 +75,7 @@ public class ConnectionHandler {
             socketMessageService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
         } else {
             System.err.println("Game is full. User " + userId + " cannot join.");
-            throw new GameFullException("Game is full");
+            throw new GameFullException("Das Spiel ist voll. Beitritt nicht möglich.");
         }
 
         return true;
@@ -83,7 +84,7 @@ public class ConnectionHandler {
     public boolean handleIntentionalDisconnectOrAfterTimeOut(String userId)
             throws IllegalArgumentException, UserNotFoundException, JsonProcessingException {
         if (userId == null || userId.isEmpty()) {
-            throw new UserNotFoundException("User ID cannot be null or empty.");
+            throw new UserNotFoundException("Die Benutzer-ID darf nicht null oder leer sein.");
         }
         if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
             if (playerManager.getCurrentPlayer().getId().equals(userId)) {
@@ -113,7 +114,7 @@ public class ConnectionHandler {
     public boolean handleSituationWhenTheConnectionIsLost(String userId)
             throws IllegalArgumentException, UserNotFoundException, JsonProcessingException {
         if (userId == null || userId.isEmpty()) {
-            throw new UserNotFoundException("User ID cannot be null or empty.");
+            throw new UserNotFoundException("Die Benutzer-ID darf nicht null oder leer sein.");
         }
         playerManager.disconnectPlayer(userId);
         PlayerUpdateEvent playerUpdateEvent = new PlayerUpdateEvent(

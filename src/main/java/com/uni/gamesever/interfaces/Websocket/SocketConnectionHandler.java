@@ -17,7 +17,7 @@ import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.PlayerManager;
 import com.uni.gamesever.domain.model.TurnState;
-import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
 import com.uni.gamesever.interfaces.Websocket.messages.server.ServerInfoEvent;
 import com.uni.gamesever.services.SocketMessageService;
@@ -35,19 +35,19 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     private final ObjectMapper objectmapper = new ObjectMapper();
     private final GameManager gameManager;
     private final ConnectionHandler connectionHandler;
-    private final GameTimerManager gameTimerManager;
+    private final ReconnectTimerManager reconnectTimerManager;
     private final ApplicationEventPublisher eventPublisher;
     private final PlayerManager playerManager;
     private final long playerReconnectionTimeout = 30;
 
     public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
-            GameManager gameManager, ConnectionHandler connectionHandler, GameTimerManager gameTimerManager,
+            GameManager gameManager, ConnectionHandler connectionHandler, ReconnectTimerManager reconnectTimerManager,
             ApplicationEventPublisher eventPublisher, PlayerManager playerManager) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
         this.gameManager = gameManager;
         this.connectionHandler = connectionHandler;
-        this.gameTimerManager = gameTimerManager;
+        this.reconnectTimerManager = reconnectTimerManager;
         this.eventPublisher = eventPublisher;
         this.playerManager = playerManager;
     }
@@ -82,7 +82,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
             if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
                 connectionHandler.handleSituationWhenTheConnectionIsLost(session.getId());
 
-                gameTimerManager.start(playerReconnectionTimeout, () -> {
+                reconnectTimerManager.start(playerReconnectionTimeout, () -> {
                     if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
                         return;
                     }
@@ -91,9 +91,11 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                         eventPublisher.publishEvent(
                                 connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
                     } catch (UserNotFoundException e) {
-                        e.printStackTrace();
+                        System.err.println(
+                                "Fehler beim Verarbeiten der Zeitüberschreitung für die Verbindung: " + e.getMessage());
                     } catch (JsonProcessingException e) {
-                        e.printStackTrace();
+                        System.err.println(
+                                "Fehler beim Verarbeiten der Zeitüberschreitung für die Verbindung: " + e.getMessage());
                     }
                 });
             } else {

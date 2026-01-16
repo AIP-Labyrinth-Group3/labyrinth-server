@@ -28,7 +28,7 @@ public class PushActionInfo {
             this.direction = DirectionType.valueOf(direction.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
-                    "Invalid direction type: " + direction + ". Valid types are: UP, DOWN, LEFT, RIGHT");
+                    "Keine gültige Richtung: " + direction);
         }
     }
 }

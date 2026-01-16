@@ -16,9 +16,11 @@ public class AchievementManager {
 
     SocketMessageService socketMessageService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
+    private final PlayerManager playerManager;
 
-    public AchievementManager(SocketMessageService socketMessageService) {
+    public AchievementManager(SocketMessageService socketMessageService, PlayerManager playerManager) {
         this.socketMessageService = socketMessageService;
+        this.playerManager = playerManager;
     }
 
     public void check(PlayerState player, AchievementContext ctx) {
@@ -59,7 +61,14 @@ public class AchievementManager {
 
     private void unlock(PlayerState player, AchievementType achievement) throws JsonProcessingException {
         player.unlockAchievement(achievement);
-        AchievementEvent achievementEvent = new AchievementEvent(player.getPlayerInfo().getId(), achievement);
-        socketMessageService.broadcastMessage(objectMapper.writeValueAsString(achievementEvent));
+    }
+
+    public void broadCastAchievementsFromPlayerWithId(String playerId) throws JsonProcessingException {
+        PlayerState playerState = playerManager.getPlayerStateById(playerId);
+
+        for (String achievement : playerState.getAchievements()) {
+            AchievementEvent achievementEvent = new AchievementEvent(playerId, AchievementType.valueOf(achievement));
+            socketMessageService.broadcastMessage(objectMapper.writeValueAsString(achievementEvent));
+        }
     }
 }

@@ -11,6 +11,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.uni.gamesever.domain.enums.AchievementType;
 import com.uni.gamesever.domain.game.AchievementManager;
+import com.uni.gamesever.domain.game.PlayerManager;
 import com.uni.gamesever.domain.model.AchievementContext;
 import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.PlayerState;
@@ -23,12 +24,15 @@ public class AchievementManagerTest {
         @Mock
         private SocketMessageService socketMessageService;
 
+        @Mock
+        PlayerManager playerManager;
+
         private PlayerState player;
 
         @BeforeEach
         void setUp() {
                 MockitoAnnotations.openMocks(this);
-                achievementManager = new AchievementManager(socketMessageService);
+                achievementManager = new AchievementManager(socketMessageService, playerManager);
 
                 PlayerInfo info = new PlayerInfo("player1");
                 player = new PlayerState(info, null, null, null, 0);
@@ -60,8 +64,7 @@ public class AchievementManagerTest {
                 achievementManager.check(player, validRun);
                 assertTrue(player.hasAchievementOfType(AchievementType.RUNNER));
 
-                verify(socketMessageService, times(1))
-                                .broadcastMessage(anyString());
+                verifyNoInteractions(socketMessageService);
         }
 
         @Test
@@ -76,8 +79,7 @@ public class AchievementManagerTest {
                 achievementManager.check(player, validRun);
                 achievementManager.check(player, validRun);
 
-                verify(socketMessageService, times(1))
-                                .broadcastMessage(anyString());
+                verifyNoInteractions(socketMessageService);
         }
 
         @Test
@@ -114,9 +116,6 @@ public class AchievementManagerTest {
                 achievementManager.check(player, ctx);
 
                 assertTrue(player.hasAchievementOfType(AchievementType.PUSHER));
-
-                verify(socketMessageService, times(1))
-                                .broadcastMessage(anyString());
         }
 
         @Test
@@ -129,7 +128,7 @@ public class AchievementManagerTest {
                 achievementManager.check(player, ctx);
                 achievementManager.check(player, ctx);
 
-                verify(socketMessageService, times(1))
-                                .broadcastMessage(anyString());
+                assertTrue(player.hasAchievementOfType(AchievementType.PUSHER));
+                verifyNoInteractions(socketMessageService);
         }
 }

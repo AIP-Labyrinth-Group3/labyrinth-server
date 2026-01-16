@@ -60,18 +60,18 @@ public class GameInitializationController {
             GameAlreadyStartedException, IllegalArgumentException {
 
         if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
-            throw new GameAlreadyStartedException("Game has already been started.");
+            throw new GameAlreadyStartedException("Das Spiel hat bereits begonnen.");
         }
 
         if (playerManager.getAdminID() == null || !playerManager.getAdminID().equals(userID)) {
-            throw new PlayerNotAdminException("Only the admin can start the game.");
+            throw new PlayerNotAdminException("Nur der Administrator kann das Spiel starten.");
         }
 
         if (playerManager.getAmountOfPlayers() < 2) {
-            throw new NotEnoughPlayerException("Not enough players to start the game.");
+            throw new NotEnoughPlayerException("Nicht genügend Spieler, um das Spiel zu starten.");
         }
         if (amountOfTreasures < 1 || amountOfTreasures > 24) {
-            throw new IllegalArgumentException("Amount of treasures must be between 1 and 24.");
+            throw new IllegalArgumentException("Die Anzahl der Schätze muss zwischen 1 und 24 liegen.");
         }
 
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
@@ -109,6 +109,8 @@ public class GameInitializationController {
 
         gameManager
                 .setGameEndTime(OffsetDateTime.now().plusSeconds(gameDuration).toString());
+
+        gameManager.resetAllVariablesForNextTurn();
 
         gameTimerManager.start(gameDuration, () -> {
             eventPublisher.publishEvent(new GameTimeoutEvent());

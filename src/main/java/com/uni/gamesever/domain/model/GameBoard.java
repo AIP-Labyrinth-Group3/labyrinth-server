@@ -80,13 +80,13 @@ public class GameBoard {
     public void pushTile(int rowOrColIndex, DirectionType direction, boolean isUsingPushFixed)
             throws NoExtraTileException {
         if (spareTile == null) {
-            throw new NoExtraTileException("Extra tile is not set.");
+            throw new NoExtraTileException("Es gibt kein Ersatzkachel zum Einfügen.");
         }
 
         if (rowOrColIndex < 0
                 || rowOrColIndex >= (direction == DirectionType.LEFT || direction == DirectionType.RIGHT ? rows
                         : cols)) {
-            throw new IllegalArgumentException("Index out of bounds.");
+            throw new IllegalArgumentException("Index außerhalb des gültigen Bereichs.");
         }
 
         Tile tileToBePushedOut = null;
@@ -100,11 +100,12 @@ public class GameBoard {
             tileToBePushedOut = tiles[rowOrColIndex][cols - 1];
 
         if (tileToBePushedOut == null) {
-            throw new IllegalArgumentException("No tile to be pushed out at the specified index and direction.");
+            throw new IllegalArgumentException(
+                    "Keine Kachel zum Herausdrücken an dem angegebenen Index und der Richtung.");
         }
 
         if (tileToBePushedOut.getIsFixed() && !isUsingPushFixed) {
-            throw new IllegalArgumentException("Cannot push a fixed tile.");
+            throw new IllegalArgumentException("Es ist verboten, eine feste Kachel zu verschieben.");
         }
 
         switch (direction) {
@@ -141,7 +142,7 @@ public class GameBoard {
                 break;
 
             default:
-                throw new IllegalArgumentException("Invalid direction: " + direction);
+                throw new IllegalArgumentException("Keine gültige Richtung: " + direction);
 
         }
 
@@ -260,7 +261,7 @@ public class GameBoard {
             Tile extraTile = new Tile(generateEntrancesForTypeWithRandomRotation(extraTileType), extraTileType);
             board.setSpareTile(extraTile);
         } else {
-            throw new NoExtraTileException("No tiles available to assign as extra tile.");
+            throw new NoExtraTileException("Es konnte kein Ersatzkachel generiert werden.");
         }
 
         int remainingTileIndex = 0;

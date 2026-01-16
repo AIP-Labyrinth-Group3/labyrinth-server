@@ -43,14 +43,14 @@ public class StartGameRequest extends Message {
 
     public void setTreasureCardCount(int treasureCardCount) throws IllegalArgumentException {
         if (treasureCardCount < 2 || treasureCardCount > 24) {
-            throw new IllegalArgumentException("Treasure card count must be between 2 and 24.");
+            throw new IllegalArgumentException("Die Anzahl der Schatzkarten muss zwischen 2 und 24 liegen.");
         }
         this.treasureCardCount = treasureCardCount;
     }
 
     public void setGameDurationInSeconds(int gameDurationInSeconds) {
         if (gameDurationInSeconds < 0) {
-            throw new IllegalArgumentException("Game duration must be non-negative.");
+            throw new IllegalArgumentException("Die Spieldauer muss positiv sein.");
         }
         this.gameDurationInSeconds = gameDurationInSeconds;
     }

@@ -49,14 +49,14 @@ public class PlayerInfo {
 
     public void setName(String name) throws IllegalArgumentException {
         if (name.length() < 1 || name.length() > 50) {
-            throw new IllegalArgumentException("Name must be between 1 and 50 characters.");
+            throw new IllegalArgumentException("Der Benutzername muss zwischen 1 und 50 Zeichen lang sein.");
         }
         this.name = name;
     }
 
     public void setColor(Color color) throws IllegalArgumentException {
         if (color == null) {
-            throw new IllegalArgumentException("Invalid color.");
+            throw new IllegalArgumentException("Ungültige Farbe.");
         }
         this.color = color;
     }

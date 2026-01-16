@@ -115,7 +115,7 @@ public class PlayerState {
                 BonusType.valueOf(bonus);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
-                        "Invalid bonus type: " + bonus + ". Valid types are: BEAM, PUSH_FIXED, SWAP, PUSH_TWICE");
+                        "Ungültiger Bonus-Typ: " + bonus);
             }
         }
         this.availableBonuses = availableBonuses;
@@ -123,7 +123,7 @@ public class PlayerState {
 
     public void collectCurrentTreasure() throws IllegalStateException {
         if (currentTreasure == null) {
-            throw new IllegalStateException("No current treasure to collect.");
+            throw new IllegalStateException("Keine Schätze zum Sammeln vorhanden.");
         }
         treasuresFound.add(currentTreasure);
         remainingTreasureCount--;
@@ -163,7 +163,7 @@ public class PlayerState {
 
     public void useOneBonusOfType(BonusType type) throws IllegalStateException {
         if (availableBonuses == null) {
-            throw new IllegalStateException("No available bonuses to use.");
+            throw new IllegalStateException("Keine verfügbaren Boni zum Verwenden.");
         }
         List<String> bonusesList = new ArrayList<>();
         boolean found = false;
@@ -175,7 +175,7 @@ public class PlayerState {
             }
         }
         if (!found) {
-            throw new IllegalStateException("No bonus of type " + type.name() + " available to use.");
+            throw new IllegalStateException("Kein Bonus vom Typ " + type.name() + " zum Verwenden vorhanden.");
         }
         this.availableBonuses = bonusesList.toArray(new String[0]);
     }
@@ -242,5 +242,12 @@ public class PlayerState {
         }
         achievementList.add(type.name());
         this.achievements = achievementList.toArray(new String[0]);
+    }
+
+    public int getAmountOfAchievements() {
+        if (achievements != null) {
+            return achievements.length;
+        }
+        return 0;
     }
 }

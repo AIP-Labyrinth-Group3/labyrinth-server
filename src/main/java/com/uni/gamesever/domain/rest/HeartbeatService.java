@@ -28,8 +28,7 @@ public class HeartbeatService {
             ServerPortHolder serverPortHolder,
             @Value("${game-server.name:Group3}") String name,
             @Value("${game-server.uri:ws://localhost:9000}") String uriPrefix,
-            @Value("${game-server.max-players:4}") int maxPlayers
-    ) {
+            @Value("${game-server.max-players:4}") int maxPlayers) {
         this.registryClient = registryClient;
         this.gameManager = gameManager;
         this.serverPortHolder = serverPortHolder;
@@ -40,7 +39,8 @@ public class HeartbeatService {
 
     private String fullUri() {
         int port = serverPortHolder.getPort();
-        if (port <= 0) throw new IllegalStateException("Server port not set yet!");
+        if (port <= 0)
+            throw new IllegalStateException("Der Port des Servers ist nicht gesetzt.");
         return uriPrefix + "/game";
     }
 
@@ -53,8 +53,7 @@ public class HeartbeatService {
 
             if (id == null) {
                 var created = registryClient.createServer(
-                        new GameServerRegistration(name, fullUri(), maxPlayers)
-                );
+                        new GameServerRegistration(name, fullUri(), maxPlayers));
                 serverId.set(created.id());
                 System.out.println("[Heartbeat] Registered serverId=" + created.id());
                 return;

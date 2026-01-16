@@ -34,7 +34,7 @@ public class SocketMessageService {
                 session.sendMessage(new org.springframework.web.socket.TextMessage(message));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Fehler beim Senden der Nachricht an die Sitzung: " + e.getMessage());
         }
     }
 
@@ -45,7 +45,7 @@ public class SocketMessageService {
                     s.sendMessage(new org.springframework.web.socket.TextMessage(message));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("Fehler beim Senden der Nachricht an die Sitzung: " + e.getMessage());
             }
         }
     }

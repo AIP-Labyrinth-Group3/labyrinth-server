@@ -49,7 +49,7 @@ public class PlayerManager {
         }
         for (PlayerInfo player : players) {
             if (player != null && player.getName().equals(newPlayer.getName())) {
-                throw new UsernameAlreadyTakenException("Username already taken.");
+                throw new UsernameAlreadyTakenException("Der Benutzername ist bereits vergeben.");
             }
         }
         for (int i = 0; i < MAX_PLAYERS; i++) {
@@ -107,7 +107,7 @@ public class PlayerManager {
         }
 
         if (!playerFound) {
-            throw new UserNotFoundException("User not found.");
+            throw new UserNotFoundException("Benutzer mit der angegebenen ID wurde nicht gefunden.");
         }
 
         PlayerInfo[] newPlayers = new PlayerInfo[MAX_PLAYERS];

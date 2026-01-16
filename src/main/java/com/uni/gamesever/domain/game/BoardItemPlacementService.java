@@ -32,7 +32,7 @@ public class BoardItemPlacementService {
         List<Tile> validTiles = collectValidTiles(board, false);
 
         if (validTiles.isEmpty()) {
-            throw new IllegalArgumentException("No valid tile for bonus placement");
+            throw new IllegalArgumentException("Keine gültigen Felder zum Platzieren des Bonus gefunden");
         }
 
         Collections.shuffle(validTiles);
@@ -50,7 +50,7 @@ public class BoardItemPlacementService {
         }
 
         if (treasures.size() > validTiles.size()) {
-            throw new IllegalArgumentException("Not enough tiles for treasures");
+            throw new IllegalArgumentException("Nicht genügend Felder für Schätze vorhanden");
         }
     }
 
@@ -123,7 +123,7 @@ public class BoardItemPlacementService {
 
     public List<Treasure> createTreasures(int amountOfTreasures) throws IllegalArgumentException {
         if (amountOfTreasures <= 0) {
-            throw new IllegalArgumentException("Amount of treasures must be positive");
+            throw new IllegalArgumentException("Die Anzahl der Schätze muss positiv sein");
         }
         List<Treasure> treasures = new ArrayList<>();
         for (int i = 1; i <= amountOfTreasures; i++) {

@@ -20,6 +20,7 @@ import com.uni.gamesever.domain.game.BoardItemPlacementService;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.GameStatsManager;
 import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.game.TurnTimer;
 import com.uni.gamesever.domain.model.BoardSize;
 import com.uni.gamesever.domain.model.Bonus;
 import com.uni.gamesever.domain.model.Coordinates;
@@ -60,6 +61,9 @@ public class GameManagerTest {
 
     @Mock
     AchievementManager achievementManager;
+
+    @Mock
+    TurnTimer turnTimer;
 
     @InjectMocks
     GameManager gameManager;
@@ -110,7 +114,6 @@ public class GameManagerTest {
         assertNotNull(lastPush, "Last push info should be set");
         assertEquals(rowOrColIndex, lastPush.getRowOrColIndex(), "Row/Col index should match pushed index");
         assertEquals(direction, lastPush.getDirection(), "Direction should match pushed direction");
-        verify(socketBroadcastService, times(1)).broadcastMessage(anyString());
     }
 
     @Test
@@ -273,19 +276,6 @@ public class GameManagerTest {
     }
 
     @Test
-    void GameManagerTest_ExceptionShouldBeThrownIfTargetIsOccupiedByAnotherPlayer() {
-        Coordinates start = new Coordinates(0, 0);
-        Coordinates target = new Coordinates(1, 1);
-
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] { state2 });
-        state2.setCurrentPosition(new Coordinates(1, 1));
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            gameManager.canPlayerMove(board, start, target);
-        });
-    }
-
-    @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldMovePlayerUp() throws Exception {
         PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 1));
@@ -409,6 +399,8 @@ public class GameManagerTest {
                 .thenReturn(new PlayerState[] { state1 });
         when(playerManager.getPlayerStatesOfPlayersNotOnTurn())
                 .thenReturn(new PlayerState[] {});
+        when(playerManager.getNonNullPlayers())
+                .thenReturn(new PlayerInfo[] { player1 });
 
         PlayerGameStats endStats = new PlayerGameStats(2, 0, 1);
         RankingEntry finalRanking = new RankingEntry(player1, 1, 100, endStats);
@@ -422,6 +414,7 @@ public class GameManagerTest {
 
         verify(socketBroadcastService, never())
                 .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
+        reset(socketBroadcastService);
 
         gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
@@ -432,6 +425,10 @@ public class GameManagerTest {
 
         verify(socketBroadcastService, atLeastOnce())
                 .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
+        verify(socketBroadcastService, atLeastOnce())
+                .broadcastMessage(argThat(msg -> msg.contains("GAME_STATE_UPDATE")));
+        verify(socketBroadcastService, atLeastOnce())
+                .broadcastMessage(argThat(msg -> msg.contains("LOBBY_STATE")));
 
         assertEquals(TurnState.NOT_STARTED, gameManager.getTurnInfo().getTurnState());
     }

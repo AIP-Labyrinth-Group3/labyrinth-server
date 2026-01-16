@@ -186,7 +186,7 @@ class PlayerManagerTest {
             Exception exception = assertThrows(UsernameAlreadyTakenException.class, () -> {
                 playerManager.addPlayer(duplicatePlayer);
             });
-            String expectedMessage = "Username already taken.";
+            String expectedMessage = "Der Benutzername ist bereits vergeben.";
             String actualMessage = exception.getMessage();
             assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
 
@@ -253,8 +253,8 @@ class PlayerManagerTest {
             // THEN
             assertTrue(result, "Das Entfernen des Spielers sollte erfolgreich sein.");
             assertEquals(1, playerManager.getAmountOfPlayers(), "Nach dem Entfernen sollte die Anzahl 1 sein.");
-            assertTrue(playerManager.getPlayers()[1].getIsAdmin(),
-                    "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein.");
+            assertTrue(playerManager.getPlayers()[0].getIsAdmin(),
+                    "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein und auf der ersten Stelle im Array stehen.");
         }
     }
 
