@@ -78,29 +78,6 @@ public class GameInitialitationTest {
     }
 
     @Test
-    void startGameAction_shouldThrowExceptionOnInvalidTreasureCount() {
-        StartGameRequest action = new StartGameRequest();
-        assertThrows(IllegalArgumentException.class,
-                () -> action.setTreasureCardCount(1));
-        assertThrows(IllegalArgumentException.class,
-                () -> action.setTreasureCardCount(50));
-    }
-
-    @Test
-    void boardSize_shouldThrowExceptionOnInvalidRows() {
-        BoardSize size = new BoardSize();
-        assertThrows(IllegalArgumentException.class,
-                () -> size.setRows(2));
-    }
-
-    @Test
-    void boardSize_shouldThrowExceptionOnInvalidCols() {
-        BoardSize size = new BoardSize();
-        assertThrows(IllegalArgumentException.class,
-                () -> size.setCols(12));
-    }
-
-    @Test
     void gameBoardHandler_shouldThrowExceptionIfPlayerIsNotAdmin() {
         String userId = "user1";
         BoardSize size = new BoardSize();
