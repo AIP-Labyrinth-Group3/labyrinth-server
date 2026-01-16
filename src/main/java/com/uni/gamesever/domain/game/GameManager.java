@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.enums.BonusType;
 import com.uni.gamesever.domain.enums.DirectionType;
 import com.uni.gamesever.domain.events.GameTimeoutEvent;
+import com.uni.gamesever.domain.events.TurnTimeoutEvent;
 import com.uni.gamesever.domain.exceptions.BonusNotAvailable;
 import com.uni.gamesever.domain.exceptions.GameNotStartedException;
 import com.uni.gamesever.domain.exceptions.GameNotValidException;
@@ -63,12 +64,11 @@ public class GameManager {
     AchievementManager achievementManager;
     private TurnInfo turnInfo;
     private String gameEndTime;
-    private TurnTimerManager turnTimerManager;
+    private TurnTimer turnTimer;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
-            GameTimerManager gameTimerManager, AchievementManager achievementManager,
-            TurnTimerManager turnTimerManager) {
+            GameTimerManager gameTimerManager, AchievementManager achievementManager, TurnTimer turnTimer) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameStatsManager = gameStatsManager;
@@ -76,7 +76,7 @@ public class GameManager {
         this.gameTimerManager = gameTimerManager;
         this.achievementManager = achievementManager;
         this.turnInfo = new TurnInfo(null, TurnState.NOT_STARTED);
-        this.turnTimerManager = turnTimerManager;
+        this.turnTimer = turnTimer;
     }
 
     public GameBoard getCurrentBoard() {
@@ -161,9 +161,7 @@ public class GameManager {
         } else {
             getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
         }
-        GameStateUpdate gameStateUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                getTurnInfo(), getGameEndTime());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
+        informAllPlayersAboutCurrentGameState();
 
         return true;
     }
@@ -298,13 +296,7 @@ public class GameManager {
 
         resetAllVariablesForNextTurn();
 
-        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                getTurnInfo(), getGameEndTime());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
-
-        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                currentBoard.getSpareTile(), 60);
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+        informAllPlayersAboutCurrentGameState();
 
         return true;
     }
@@ -319,6 +311,7 @@ public class GameManager {
         getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
         getTurnInfo().updateTurnEndTime();
+        turnTimer.resetTurnTimer();
 
     }
 
@@ -340,13 +333,8 @@ public class GameManager {
         currentBoard.setSpareTile(spareTile);
 
         getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
-        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                getTurnInfo(), getGameEndTime());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                currentBoard.getSpareTile(), 60);
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+        informAllPlayersAboutCurrentGameState();
 
         return true;
     }
@@ -505,13 +493,7 @@ public class GameManager {
 
         getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
 
-        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
-                getTurnInfo(), getGameEndTime());
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
-
-        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                currentBoard.getSpareTile(), 60);
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+        informAllPlayersAboutCurrentGameState();
 
         return true;
     }
@@ -583,6 +565,16 @@ public class GameManager {
         return true;
     }
 
+    public void informAllPlayersAboutCurrentGameState() throws JsonProcessingException {
+        GameStateUpdate gameStatUpdate = new GameStateUpdate(currentBoard, playerManager.getNonNullPlayerStates(),
+                getTurnInfo(), getGameEndTime());
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
+
+        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
+                currentBoard.getSpareTile(), 60);
+        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+    }
+
     @EventListener
     public void onGameTimeout(GameTimeoutEvent event) {
         try {
@@ -615,10 +607,15 @@ public class GameManager {
         return true;
     }
 
-    public void resetTurnTimerForCurrentPlayer() {
-        turnTimerManager.stop();
-        turnTimerManager.start(60, () -> {
+    @EventListener
+    public void onTurnTimeout(TurnTimeoutEvent event) {
+        try {
             playerManager.setNextPlayerAsCurrent();
-        });
+            resetAllVariablesForNextTurn();
+            informAllPlayersAboutCurrentGameState();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
+
 }

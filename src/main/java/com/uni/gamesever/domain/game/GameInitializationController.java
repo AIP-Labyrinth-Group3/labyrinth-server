@@ -110,6 +110,8 @@ public class GameInitializationController {
         gameManager
                 .setGameEndTime(OffsetDateTime.now().plusSeconds(gameDuration).toString());
 
+        gameManager.resetAllVariablesForNextTurn();
+
         gameTimerManager.start(gameDuration, () -> {
             eventPublisher.publishEvent(new GameTimeoutEvent());
         });

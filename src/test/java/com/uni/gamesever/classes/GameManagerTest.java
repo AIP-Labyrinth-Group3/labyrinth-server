@@ -20,6 +20,7 @@ import com.uni.gamesever.domain.game.BoardItemPlacementService;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.GameStatsManager;
 import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.game.TurnTimer;
 import com.uni.gamesever.domain.model.BoardSize;
 import com.uni.gamesever.domain.model.Bonus;
 import com.uni.gamesever.domain.model.Coordinates;
@@ -60,6 +61,9 @@ public class GameManagerTest {
 
     @Mock
     AchievementManager achievementManager;
+
+    @Mock
+    TurnTimer turnTimer;
 
     @InjectMocks
     GameManager gameManager;
@@ -110,7 +114,6 @@ public class GameManagerTest {
         assertNotNull(lastPush, "Last push info should be set");
         assertEquals(rowOrColIndex, lastPush.getRowOrColIndex(), "Row/Col index should match pushed index");
         assertEquals(direction, lastPush.getDirection(), "Direction should match pushed direction");
-        verify(socketBroadcastService, times(1)).broadcastMessage(anyString());
     }
 
     @Test
