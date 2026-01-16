@@ -17,6 +17,7 @@ import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.server.ConnectAck;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
 import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
+import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerUpdateEvent;
 import com.uni.gamesever.services.SocketMessageService;
@@ -46,17 +47,18 @@ public class ConnectionHandler {
                 System.out.println("User " + userId + " reconnected as " + request.getUsername());
                 ConnectAck connectionAck = new ConnectAck(userId, userId);
                 socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
+                NextTreasureCardEvent nextTreasureCardEvent = new NextTreasureCardEvent(
+                        playerManager.getPlayerStateById(userId).getCurrentTreasure());
+                socketMessageService.sendMessageToSession(userId,
+                        objectMapper.writeValueAsString(nextTreasureCardEvent));
+                GameStateUpdate gameStateUpdate = new GameStateUpdate(gameManager.getCurrentBoard(),
+                        playerManager.getNonNullPlayerStates(),
+                        gameManager.getTurnInfo(), gameManager.getGameEndTime());
+                socketMessageService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
+                PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
+                        gameManager.getCurrentBoard().getSpareTile(), 60);
+                socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
 
-                if (playerManager.getCurrentPlayer().getId().equals(userId)) {
-                    GameStateUpdate gameStatUpdate = new GameStateUpdate(gameManager.getCurrentBoard(),
-                            playerManager.getNonNullPlayerStates(),
-                            gameManager.getTurnInfo(), gameManager.getGameEndTime());
-                    socketMessageService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
-
-                    PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                            gameManager.getCurrentBoard().getSpareTile(), 60);
-                    socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
-                }
                 return true;
             }
         }
@@ -90,6 +92,10 @@ public class ConnectionHandler {
             if (playerManager.getCurrentPlayer().getId().equals(userId)) {
                 playerManager.setNextPlayerAsCurrent();
                 playerManager.removePlayer(userId);
+                if (playerManager.getNonNullPlayers().length == 0) {
+                    gameManager.endGameByTimeoutOrAfterCollectingAllTreasures();
+                    return true;
+                }
                 gameManager.resetAllVariablesForNextTurn();
                 GameStateUpdate gameStatUpdate = new GameStateUpdate(gameManager.getCurrentBoard(),
                         playerManager.getNonNullPlayerStates(),

@@ -13,6 +13,7 @@ import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.PlayerState;
+import com.uni.gamesever.services.SocketMessageService;
 
 @Service
 public class PlayerManager {
@@ -23,6 +24,11 @@ public class PlayerManager {
     private List<Color> currentAvailableColors = new ArrayList<>(
             Arrays.asList(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW));
     private PlayerInfo currentPlayer = null;
+    private final SocketMessageService socketMessageService;
+
+    public PlayerManager(SocketMessageService socketMessageService) {
+        this.socketMessageService = socketMessageService;
+    }
 
     public int getAmountOfPlayers() {
         int count = 0;
@@ -122,6 +128,8 @@ public class PlayerManager {
         }
         this.players = newPlayers;
         this.playerStates = newPlayerStates;
+
+        socketMessageService.removeDisconnectedSessionWithID(userID);
 
         return true;
     }

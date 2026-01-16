@@ -39,10 +39,11 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     private final ApplicationEventPublisher eventPublisher;
     private final PlayerManager playerManager;
     private final long playerReconnectionTimeout = 30;
+    private final ShutdownState shutdownState;
 
     public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
             GameManager gameManager, ConnectionHandler connectionHandler, ReconnectTimerManager reconnectTimerManager,
-            ApplicationEventPublisher eventPublisher, PlayerManager playerManager) {
+            ApplicationEventPublisher eventPublisher, PlayerManager playerManager, ShutdownState shutdownState) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
         this.gameManager = gameManager;
@@ -50,6 +51,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         this.reconnectTimerManager = reconnectTimerManager;
         this.eventPublisher = eventPublisher;
         this.playerManager = playerManager;
+        this.shutdownState = shutdownState;
     }
 
     // This method is executed when client tries to connect
@@ -76,6 +78,14 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session,
             CloseStatus status) throws Exception {
+
+        if (shutdownState.isShuttingDown()) {
+            return;
+        }
+        if (status.getCode() == CloseStatus.GOING_AWAY.getCode()) {
+            return;
+        }
+
         super.afterConnectionClosed(session, status);
         try {
             socketBroadcastService.removeDisconnectedSession(session);
@@ -105,8 +115,10 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                 socketBroadcastService.broadcastMessage(
                         objectmapper.writeValueAsString(lobbyState));
             }
-        } catch (Exception e) {
-            throw e;
+        } catch (UserNotFoundException e) {
+            System.err.println(
+                    "Der Benutzer mit der ID " + session.getId()
+                            + " wurde nicht gefunden und wurde bereites entfernt.");
         }
     }
 
