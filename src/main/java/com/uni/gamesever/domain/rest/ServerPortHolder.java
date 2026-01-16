@@ -5,13 +5,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class ServerPortHolder {
 
-    private int port;
+    private volatile Integer port;
 
-    public int getPort() {
-        return port;
-    }
+    //public int getPort() {
+    //    return port;
+    //}
 
-    void setPort(int port) {
+    public void setPort(int port) {
         this.port = port;
     }
+
+    public int getPortOrThrow() {
+        Integer p = port;
+        if (p == null || p <= 0) throw new IllegalStateException("Server port not set yet");
+        return p;
+    }
+
 }
