@@ -12,7 +12,7 @@ public class LocalBaseUrlProvider {
     }
 
     public String getBaseUrl() {
-        return "http://localhost:" + portHolder.getPort();
+        return "http://localhost:" + portHolder.getPortOrThrow();
     }
 
     public String url(String path) {
