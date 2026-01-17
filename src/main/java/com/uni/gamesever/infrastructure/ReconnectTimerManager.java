@@ -1,20 +1,50 @@
 package com.uni.gamesever.infrastructure;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PreDestroy;
+
+import java.util.concurrent.ScheduledFuture;
+
 @Service
-public class ReconnectTimerManager extends AbstractTimerManager {
-    public void start(long durationInSeconds, Runnable onTimeout) {
-        System.out.println("Starting Reconnect Timer for " + durationInSeconds + " seconds");
-        startInternal(durationInSeconds, onTimeout);
+public class ReconnectTimerManager {
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+
+    private final Map<String, ScheduledFuture<?>> reconnectTimers = new ConcurrentHashMap<>();
+
+    public void start(String playerId, long timeoutSeconds, Runnable onTimeout) {
+        System.out.println("Starting reconnect timer for player: " + playerId);
+        stop(playerId);
+
+        ScheduledFuture<?> future = scheduler.schedule(() -> {
+            reconnectTimers.remove(playerId);
+            onTimeout.run();
+        }, timeoutSeconds, TimeUnit.SECONDS);
+
+        reconnectTimers.put(playerId, future);
     }
 
-    public void stop() {
-        System.out.println("Stopping Reconnect Timer");
-        stopInternal();
+    public void stop(String playerId) {
+        ScheduledFuture<?> future = reconnectTimers.remove(playerId);
+        if (future != null) {
+            future.cancel(false);
+        }
     }
 
-    public boolean isRunning() {
-        return super.isRunning();
+    public boolean isRunning(String playerId) {
+        ScheduledFuture<?> future = reconnectTimers.get(playerId);
+        return future != null && !future.isDone();
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        scheduler.shutdownNow();
     }
 }

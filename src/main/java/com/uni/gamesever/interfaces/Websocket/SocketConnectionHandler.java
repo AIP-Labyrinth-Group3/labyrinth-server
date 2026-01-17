@@ -1,6 +1,5 @@
 package com.uni.gamesever.interfaces.Websocket;
 
-import java.io.Console;
 import java.time.OffsetDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +11,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.uni.gamesever.domain.events.GameTimeoutEvent;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.PlayerManager;
@@ -92,7 +90,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
             if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
                 connectionHandler.handleSituationWhenTheConnectionIsLost(session.getId());
 
-                reconnectTimerManager.start(playerReconnectionTimeout, () -> {
+                reconnectTimerManager.start(session.getId(), playerReconnectionTimeout, () -> {
                     if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
                         return;
                     }
