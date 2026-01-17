@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -12,6 +14,7 @@ public class SocketMessageService {
     // In this list all the connections will be stored
     // Then it will be used to broadcast the message
     private final List<WebSocketSession> webSocketSessions = Collections.synchronizedList(new ArrayList<>());
+    private static final Logger log = LoggerFactory.getLogger(SocketMessageService.class);
 
     public void addIncomingSession(WebSocketSession session) {
         webSocketSessions.add(session);
@@ -39,6 +42,7 @@ public class SocketMessageService {
             }
         } catch (Exception e) {
             System.out.println("Fehler beim Senden der Nachricht an die Sitzung: " + e.getMessage());
+            log.error("Fehler beim Senden der Nachricht an die Sitzung: {}", e.getMessage());
         }
     }
 
@@ -50,6 +54,7 @@ public class SocketMessageService {
                 }
             } catch (Exception e) {
                 System.out.println("Fehler beim Senden der Nachricht an die Sitzung: " + e.getMessage());
+                log.error("Fehler beim Senden der Nachricht an die Sitzung: {}", e.getMessage());
             }
         }
     }
