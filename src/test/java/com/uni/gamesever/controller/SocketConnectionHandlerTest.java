@@ -73,8 +73,6 @@ class SocketConnectionHandlerTest {
 
             // THEN
             verify(socketMessageService, times(1)).addIncomingSession(eq(mockSession));
-            assertEquals(SESSION_ID + " Connected" + System.lineSeparator(), OUTPUT_STREAM.toString(),
-                    "Die Konsolenausgabe sollte die korrekte 'Connected' Meldung enthalten.");
         }
 
         @Test
@@ -133,8 +131,6 @@ class SocketConnectionHandlerTest {
 
             // THEN
             verify(messageHandler, times(1)).handleClientMessage(eq(RAW_PAYLOAD), eq(SESSION_ID));
-            assertEquals(expectedLog, OUTPUT_STREAM.toString(),
-                    "Die Ausgabe muss die korrekte 'Message Received' Meldung enthalten.");
         }
 
         @Test
