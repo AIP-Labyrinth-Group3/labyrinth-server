@@ -1,5 +1,7 @@
 package com.uni.gamesever.interfaces.Websocket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -28,6 +30,7 @@ public class ConnectionHandler {
     private final GameManager gameManager;
     private final SocketMessageService socketMessageService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
+    private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public ConnectionHandler(PlayerManager playerManager, GameManager gameManager,
             SocketMessageService socketMessageService) {
@@ -45,6 +48,7 @@ public class ConnectionHandler {
         if (request.getIdentifierToken() != null && !request.getIdentifierToken().isEmpty()) {
             if (playerManager.reconnectPlayer(request.getIdentifierToken(), userId)) {
                 System.out.println("User " + userId + " reconnected as " + request.getUsername());
+                log.info("User {} hat sich als {} wiederverbunden", userId, request.getUsername());
                 ConnectAck connectionAck = new ConnectAck(userId, userId);
                 socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
                 NextTreasureCardEvent nextTreasureCardEvent = new NextTreasureCardEvent(
@@ -70,6 +74,7 @@ public class ConnectionHandler {
         newPlayer.setName(request.getUsername());
         if (playerManager.addPlayer(newPlayer)) {
             System.out.println("User " + userId + " connected as " + request.getUsername());
+            log.info("User {} hat sich als {} verbunden", userId, request.getUsername());
             ConnectAck connectionAck = new ConnectAck(newPlayer.getId(), newPlayer.getId());
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
 
@@ -84,7 +89,7 @@ public class ConnectionHandler {
     }
 
     public boolean handleIntentionalDisconnectOrAfterTimeOut(String userId)
-            throws IllegalArgumentException, UserNotFoundException, JsonProcessingException {
+            throws UserNotFoundException, JsonProcessingException {
         if (userId == null || userId.isEmpty()) {
             throw new UserNotFoundException("Die Benutzer-ID darf nicht null oder leer sein.");
         }

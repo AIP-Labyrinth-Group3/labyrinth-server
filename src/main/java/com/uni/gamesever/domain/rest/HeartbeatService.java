@@ -2,6 +2,9 @@ package com.uni.gamesever.domain.rest;
 
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.rest.Dtos.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ public class HeartbeatService {
     private final int maxPlayers;
     private String host;
     private final AtomicReference<UUID> serverId = new AtomicReference<>(null);
+    private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public HeartbeatService(
             ServerRegistryClient registryClient,
@@ -62,7 +66,9 @@ public class HeartbeatService {
                         new GameServerRegistration(name, fullUri(), maxPlayers));
                 serverId.set(created.id());
                 System.out.println("[Heartbeat] Registered serverId=" + created.id());
+                log.info("Server registriert mit ID {}", created.id());
                 System.out.println("[Heartbeat] Server URI: " + fullUri());
+                log.info("Server URI: {}", fullUri());
                 return;
             }
 
@@ -70,6 +76,7 @@ public class HeartbeatService {
 
         } catch (Exception e) {
             System.out.println("[Heartbeat] " + e.getMessage());
+            log.error("Fehler im Heartbeat: {}", e.getMessage());
         }
     }
 }

@@ -2,6 +2,8 @@ package com.uni.gamesever.domain.game;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.uni.gamesever.domain.model.PlayerGameStats;
@@ -11,6 +13,7 @@ import com.uni.gamesever.domain.model.RankingEntry;
 public class GameStatsManager {
     private List<RankingEntry> rankings;
     PlayerManager playerManager;
+    private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public GameStatsManager(PlayerManager playerManager) {
         this.playerManager = playerManager;
@@ -91,6 +94,7 @@ public class GameStatsManager {
             if (entry.getPlayerId().equals(playerId)) {
                 entry.getStats().increaseStepsTaken(steps);
                 System.out.println("Increased steps for player " + playerId + " by " + steps);
+                log.info("Schritte für Spieler {} um {} erhöht", playerId, steps);
                 return;
             }
         }
@@ -101,6 +105,7 @@ public class GameStatsManager {
             if (entry.getPlayerId().equals(playerId)) {
                 entry.getStats().increaseTilesPushed(tiles);
                 System.out.println("Increased tiles pushed for player " + playerId + " by " + tiles);
+                log.info("Geschobene Kacheln für Spieler {} um {} erhöht", playerId, tiles);
                 return;
             }
         }

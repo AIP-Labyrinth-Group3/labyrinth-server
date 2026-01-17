@@ -2,6 +2,8 @@ package com.uni.gamesever.interfaces.Websocket;
 
 import java.time.OffsetDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.socket.CloseStatus;
@@ -38,6 +40,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     private final PlayerManager playerManager;
     private final long playerReconnectionTimeout = 30;
     private final ShutdownState shutdownState;
+    private static final Logger log = LoggerFactory.getLogger(SocketConnectionHandler.class);
 
     public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
             GameManager gameManager, ConnectionHandler connectionHandler, ReconnectTimerManager reconnectTimerManager,
@@ -62,6 +65,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         try {
             socketBroadcastService.addIncomingSession(session);
             System.out.println(session.getId() + " Connected");
+            log.info("Session {} verbunden", session.getId());
             ServerInfoEvent serverInfoEvent = new ServerInfoEvent(OffsetDateTime.now().toString(), serverVersion,
                     protocolVersion, serverMotd);
             socketBroadcastService.sendMessageToSession(session.getId(),
@@ -96,6 +100,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                     }
                     try {
                         System.out.println("Player " + session.getId() + " failed to reconnect in time.");
+                        log.info("Spieler " + session.getId() + " hat sich nicht rechtzeitig wiederverbunden.");
                         eventPublisher.publishEvent(
                                 connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
                     } catch (UserNotFoundException e) {
@@ -131,6 +136,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         super.handleMessage(session, message);
 
         System.out.println("Message Received from user " + session.getId() + ": " + message.getPayload());
+        log.info("Nachricht von Benutzer {} empfangen: {}", session.getId(), message.getPayload());
 
         // the whole game logic goes here
         if (!messageHandler.handleClientMessage(message.getPayload().toString(), session.getId())) {

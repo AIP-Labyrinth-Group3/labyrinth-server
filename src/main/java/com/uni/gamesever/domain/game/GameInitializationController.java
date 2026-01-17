@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,12 +23,15 @@ import com.uni.gamesever.domain.model.Treasure;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
+import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStarted;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
 import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.services.SocketMessageService;
-import org.springframework.context.ApplicationEventPublisher;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class GameInitializationController {
@@ -38,6 +42,8 @@ public class GameInitializationController {
     GameStatsManager gameStatsManager;
     BoardItemPlacementService boardItemPlacementService;
     GameTimerManager gameTimerManager;
+    private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
+
     private final ApplicationEventPublisher eventPublisher;
 
     public GameInitializationController(PlayerManager playerManager, SocketMessageService socketBroadcastService,
@@ -79,6 +85,7 @@ public class GameInitializationController {
         }
 
         System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
+        log.info("Spiel wurde gestartet mit Brettgröße: {}x{}", size.getRows(), size.getCols());
 
         gameManager.setTotalBonusCountsOnBoard(totalBonusCount);
 
