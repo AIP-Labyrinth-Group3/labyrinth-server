@@ -3,9 +3,6 @@ package com.uni.gamesever.domain.rest;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.rest.Dtos.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +31,6 @@ public class HeartbeatService {
             @Value("${game-server.host:localhost}") String host,
             @Value("${game-server.max-players:4}") int maxPlayers
 
-
     ) {
         this.registryClient = registryClient;
         this.gameManager = gameManager;
@@ -46,12 +42,11 @@ public class HeartbeatService {
         System.out.println("[HeartbeatService] Initialized with uriPrefix=" + this.uriPrefix);
     }
 
-
-
-    private String fullUri ()  {
+    private String fullUri() {
 
         Integer port = serverPortHolder.getPortOrThrow();
-        if (port == null || port <= 0) throw new IllegalStateException("Server port not set yet!");
+        if (port == null || port <= 0)
+            throw new IllegalStateException("Server port not set yet!");
         return uriPrefix + host + ":" + port + "/game";
     }
 
@@ -62,12 +57,9 @@ public class HeartbeatService {
             int players = gameManager.getPlayerCount();
             ServerStatus status = ServerStatus.valueOf(gameManager.getLobbyState().name());
 
-
-
             if (id == null) {
                 var created = registryClient.createServer(
-                        new GameServerRegistration(name, fullUri(), maxPlayers)
-                );
+                        new GameServerRegistration(name, fullUri(), maxPlayers));
                 serverId.set(created.id());
                 System.out.println("[Heartbeat] Registered serverId=" + created.id());
                 System.out.println("[Heartbeat] Server URI: " + fullUri());

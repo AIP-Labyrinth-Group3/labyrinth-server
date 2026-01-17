@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.HashMap;
 import java.util.Map;
 
 @EnableScheduling
@@ -39,23 +38,18 @@ public class GameseverApplication {
 
             // Höchste Priorität: überschreibt server.port aus Dateien/Args
             env.getPropertySources().addFirst(
-                    new MapPropertySource("portRangeOverride", Map.of("server.port", port))
-            );
+                    new MapPropertySource("portRangeOverride", Map.of("server.port", port)));
         }
     }
-
-
-
 
     private static int findFreePortInRange(int min, int max) {
         for (int p = min; p <= max; p++) {
             try (ServerSocket socket = new ServerSocket(p)) {
                 socket.setReuseAddress(true);
                 return p;
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
         throw new IllegalStateException("Kein freier Port im Bereich " + min + "-" + max);
     }
 }
-
-

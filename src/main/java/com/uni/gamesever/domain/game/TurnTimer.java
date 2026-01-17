@@ -24,7 +24,6 @@ public class TurnTimer {
         turnTimerManager.stop();
         turnTimerManager.start(TURN_DURATION, () -> {
             eventPublisher.publishEvent(new TurnTimeoutEvent());
-            resetTurnTimer();
         });
     }
 }

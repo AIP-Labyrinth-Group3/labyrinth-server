@@ -1,20 +1,18 @@
 package com.uni.gamesever.domain.rest;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.net.SocketException;
-
 @Component
-public class ConnectManagement  {
+public class ConnectManagement {
 
     private final ServerPortHolder localServerPortHolder;
 
     public ConnectManagement(ServerRegistryClient client, ServerPortHolder localServerPortHolder) {
         this.localServerPortHolder = localServerPortHolder;
     }
+
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() {
 
@@ -25,6 +23,5 @@ public class ConnectManagement  {
 
         }
     }
-
 
 }
