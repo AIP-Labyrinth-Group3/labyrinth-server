@@ -154,6 +154,12 @@ public class GameBoard {
 
     // Tile generation and assignment
     public static GameBoard generateBoard(BoardSize size) throws NoExtraTileException {
+        if (size.getRows() < 3 || size.getRows() > 11) {
+            throw new IllegalArgumentException("Die Anzahl der Reihen muss zwischen 3 und 11 liegen.");
+        }
+        if (size.getCols() < 3 || size.getCols() > 11) {
+            throw new IllegalArgumentException("Die Anzahl der Spalten muss zwischen 3 und 11 liegen.");
+        }
         GameBoard board = new GameBoard(size);
         int boardRows = size.getRows();
         int boardCols = size.getCols();
