@@ -51,7 +51,7 @@ public class HeartbeatService {
         Integer port = serverPortHolder.getPortOrThrow();
         if (port == null || port <= 0)
             throw new IllegalStateException("Server port not set yet!");
-        return uriPrefix + host + ":" + port ;
+        return uriPrefix + host + ":" + port;  // /game deleted
     }
 
     @Scheduled(initialDelay = 1000, fixedDelayString = "#{1 * 1000}")
