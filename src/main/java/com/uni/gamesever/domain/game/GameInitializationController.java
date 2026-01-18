@@ -142,9 +142,6 @@ public class GameInitializationController {
                 gameManager.getTurnInfo(), gameManager.getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
-        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(), board.getSpareTile(), 60);
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
-
         return true;
     }
 
