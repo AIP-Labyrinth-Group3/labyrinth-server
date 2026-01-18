@@ -59,10 +59,6 @@ public class ConnectionHandler {
                         playerManager.getNonNullPlayerStates(),
                         gameManager.getTurnInfo(), gameManager.getGameEndTime());
                 socketMessageService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
-                PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                        gameManager.getCurrentBoard().getSpareTile(), 60);
-                socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
-
                 return true;
             }
         }

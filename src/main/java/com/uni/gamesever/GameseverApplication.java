@@ -38,6 +38,20 @@ public class GameseverApplication {
         public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
             ConfigurableEnvironment env = event.getEnvironment();
 
+
+            String configuredHost = env.getProperty("game-server.host");
+            if (configuredHost == null || configuredHost.isBlank()) {
+                String hostToUse = "localhost"; // oder eine gewünschte IP
+                env.getPropertySources().addFirst(
+                        new MapPropertySource("hostOverride", Map.of("game-server.host", hostToUse)));
+            }
+            String configuredGroupname = env.getProperty("game-server.name");
+            if (configuredGroupname == null || configuredGroupname.isBlank()) {
+                String nameToUse = "Gruppe 3 ";
+                env.getPropertySources().addFirst(
+                        new MapPropertySource("hostOverride", Map.of("game-server.name", nameToUse)));
+            }
+
             String configuredPort = env.getProperty("server.port");
             if (configuredPort != null && !configuredPort.isBlank()) {
                 log.info("Server-Port extern gesetzt: {}", configuredPort);
