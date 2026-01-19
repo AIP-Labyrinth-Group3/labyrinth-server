@@ -159,12 +159,9 @@ public class GameInitializationController {
             while (index < treasures.size() && assigned.size() < treasures.size() / playersCount) {
                 assigned.add(treasures.get(index++));
             }
-
             state.setRemainingTreasureCount(assigned.size());
             state.setCurrentTreasure(assigned.get(0));
             state.setAssignedTreasures(assigned);
         }
-
     }
-
 }
