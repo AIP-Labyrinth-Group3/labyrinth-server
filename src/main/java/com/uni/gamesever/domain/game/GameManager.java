@@ -350,14 +350,10 @@ public class GameManager {
             throw new IllegalArgumentException("Start- oder Zielkoordinaten dürfen nicht null sein.");
         }
 
-        /*
-         * if (currentBoard.isAnyPlayerOnTile(target,
-         * playerManager.getPlayerStatesOfPlayersNotOnTurn())) {
-         * throw new
-         * IllegalArgumentException("Das Zielfeld ist von einem anderen Spieler besetzt."
-         * );
-         * }
-         */
+        if (currentBoard.isAnyPlayerOnTile(target,
+                playerManager.getPlayerStatesOfPlayersNotOnTurn())) {
+            throw new IllegalArgumentException("Das Zielfeld ist von einem anderen Spieler besetzt.");
+        }
 
         if (start.getColumn() == target.getColumn() && start.getRow() == target.getRow()) {
             return true;
@@ -568,9 +564,10 @@ public class GameManager {
                 getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-        //PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-        //        currentBoard.getSpareTile(), 60);
-        //socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+        // PlayerTurnEvent turn = new
+        // PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
+        // currentBoard.getSpareTile(), 60);
+        // socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
     }
 
     @EventListener
