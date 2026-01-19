@@ -568,9 +568,9 @@ public class GameManager {
                 getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-        PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                currentBoard.getSpareTile(), 60);
-        socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
+        //PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
+        //        currentBoard.getSpareTile(), 60);
+        //socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(turn));
     }
 
     @EventListener

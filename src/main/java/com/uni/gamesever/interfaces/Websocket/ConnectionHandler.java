@@ -103,9 +103,9 @@ public class ConnectionHandler {
                         gameManager.getTurnInfo(), gameManager.getGameEndTime());
                 socketMessageService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-                PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                        gameManager.getCurrentBoard().getSpareTile(), 60);
-                socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
+                //PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
+                //        gameManager.getCurrentBoard().getSpareTile(), 60);
+                //socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
             } else {
                 playerManager.removePlayer(userId);
 
