@@ -8,14 +8,14 @@ import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 public class GameStarted extends Message {
     private GameBoard board;
     private PlayerState[] players;
-    private TurnInfo turnInfo;
+    private TurnInfo currentTurnInfo;
     private String gameEndTime;
 
-    public GameStarted(GameBoard board, PlayerState[] players, TurnInfo turnInfo, String gameEndTime) {
+    public GameStarted(GameBoard board, PlayerState[] players, TurnInfo currentTurnInfo, String gameEndTime) {
         super("GAME_STARTED");
         this.board = board;
         this.players = players;
-        this.turnInfo = turnInfo;
+        this.currentTurnInfo = currentTurnInfo;
         this.gameEndTime = gameEndTime;
     }
 
@@ -27,8 +27,8 @@ public class GameStarted extends Message {
         return players;
     }
 
-    public TurnInfo getTurnInfo() {
-        return turnInfo;
+    public TurnInfo getCurrentTurnInfo() {
+        return currentTurnInfo;
     }
 
     public String getGameEndTime() {

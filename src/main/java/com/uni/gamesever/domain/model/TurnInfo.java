@@ -5,12 +5,12 @@ import java.time.OffsetDateTime;
 public class TurnInfo {
     private String currentPlayerId;
     private String turnEndTime;
-    private TurnState turnState;
+    private TurnState state;
 
-    public TurnInfo(String currentPlayerId, TurnState turnState) {
+    public TurnInfo(String currentPlayerId, TurnState state) {
         this.currentPlayerId = currentPlayerId;
         this.turnEndTime = null;
-        this.turnState = turnState;
+        this.state = state;
     }
 
     public String getCurrentPlayerId() {
@@ -21,8 +21,8 @@ public class TurnInfo {
         return turnEndTime;
     }
 
-    public TurnState getTurnState() {
-        return turnState;
+    public TurnState getState() {
+        return state;
     }
 
     public void setCurrentPlayerId(String currentPlayerId) {
@@ -33,7 +33,7 @@ public class TurnInfo {
         this.turnEndTime = OffsetDateTime.now().plusSeconds(60).toString();
     }
 
-    public void setTurnState(TurnState turnState) {
-        this.turnState = turnState;
+    public void setState(TurnState state) {
+        this.state = state;
     }
 }

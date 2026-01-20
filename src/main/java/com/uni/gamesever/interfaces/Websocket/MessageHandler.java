@@ -225,8 +225,8 @@ public class MessageHandler {
                 }
 
             case "PUSH_TILE":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -298,8 +298,8 @@ public class MessageHandler {
                     return false;
                 }
             case "ROTATE_TILE":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -345,8 +345,8 @@ public class MessageHandler {
                     return false;
                 }
             case "MOVE_PAWN":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -403,8 +403,8 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_BEAM":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -465,8 +465,8 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_SWAP":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -518,8 +518,8 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_PUSH_FIXED":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -602,8 +602,8 @@ public class MessageHandler {
                     return false;
                 }
             case "USE_PUSH_TWICE":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
                             "Das Spiel hat noch nicht begonnen.");
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));

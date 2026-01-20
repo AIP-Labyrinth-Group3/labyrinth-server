@@ -91,7 +91,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         super.afterConnectionClosed(session, status);
         try {
             socketBroadcastService.removeDisconnectedSession(session);
-            if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+            if (gameManager.getTurnInfo().getState() != TurnState.NOT_STARTED) {
                 connectionHandler.handleSituationWhenTheConnectionIsLost(session.getId());
 
                 reconnectTimerManager.start(session.getId(), playerReconnectionTimeout, () -> {

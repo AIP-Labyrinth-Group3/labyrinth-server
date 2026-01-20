@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.uni.gamesever.domain.model.*;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +17,6 @@ import com.uni.gamesever.domain.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.domain.exceptions.NoExtraTileException;
 import com.uni.gamesever.domain.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.domain.exceptions.PlayerNotAdminException;
-import com.uni.gamesever.domain.model.BoardSize;
-import com.uni.gamesever.domain.model.GameBoard;
-import com.uni.gamesever.domain.model.PlayerState;
-import com.uni.gamesever.domain.model.Treasure;
-import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
 import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
@@ -65,7 +61,7 @@ public class GameInitializationController {
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
-        if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+        if (gameManager.getTurnInfo().getState() != TurnState.NOT_STARTED) {
             throw new GameAlreadyStartedException("Das Spiel hat bereits begonnen.");
         }
 
@@ -108,16 +104,20 @@ public class GameInitializationController {
         }
 
         playerManager.setNextPlayerAsCurrent();
+
+        TurnInfo turnifo= gameManager.getTurnInfo();
         gameManager.setCurrentBoard(board);
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        //gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
+        turnifo.setState(TurnState.WAITING_FOR_PUSH);
         gameManager.setLobbyState(LobbyStateEnum.IN_GAME);
-
         gameStatsManager.initAllRankingStats(playerManager);
-
-        gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
-        gameManager.getTurnInfo().updateTurnEndTime();
-
+        //gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+        turnifo.setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+        //gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
+        turnifo.setState(TurnState.WAITING_FOR_PUSH);
+        //gameManager.getTurnInfo().updateTurnEndTime();
+        turnifo.updateTurnEndTime();
+        gameManager.setTurnInfo(turnifo);
         gameManager
                 .setGameEndTime(OffsetDateTime.now().plusSeconds(gameDuration).toString());
 
