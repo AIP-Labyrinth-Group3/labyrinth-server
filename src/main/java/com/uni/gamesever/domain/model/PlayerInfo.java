@@ -4,6 +4,7 @@ import com.uni.gamesever.domain.enums.Color;
 
 public class PlayerInfo {
     private String id;
+    private String identifierToken; // Bleibt fix beim Reconnect, für AI und Reconnect-Logik
     private String name;
     private Color color;
     private boolean isAdmin;
@@ -71,5 +72,13 @@ public class PlayerInfo {
 
     public void setIsConnected(boolean isConnected) {
         this.isConnected = isConnected;
+    }
+
+    public String getIdentifierToken() {
+        return identifierToken;
+    }
+
+    public void setIdentifierToken(String identifierToken) {
+        this.identifierToken = identifierToken;
     }
 }

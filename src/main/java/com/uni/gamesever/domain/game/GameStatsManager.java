@@ -63,23 +63,22 @@ public class GameStatsManager {
     }
 
     public void addAmountToScoreForASinglePlayer(String playerId, int amount) {
-        for (var entry : rankings) {
-            if (entry.getPlayerId().equals(playerId)) {
-                int newScore = entry.getScore() + amount;
-                entry.setScore(newScore);
-                return;
-            }
+        RankingEntry entry = findRankingEntry(playerId);
+        if (entry != null) {
+            int newScore = entry.getScore() + amount;
+            entry.setScore(newScore);
+        } else {
+            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
     public void updateScoreForEndGameForASinglePlayer(String playerId) {
-        for (var entry : rankings) {
-            if (entry.getPlayerId().equals(playerId)) {
-                int score = entry.getStats().getTreasuresCollected() * 10;
-
-                entry.setScore(entry.getScore() + score);
-                return;
-            }
+        RankingEntry entry = findRankingEntry(playerId);
+        if (entry != null) {
+            int score = entry.getStats().getTreasuresCollected() * 10;
+            entry.setScore(entry.getScore() + score);
+        } else {
+            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
@@ -89,34 +88,63 @@ public class GameStatsManager {
         }
     }
 
-    public void increaseStepsTaken(int steps, String playerId) {
+    /**
+     * Helper method to find RankingEntry by playerId or identifierToken.
+     * Tries playerId first, then falls back to identifierToken (for reconnected players).
+     */
+    private RankingEntry findRankingEntry(String playerId) {
+        // First try to find by current playerId
         for (var entry : rankings) {
             if (entry.getPlayerId().equals(playerId)) {
-                entry.getStats().increaseStepsTaken(steps);
-                System.out.println("Increased steps for player " + playerId + " by " + steps);
-                log.info("Schritte für Spieler {} um {} erhöht", playerId, steps);
-                return;
+                return entry;
             }
+        }
+
+        // If not found, try to find by identifierToken (for reconnected players)
+        var player = playerManager.getPlayerById(playerId);
+        if (player != null && player.getIdentifierToken() != null) {
+            for (var entry : rankings) {
+                if (player.getIdentifierToken().equals(entry.getIdentifierToken())) {
+                    System.out.println("📊 Found ranking by identifierToken for reconnected player: " +
+                            player.getName() + " (old ID: " + entry.getPlayerId() + " → new ID: " + playerId + ")");
+                    // Update the playerId in ranking to current one
+                    entry.setPlayerId(playerId);
+                    return entry;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public void increaseStepsTaken(int steps, String playerId) {
+        RankingEntry entry = findRankingEntry(playerId);
+        if (entry != null) {
+            entry.getStats().increaseStepsTaken(steps);
+            System.out.println("Increased steps for player " + playerId + " by " + steps);
+            log.info("Schritte für Spieler {} um {} erhöht", playerId, steps);
+        } else {
+            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
     public void increaseTilesPushed(int tiles, String playerId) {
-        for (var entry : rankings) {
-            if (entry.getPlayerId().equals(playerId)) {
-                entry.getStats().increaseTilesPushed(tiles);
-                System.out.println("Increased tiles pushed for player " + playerId + " by " + tiles);
-                log.info("Geschobene Kacheln für Spieler {} um {} erhöht", playerId, tiles);
-                return;
-            }
+        RankingEntry entry = findRankingEntry(playerId);
+        if (entry != null) {
+            entry.getStats().increaseTilesPushed(tiles);
+            System.out.println("Increased tiles pushed for player " + playerId + " by " + tiles);
+            log.info("Geschobene Kacheln für Spieler {} um {} erhöht", playerId, tiles);
+        } else {
+            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
     public void increaseTreasuresCollected(int treasures, String playerId) {
-        for (var entry : rankings) {
-            if (entry.getPlayerId().equals(playerId)) {
-                entry.getStats().increaseTreasuresCollected(treasures);
-                return;
-            }
+        RankingEntry entry = findRankingEntry(playerId);
+        if (entry != null) {
+            entry.getStats().increaseTreasuresCollected(treasures);
+        } else {
+            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 

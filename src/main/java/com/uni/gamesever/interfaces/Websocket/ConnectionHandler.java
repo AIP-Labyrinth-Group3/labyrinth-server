@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.domain.ai.ServerAIManager;
 import com.uni.gamesever.domain.exceptions.GameAlreadyStartedException;
 import com.uni.gamesever.domain.exceptions.GameFullException;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
@@ -29,14 +30,16 @@ public class ConnectionHandler {
     private final PlayerManager playerManager;
     private final GameManager gameManager;
     private final SocketMessageService socketMessageService;
+    private final ServerAIManager serverAIManager;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public ConnectionHandler(PlayerManager playerManager, GameManager gameManager,
-            SocketMessageService socketMessageService) {
+            SocketMessageService socketMessageService, ServerAIManager serverAIManager) {
         this.playerManager = playerManager;
         this.gameManager = gameManager;
         this.socketMessageService = socketMessageService;
+        this.serverAIManager = serverAIManager;
     }
 
     public boolean handleConnectMessage(ConnectRequest request, String userId)
@@ -47,9 +50,14 @@ public class ConnectionHandler {
         }
         if (request.getIdentifierToken() != null && !request.getIdentifierToken().isEmpty()) {
             if (playerManager.reconnectPlayer(request.getIdentifierToken(), userId)) {
+                // DEACTIVATE AI WHEN PLAYER RECONNECTS
+                // WICHTIG: Deaktiviere AI für die ALTE Player ID (identifierToken), nicht die neue Session ID!
+                serverAIManager.deactivateAI(request.getIdentifierToken());
+                System.out.println("🤖 AI deactivated for reconnected player: " + request.getIdentifierToken() + " (new session: " + userId + ")");
+
                 System.out.println("User " + userId + " reconnected as " + request.getUsername());
                 log.info("User {} hat sich als {} wiederverbunden", userId, request.getUsername());
-                ConnectAck connectionAck = new ConnectAck(userId, userId);
+                ConnectAck connectionAck = new ConnectAck(userId, request.getIdentifierToken());
                 socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
                 NextTreasureCardEvent nextTreasureCardEvent = new NextTreasureCardEvent(
                         playerManager.getPlayerStateById(userId).getCurrentTreasure());
@@ -68,10 +76,11 @@ public class ConnectionHandler {
         }
         PlayerInfo newPlayer = new PlayerInfo(userId);
         newPlayer.setName(request.getUsername());
+        newPlayer.setIdentifierToken(userId); // Setze identifierToken beim ersten Connect
         if (playerManager.addPlayer(newPlayer)) {
             System.out.println("User " + userId + " connected as " + request.getUsername());
             log.info("User {} hat sich als {} verbunden", userId, request.getUsername());
-            ConnectAck connectionAck = new ConnectAck(newPlayer.getId(), newPlayer.getId());
+            ConnectAck connectionAck = new ConnectAck(newPlayer.getId(), newPlayer.getIdentifierToken());
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
 
             LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());

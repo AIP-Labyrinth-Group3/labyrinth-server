@@ -134,11 +134,14 @@ public class PlayerManager {
         return true;
     }
 
-    public boolean reconnectPlayer(String identifierToken, String id) throws UserNotFoundException {
+    public boolean reconnectPlayer(String identifierToken, String newSessionId) throws UserNotFoundException {
         for (PlayerInfo player : players) {
-            if (player != null && player.getId().equals(identifierToken)) {
+            // Suche nach identifierToken (bleibt fix) statt nach ID (ändert sich)
+            if (player != null && player.getIdentifierToken() != null
+                && player.getIdentifierToken().equals(identifierToken)) {
                 player.setIsConnected(true);
-                player.setId(id);
+                player.setId(newSessionId); // Update Session ID für Message-Routing
+                System.out.println("📝 Reconnect: identifierToken=" + identifierToken + " → neue SessionID=" + newSessionId);
                 return true;
             }
         }
@@ -172,6 +175,27 @@ public class PlayerManager {
         for (PlayerInfo player : players) {
             if (player != null && player.getId().equals(playerId)) {
                 return player;
+            }
+        }
+        return null;
+    }
+
+    public PlayerInfo getPlayerByIdentifierToken(String identifierToken) {
+        for (PlayerInfo player : players) {
+            if (player != null && player.getIdentifierToken() != null
+                && player.getIdentifierToken().equals(identifierToken)) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    public PlayerState getPlayerStateByIdentifierToken(String identifierToken) {
+        for (PlayerState state : playerStates) {
+            if (state != null && state.getPlayerInfo() != null
+                && state.getPlayerInfo().getIdentifierToken() != null
+                && state.getPlayerInfo().getIdentifierToken().equals(identifierToken)) {
+                return state;
             }
         }
         return null;
