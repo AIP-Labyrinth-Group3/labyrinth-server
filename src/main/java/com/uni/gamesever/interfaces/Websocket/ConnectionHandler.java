@@ -106,17 +106,32 @@ public class ConnectionHandler {
                     gameManager.endGameByTimeoutOrAfterCollectingAllTreasures();
                     return true;
                 }
+
+                gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+                gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
+
                 gameManager.resetAllVariablesForNextTurn();
                 GameStateUpdate gameStatUpdate = new GameStateUpdate(gameManager.getCurrentBoard(),
                         playerManager.getNonNullPlayerStates(),
                         gameManager.getTurnInfo(), gameManager.getGameEndTime());
                 socketMessageService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
-                //PlayerTurnEvent turn = new PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
-                //        gameManager.getCurrentBoard().getSpareTile(), 60);
-                //socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
+                // PlayerTurnEvent turn = new
+                // PlayerTurnEvent(playerManager.getCurrentPlayer().getId(),
+                // gameManager.getCurrentBoard().getSpareTile(), 60);
+                // socketMessageService.broadcastMessage(objectMapper.writeValueAsString(turn));
             } else {
                 playerManager.removePlayer(userId);
+
+                if (playerManager.getNonNullPlayers().length == 0) {
+                    gameManager.endGameByTimeoutOrAfterCollectingAllTreasures();
+                    return true;
+                }
+
+                GameStateUpdate gameStatUpdate = new GameStateUpdate(gameManager.getCurrentBoard(),
+                        playerManager.getNonNullPlayerStates(),
+                        gameManager.getTurnInfo(), gameManager.getGameEndTime());
+                socketMessageService.broadcastMessage(objectMapper.writeValueAsString(gameStatUpdate));
 
             }
         } else {

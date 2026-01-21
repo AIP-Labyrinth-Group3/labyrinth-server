@@ -34,6 +34,7 @@ import com.uni.gamesever.domain.model.Tile;
 import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameOverEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
@@ -65,10 +66,12 @@ public class GameManager {
     private TurnInfo turnInfo;
     private String gameEndTime;
     private TurnTimer turnTimer;
+    private ReconnectTimerManager reconnectTimerManager;
 
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
             GameTimerManager gameTimerManager, AchievementManager achievementManager, TurnTimer turnTimer,
+            ReconnectTimerManager reconnectTimerManager, 
             ServerAIManager serverAIManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
@@ -78,6 +81,7 @@ public class GameManager {
         this.achievementManager = achievementManager;
         this.turnInfo = new TurnInfo(null, TurnState.NOT_STARTED);
         this.turnTimer = turnTimer;
+        this.reconnectTimerManager = reconnectTimerManager;
         this.serverAIManager = serverAIManager;
     }
 
@@ -624,6 +628,8 @@ public class GameManager {
 
     public boolean endGameByTimeoutOrAfterCollectingAllTreasures() throws JsonProcessingException {
         gameTimerManager.stop();
+        turnTimer.stop();
+        reconnectTimerManager.stopAll();
         gameStatsManager.updateScoresForAllPlayersAtTheEndOfTheGame();
         gameStatsManager.updateRankForAllPlayersBasedOnScore();
         GameStateUpdate finalGameState = new GameStateUpdate(currentBoard,
@@ -634,6 +640,7 @@ public class GameManager {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
             getTurnInfo().setTurnState(TurnState.NOT_STARTED);
             setLobbyState(LobbyStateEnum.LOBBY);
+            gameStatsManager.removeAllScoresAndRanks();
         } else {
             throw new IllegalStateException("Die Gewinner-ID ist null, obwohl alle Schätze gesammelt wurden.");
         }
