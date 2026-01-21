@@ -36,9 +36,16 @@ public class ReconnectTimerManager {
     }
 
     public void stop(String playerId) {
+        System.out.println("Stopping reconnect timer for player: " + playerId);
         ScheduledFuture<?> future = reconnectTimers.remove(playerId);
         if (future != null) {
             future.cancel(false);
+        }
+    }
+
+    public void stopAll() {
+        for (String playerId : reconnectTimers.keySet()) {
+            stop(playerId);
         }
     }
 

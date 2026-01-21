@@ -26,6 +26,10 @@ public class GameStatsManager {
         }
     }
 
+    public void removeAllScoresAndRanks() {
+        rankings.clear();
+    }
+
     public void updateRankForAllPlayersBasedOnScore() {
         rankings.sort((a, b) -> {
             int scoreA = a.getScore();

@@ -109,13 +109,11 @@ public class GameInitializationController {
 
         playerManager.setNextPlayerAsCurrent();
         gameManager.setCurrentBoard(board);
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         gameManager.setLobbyState(LobbyStateEnum.IN_GAME);
 
         gameStatsManager.initAllRankingStats(playerManager);
 
         gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         gameManager.getTurnInfo().updateTurnEndTime();
 
         gameManager

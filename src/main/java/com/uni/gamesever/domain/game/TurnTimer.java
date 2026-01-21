@@ -26,4 +26,8 @@ public class TurnTimer {
             eventPublisher.publishEvent(new TurnTimeoutEvent());
         });
     }
+
+    public void stop() {
+        turnTimerManager.stop();
+    }
 }
