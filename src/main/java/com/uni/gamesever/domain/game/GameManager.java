@@ -71,7 +71,7 @@ public class GameManager {
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
             GameTimerManager gameTimerManager, AchievementManager achievementManager, TurnTimer turnTimer,
-            ReconnectTimerManager reconnectTimerManager) {
+            ReconnectTimerManager reconnectTimerManager, 
             ServerAIManager serverAIManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
