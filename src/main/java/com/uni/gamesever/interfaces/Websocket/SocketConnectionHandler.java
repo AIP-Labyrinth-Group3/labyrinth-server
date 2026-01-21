@@ -13,9 +13,11 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.domain.ai.ServerAIManager;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.PlayerManager;
+import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
@@ -38,13 +40,15 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
     private final ReconnectTimerManager reconnectTimerManager;
     private final ApplicationEventPublisher eventPublisher;
     private final PlayerManager playerManager;
+    private final ServerAIManager serverAIManager;
     private final long playerReconnectionTimeout = 30;
     private final ShutdownState shutdownState;
     private static final Logger log = LoggerFactory.getLogger(SocketConnectionHandler.class);
 
     public SocketConnectionHandler(SocketMessageService socketBroadcastService, MessageHandler messageHandler,
             GameManager gameManager, ConnectionHandler connectionHandler, ReconnectTimerManager reconnectTimerManager,
-            ApplicationEventPublisher eventPublisher, PlayerManager playerManager, ShutdownState shutdownState) {
+            ApplicationEventPublisher eventPublisher, PlayerManager playerManager, ShutdownState shutdownState,
+            ServerAIManager serverAIManager) {
         this.socketBroadcastService = socketBroadcastService;
         this.messageHandler = messageHandler;
         this.gameManager = gameManager;
@@ -53,6 +57,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         this.eventPublisher = eventPublisher;
         this.playerManager = playerManager;
         this.shutdownState = shutdownState;
+        this.serverAIManager = serverAIManager;
     }
 
     // This method is executed when client tries to connect
@@ -94,13 +99,36 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
             if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
                 connectionHandler.handleSituationWhenTheConnectionIsLost(session.getId());
 
+                // ACTIVATE AI FOR DISCONNECTED PLAYER
+                // Verwende identifierToken (bleibt fix) statt Session ID
+                PlayerInfo player = playerManager.getPlayerById(session.getId());
+                String identifierToken = player != null && player.getIdentifierToken() != null
+                    ? player.getIdentifierToken()
+                    : session.getId();
+
+                serverAIManager.activateAI(identifierToken);
+                System.out.println("🤖 AI activated for disconnected player: " + identifierToken + " (session: " + session.getId() + ")");
+
                 reconnectTimerManager.start(session.getId(), playerReconnectionTimeout, () -> {
                     if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
                         return;
                     }
+
+                    System.out.println("⏱️  Player " + identifierToken + " failed to reconnect in time.");
+                    log.info("Spieler " + identifierToken + " hat sich nicht rechtzeitig wiederverbunden.");
+
+                    // WICHTIG: Wenn AI aktiv ist, NICHT den Spieler entfernen!
+                    // Die AI soll weiterspielen bis der Spieler sich wieder verbindet
+                    if (serverAIManager.isAIActive(identifierToken)) {
+                        System.out.println("🤖 AI bleibt aktiv - Spieler kann sich jederzeit wieder verbinden");
+                        log.info("AI bleibt aktiv für Spieler: {}", identifierToken);
+                        // Spieler bleibt im Spiel, AI spielt weiter
+                        return;
+                    }
+
+                    // Nur wenn AI NICHT aktiv ist, entferne den Spieler wie bisher
                     try {
-                        System.out.println("Player " + session.getId() + " failed to reconnect in time.");
-                        log.info("Spieler " + session.getId() + " hat sich nicht rechtzeitig wiederverbunden.");
+                        System.out.println("❌ Entferne Spieler aus dem Spiel (keine AI aktiv)");
                         eventPublisher.publishEvent(
                                 connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(session.getId()));
                     } catch (UserNotFoundException e) {

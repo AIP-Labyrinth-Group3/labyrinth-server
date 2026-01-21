@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import com.uni.gamesever.domain.ai.ServerAIManager;
 import com.uni.gamesever.domain.enums.LobbyStateEnum;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +53,7 @@ public class GameManager {
     private LobbyStateEnum lobbyState = LobbyStateEnum.LOBBY;
     SocketMessageService socketBroadcastService;
     GameTimerManager gameTimerManager;
+    ServerAIManager serverAIManager;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private boolean pushTwiceUsedInCurrentTurn = false;
     private final Map<DirectionType, Coordinates> DIRECTION_OFFSETS = Map.of(
@@ -70,6 +72,7 @@ public class GameManager {
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
             GameTimerManager gameTimerManager, AchievementManager achievementManager, TurnTimer turnTimer,
             ReconnectTimerManager reconnectTimerManager) {
+            ServerAIManager serverAIManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
         this.gameStatsManager = gameStatsManager;
@@ -79,6 +82,7 @@ public class GameManager {
         this.turnInfo = new TurnInfo(null, TurnState.NOT_STARTED);
         this.turnTimer = turnTimer;
         this.reconnectTimerManager = reconnectTimerManager;
+        this.serverAIManager = serverAIManager;
     }
 
     public GameBoard getCurrentBoard() {
@@ -300,6 +304,9 @@ public class GameManager {
 
         informAllPlayersAboutCurrentGameState();
 
+        // Prüfe ob der neue aktuelle Spieler AI-gesteuert ist (disconnected)
+        checkAndExecuteAIIfNeeded();
+
         return true;
     }
 
@@ -315,6 +322,39 @@ public class GameManager {
         getTurnInfo().updateTurnEndTime();
         turnTimer.resetTurnTimer();
 
+    }
+
+    /**
+     * Prüft ob der aktuelle Spieler disconnected ist und AI aktiv hat.
+     * Wenn ja, führt die AI sofort den Zug aus (Auto-Modus).
+     * Diese Methode wird nach jedem Turn-Wechsel aufgerufen.
+     */
+    public void checkAndExecuteAIIfNeeded() {
+        try {
+            PlayerInfo currentPlayer = playerManager.getCurrentPlayer();
+
+            // Prüfe ob Spieler disconnected ist und AI aktiv
+            if (currentPlayer != null && !currentPlayer.getIsConnected()) {
+                String identifierToken = currentPlayer.getIdentifierToken();
+
+                if (identifierToken != null && serverAIManager.isAIActive(identifierToken)) {
+                    System.out.println("🤖 AUTO-AI: Spieler " + identifierToken + " ist disconnected, AI übernimmt sofort");
+
+                    // Führe AI-Zug asynchron aus (nach kurzer Verzögerung für UI-Update)
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1000); // 1 Sekunde warten, damit UI sich aktualisieren kann
+                            serverAIManager.executeAITurn(identifierToken);
+                        } catch (Exception e) {
+                            System.err.println("❌ AUTO-AI execution failed: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }).start();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Error in checkAndExecuteAIIfNeeded: " + e.getMessage());
+        }
     }
 
     public boolean handleRotateTile(String playerIdWhoRotated) throws GameNotValidException,
@@ -493,6 +533,9 @@ public class GameManager {
 
         informAllPlayersAboutCurrentGameState();
 
+        // Prüfe ob der neue aktuelle Spieler AI-gesteuert ist (disconnected)
+        checkAndExecuteAIIfNeeded();
+
         return true;
     }
 
@@ -612,9 +655,33 @@ public class GameManager {
     @EventListener
     public void onTurnTimeout(TurnTimeoutEvent event) {
         try {
+            PlayerInfo currentPlayer = playerManager.getCurrentPlayer();
+
+            // CHECK: If player is disconnected, let AI play instead of skipping
+            // WICHTIG: Verwende identifierToken (bleibt fix), nicht ID (ändert sich bei reconnect)!
+            String identifierToken = currentPlayer.getIdentifierToken();
+            if (identifierToken != null && !currentPlayer.getIsConnected() && serverAIManager.isAIActive(identifierToken)) {
+                System.out.println("🤖 Turn timeout for disconnected player, AI taking over: "
+                    + identifierToken);
+
+                try {
+                    // Let AI execute the full turn
+                    serverAIManager.executeAITurn(identifierToken);
+                    return; // AI handles turn transition
+                } catch (Exception e) {
+                    System.err.println("❌ AI execution failed: " + e.getMessage());
+                    e.printStackTrace();
+                    // Fall through to skip turn on AI failure
+                }
+            }
+
+            // Original behavior: skip to next player
             playerManager.setNextPlayerAsCurrent();
             resetAllVariablesForNextTurn();
             informAllPlayersAboutCurrentGameState();
+
+            // Prüfe ob der neue aktuelle Spieler AI-gesteuert ist (disconnected)
+            checkAndExecuteAIIfNeeded();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

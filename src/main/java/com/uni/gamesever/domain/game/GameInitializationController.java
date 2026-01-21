@@ -140,6 +140,9 @@ public class GameInitializationController {
                 gameManager.getTurnInfo(), gameManager.getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameStateUpdate));
 
+        // Prüfe ob der erste Spieler AI-gesteuert ist (disconnected beim Spielstart)
+        gameManager.checkAndExecuteAIIfNeeded();
+
         return true;
     }
 

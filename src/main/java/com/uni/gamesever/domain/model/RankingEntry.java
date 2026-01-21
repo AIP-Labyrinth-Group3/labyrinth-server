@@ -6,6 +6,9 @@ public class RankingEntry {
     @JsonIgnore
     private PlayerInfo playerInfo;
 
+    @JsonIgnore
+    private String identifierToken;  // Stable across reconnects
+
     private String playerId;
     private int rank;
     private int score;
@@ -14,6 +17,7 @@ public class RankingEntry {
     public RankingEntry(PlayerInfo playerInfo, int rank, int score, PlayerGameStats stats) {
         this.playerInfo = playerInfo;
         this.playerId = playerInfo.getId();
+        this.identifierToken = playerInfo.getIdentifierToken();
         this.rank = rank;
         this.score = score;
         this.stats = stats;
@@ -41,5 +45,13 @@ public class RankingEntry {
 
     public void setScore(int score) {
         this.score = score;
+    }
+
+    public String getIdentifierToken() {
+        return identifierToken;
+    }
+
+    public void setPlayerId(String playerId) {
+        this.playerId = playerId;
     }
 }
