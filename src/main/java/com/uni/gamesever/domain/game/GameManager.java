@@ -71,7 +71,7 @@ public class GameManager {
     public GameManager(PlayerManager playerManager, SocketMessageService socketBroadcastService,
             GameStatsManager gameStatsManager, BoardItemPlacementService boardItemPlacementService,
             GameTimerManager gameTimerManager, AchievementManager achievementManager, TurnTimer turnTimer,
-            ReconnectTimerManager reconnectTimerManager, 
+            ReconnectTimerManager reconnectTimerManager,
             ServerAIManager serverAIManager) {
         this.playerManager = playerManager;
         this.socketBroadcastService = socketBroadcastService;
@@ -338,7 +338,8 @@ public class GameManager {
                 String identifierToken = currentPlayer.getIdentifierToken();
 
                 if (identifierToken != null && serverAIManager.isAIActive(identifierToken)) {
-                    System.out.println("🤖 AUTO-AI: Spieler " + identifierToken + " ist disconnected, AI übernimmt sofort");
+                    System.out.println(
+                            "🤖 AUTO-AI: Spieler " + identifierToken + " ist disconnected, AI übernimmt sofort");
 
                     // Führe AI-Zug asynchron aus (nach kurzer Verzögerung für UI-Update)
                     new Thread(() -> {
@@ -647,6 +648,7 @@ public class GameManager {
         for (PlayerInfo player : playerManager.getNonNullPlayers()) {
             achievementManager.broadCastAchievementsFromPlayerWithId(player.getId());
         }
+        playerManager.removeNotConnectedPlayers();
         LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));
         return true;
@@ -658,11 +660,13 @@ public class GameManager {
             PlayerInfo currentPlayer = playerManager.getCurrentPlayer();
 
             // CHECK: If player is disconnected, let AI play instead of skipping
-            // WICHTIG: Verwende identifierToken (bleibt fix), nicht ID (ändert sich bei reconnect)!
+            // WICHTIG: Verwende identifierToken (bleibt fix), nicht ID (ändert sich bei
+            // reconnect)!
             String identifierToken = currentPlayer.getIdentifierToken();
-            if (identifierToken != null && !currentPlayer.getIsConnected() && serverAIManager.isAIActive(identifierToken)) {
+            if (identifierToken != null && !currentPlayer.getIsConnected()
+                    && serverAIManager.isAIActive(identifierToken)) {
                 System.out.println("🤖 Turn timeout for disconnected player, AI taking over: "
-                    + identifierToken);
+                        + identifierToken);
 
                 try {
                     // Let AI execute the full turn

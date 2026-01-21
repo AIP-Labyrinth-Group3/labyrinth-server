@@ -138,10 +138,11 @@ public class PlayerManager {
         for (PlayerInfo player : players) {
             // Suche nach identifierToken (bleibt fix) statt nach ID (ändert sich)
             if (player != null && player.getIdentifierToken() != null
-                && player.getIdentifierToken().equals(identifierToken)) {
+                    && player.getIdentifierToken().equals(identifierToken)) {
                 player.setIsConnected(true);
                 player.setId(newSessionId); // Update Session ID für Message-Routing
-                System.out.println("📝 Reconnect: identifierToken=" + identifierToken + " → neue SessionID=" + newSessionId);
+                System.out.println(
+                        "📝 Reconnect: identifierToken=" + identifierToken + " → neue SessionID=" + newSessionId);
                 return true;
             }
         }
@@ -156,6 +157,21 @@ public class PlayerManager {
         return Arrays.stream(players)
                 .filter(player -> player != null)
                 .toArray(PlayerInfo[]::new);
+    }
+
+    public void removeNotConnectedPlayers() {
+        // alle spieler durchgehen
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] != null && !players[i].getIsConnected()) {
+                try {
+                    removePlayer(players[i].getId());
+                    System.out.println(
+                            "User " + players[i].getId() + " has been removed for next round due to disconnection.");
+                } catch (UserNotFoundException e) {
+
+                }
+            }
+        }
     }
 
     public PlayerState[] getPlayerStates() {
@@ -183,7 +199,7 @@ public class PlayerManager {
     public PlayerInfo getPlayerByIdentifierToken(String identifierToken) {
         for (PlayerInfo player : players) {
             if (player != null && player.getIdentifierToken() != null
-                && player.getIdentifierToken().equals(identifierToken)) {
+                    && player.getIdentifierToken().equals(identifierToken)) {
                 return player;
             }
         }
@@ -193,8 +209,8 @@ public class PlayerManager {
     public PlayerState getPlayerStateByIdentifierToken(String identifierToken) {
         for (PlayerState state : playerStates) {
             if (state != null && state.getPlayerInfo() != null
-                && state.getPlayerInfo().getIdentifierToken() != null
-                && state.getPlayerInfo().getIdentifierToken().equals(identifierToken)) {
+                    && state.getPlayerInfo().getIdentifierToken() != null
+                    && state.getPlayerInfo().getIdentifierToken().equals(identifierToken)) {
                 return state;
             }
         }
