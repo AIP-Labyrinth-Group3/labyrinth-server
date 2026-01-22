@@ -7,10 +7,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.uni.gamesever.domain.ai.ServerAIManager;
 import com.uni.gamesever.domain.exceptions.*;
 import com.uni.gamesever.domain.game.GameInitializationController;
 import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.game.PlayerManager;
 import com.uni.gamesever.domain.model.ErrorCode;
+import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.interfaces.Websocket.messages.client.ConnectRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
@@ -18,6 +21,7 @@ import com.uni.gamesever.interfaces.Websocket.messages.client.MovePawnRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.UsePushFixedTileRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.PushTileRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.StartGameRequest;
+import com.uni.gamesever.interfaces.Websocket.messages.client.ToggleAiCommand;
 import com.uni.gamesever.interfaces.Websocket.messages.client.UseBeamRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.client.UseSwapRequest;
 import com.uni.gamesever.interfaces.Websocket.messages.server.ActionErrorEvent;
@@ -30,16 +34,20 @@ public class MessageHandler {
     private final ConnectionHandler connectionHandler;
     private final GameInitializationController gameInitialitionController;
     private final GameManager gameManager;
+    private final PlayerManager playerManager;
+    private final ServerAIManager serverAIManager;
     private final SocketMessageService socketMessageService;
     private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public MessageHandler(SocketMessageService socketMessageService,
             GameInitializationController gameInitialitionController, ConnectionHandler connectionHandler,
-            GameManager gameManager) {
+            GameManager gameManager, PlayerManager playerManager, ServerAIManager serverAIManager) {
         this.socketMessageService = socketMessageService;
         this.connectionHandler = connectionHandler;
         this.gameInitialitionController = gameInitialitionController;
         this.gameManager = gameManager;
+        this.playerManager = playerManager;
+        this.serverAIManager = serverAIManager;
     }
 
     public void handleClientMessage(String message, String userId)
@@ -519,6 +527,48 @@ public class MessageHandler {
                     log.error(userId, "Ungültiger Use-Push-Twice-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.GENERAL,
                             e.getMessage());
+                    return;
+                }
+            case "TOGGLE_AI":
+                try {
+                    ToggleAiCommand toggleAiCommand = objectMapper.readValue(message, ToggleAiCommand.class);
+                    PlayerInfo player = playerManager.getPlayerById(userId);
+
+                    if (player == null) {
+                        log.error("Spieler mit ID {} nicht gefunden für TOGGLE_AI", userId);
+                        sendError(userId, ErrorCode.PLAYER_NOT_FOUND, "Spieler nicht gefunden");
+                        return;
+                    }
+
+                    String identifierToken = player.getIdentifierToken();
+                    if (identifierToken == null) {
+                        log.error("Spieler {} hat keinen identifierToken für TOGGLE_AI", userId);
+                        sendError(userId, ErrorCode.GENERAL, "Ungültiger Spieler-Token");
+                        return;
+                    }
+
+                    if (toggleAiCommand.isEnabled()) {
+                        // ACTIVATE AI
+                        serverAIManager.activateAI(identifierToken);
+                        player.setIsAiControlled(true);
+                        System.out.println("🤖 AI aktiviert für Spieler: " + player.getName() + " (" + identifierToken + ")");
+                        log.info("AI aktiviert für Spieler {}", identifierToken);
+                    } else {
+                        // DEACTIVATE AI
+                        serverAIManager.deactivateAI(identifierToken);
+                        player.setIsAiControlled(false);
+                        System.out.println("🤖 AI deaktiviert für Spieler: " + player.getName() + " (" + identifierToken + ")");
+                        log.info("AI deaktiviert für Spieler {}", identifierToken);
+                    }
+
+                    return;
+                } catch (JsonMappingException e) {
+                    log.error("Fehler beim Parsen von TOGGLE_AI von Benutzer {}: {}", userId, e.getMessage());
+                    sendError(userId, ErrorCode.INVALID_COMMAND, "Ungültiges Nachrichtenformat");
+                    return;
+                } catch (Exception e) {
+                    log.error("Fehler beim Verarbeiten von TOGGLE_AI von Benutzer {}: {}", userId, e.getMessage());
+                    sendError(userId, ErrorCode.GENERAL, "Fehler beim Umschalten der AI");
                     return;
                 }
             default:
