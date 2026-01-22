@@ -289,10 +289,23 @@ public class GameManager {
             }
         }
 
-        playerManager.setNextPlayerAsCurrent();
         if (boardItemPlacementService.trySpawnBonus(currentBoard, getTotalBonusCountsOnBoard())) {
             reduceTotalBonusCountsOnBoard(1);
         }
+
+        if(useBeamBonus) {
+            return true;
+        }
+
+        endTurnForCurrentPlayer();
+
+        return true;
+    }
+
+    public void endTurnForCurrentPlayer() throws JsonProcessingException{
+        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
+        playerManager.setNextPlayerAsCurrent();
+
 
         AchievementContext ctx = new AchievementContext(currentPlayerState.getStepsTakenThisTurn(),
                 currentPlayerState.getWasPushedOutLastRound(),
@@ -306,8 +319,6 @@ public class GameManager {
 
         // Prüfe ob der neue aktuelle Spieler AI-gesteuert ist (disconnected)
         checkAndExecuteAIIfNeeded();
-
-        return true;
     }
 
     public void resetAllVariablesForNextTurn() throws JsonProcessingException {
@@ -461,7 +472,7 @@ public class GameManager {
     public boolean handleUseBeam(Coordinates targetCoordinates, String playerIdWhoUsedBeam)
             throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
             TargetCoordinateNullException, JsonProcessingException, BonusNotAvailable {
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_MOVE) {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
             if (!playerIdWhoUsedBeam.equals(playerManager.getCurrentPlayer().getId())) {
                 throw new NotPlayersTurnException(
                         "Es ist nicht dein Zug, um den Strahl zu benutzen.");
@@ -485,7 +496,12 @@ public class GameManager {
 
         currentPlayerState.useOneBonusOfType(BonusType.BEAM);
 
-        return handleMovePawn(targetCoordinates, playerIdWhoUsedBeam, true);
+        boolean result = handleMovePawn(targetCoordinates, playerIdWhoUsedBeam, true);
+
+        getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        informAllPlayersAboutCurrentGameState();
+
+        return result;
     }
 
     public boolean handleUseSwap(String targetPlayerId, String playerIdWhoUsedSwap)
@@ -495,7 +511,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um den Tausch-Bonus zu benutzen.");
         }
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_MOVE) {
+        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um den Tausch-Bonus zu benutzen.");
         }
@@ -525,17 +541,13 @@ public class GameManager {
         currentPlayerState.setCurrentPosition(targetPlayerPosition);
         targetPlayerState.setCurrentPosition(currentPlayerPosition);
 
-        playerManager.setNextPlayerAsCurrent();
         if (boardItemPlacementService.trySpawnBonus(currentBoard, getTotalBonusCountsOnBoard())) {
             reduceTotalBonusCountsOnBoard(1);
         }
 
-        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
 
         informAllPlayersAboutCurrentGameState();
-
-        // Prüfe ob der neue aktuelle Spieler AI-gesteuert ist (disconnected)
-        checkAndExecuteAIIfNeeded();
 
         return true;
     }
