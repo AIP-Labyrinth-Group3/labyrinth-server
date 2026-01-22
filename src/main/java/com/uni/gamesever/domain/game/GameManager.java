@@ -234,7 +234,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um die Spielfigur zu bewegen.");
         }
-        if (getTurnInfo().getTurnState() != TurnState.WAITING_FOR_MOVE) {
+        if (getTurnInfo().getTurnState() != TurnState.WAITING_FOR_MOVE && !useBeamBonus) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um die Spielfigur zu bewegen.");
         }
@@ -293,7 +293,7 @@ public class GameManager {
             reduceTotalBonusCountsOnBoard(1);
         }
 
-        if(useBeamBonus) {
+        if (useBeamBonus) {
             return true;
         }
 
@@ -302,10 +302,9 @@ public class GameManager {
         return true;
     }
 
-    public void endTurnForCurrentPlayer() throws JsonProcessingException{
+    public void endTurnForCurrentPlayer() throws JsonProcessingException {
         PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         playerManager.setNextPlayerAsCurrent();
-
 
         AchievementContext ctx = new AchievementContext(currentPlayerState.getStepsTakenThisTurn(),
                 currentPlayerState.getWasPushedOutLastRound(),
