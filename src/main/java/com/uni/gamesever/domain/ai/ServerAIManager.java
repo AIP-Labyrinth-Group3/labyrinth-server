@@ -37,6 +37,7 @@ public class ServerAIManager {
 
     /**
      * Activates AI for a player when they disconnect
+     * 
      * @param identifierToken Der fixe Token des Spielers
      */
     public void activateAI(String identifierToken) {
@@ -57,6 +58,7 @@ public class ServerAIManager {
 
     /**
      * Deactivates AI when player reconnects
+     * 
      * @param identifierToken Der fixe Token des Spielers
      */
     public void deactivateAI(String identifierToken) {
@@ -67,6 +69,7 @@ public class ServerAIManager {
 
     /**
      * Checks if AI should control this player
+     * 
      * @param identifierToken Der fixe Token des Spielers
      */
     public boolean isAIActive(String identifierToken) {
@@ -75,6 +78,7 @@ public class ServerAIManager {
 
     /**
      * Executes AI turn for disconnected player
+     * 
      * @param identifierToken Der fixe Token des Spielers
      */
     public void executeAITurn(String identifierToken) throws Exception {
@@ -111,7 +115,9 @@ public class ServerAIManager {
 
     /**
      * Builds GameState from server models
-     * @param identifierToken Der fixe Token des Spielers (ändert sich nicht bei Reconnect)
+     * 
+     * @param identifierToken Der fixe Token des Spielers (ändert sich nicht bei
+     *                        Reconnect)
      */
     private GameState buildGameStateForPlayer(String identifierToken) {
         GameState gameState = new GameState();
@@ -135,15 +141,14 @@ public class ServerAIManager {
         gameState.setMyPlayerId(identifierToken);
 
         // Set turn state
-        gameState.setCurrentTurnState(gameManager.getTurnInfo().getTurnState());
+        gameState.setCurrentTurnState(gameManager.getTurnInfo().getState());
 
         // Set last push (convert PushActionInfo to LastPush)
         PushActionInfo serverLastPush = gameManager.getCurrentBoard().getLastPush();
         if (serverLastPush != null) {
             LastPush lastPush = new LastPush(
-                serverLastPush.getRowOrColIndex(),
-                serverLastPush.getDirection()
-            );
+                    serverLastPush.getRowOrColIndex(),
+                    serverLastPush.getDirection());
             gameState.setLastPush(lastPush);
         }
 
@@ -152,12 +157,14 @@ public class ServerAIManager {
 
     /**
      * Executes AI decision through GameManager
+     * 
      * @param identifierToken Der fixe Token des Spielers
      */
     private void executeDecision(String identifierToken, AIDecision decision, GameState gameState) throws Exception {
         TurnState currentPhase = gameState.getCurrentTurnState();
 
-        // Konvertiere identifierToken → aktuelle Session ID (GameManager braucht aktuelle ID!)
+        // Konvertiere identifierToken → aktuelle Session ID (GameManager braucht
+        // aktuelle ID!)
         PlayerInfo player = playerManager.getPlayerByIdentifierToken(identifierToken);
         if (player == null) {
             System.err.println("❌ Player not found for identifierToken: " + identifierToken);
@@ -174,10 +181,12 @@ public class ServerAIManager {
 
     /**
      * Executes PUSH phase of AI decision
-     * @param identifierToken Der fixe Token (für AI-Status-Check)
+     * 
+     * @param identifierToken  Der fixe Token (für AI-Status-Check)
      * @param currentSessionId Die aktuelle Session ID (für GameManager calls)
      */
-    private void executePushPhase(String identifierToken, String currentSessionId, AIDecision decision, GameState gameState) throws Exception {
+    private void executePushPhase(String identifierToken, String currentSessionId, AIDecision decision,
+            GameState gameState) throws Exception {
         // Check if player reconnected mid-execution
         if (!isAIActive(identifierToken)) {
             System.out.println("🔄 Player reconnected during PUSH phase, aborting AI execution");
@@ -197,10 +206,9 @@ public class ServerAIManager {
         if (decision.getUseBonus() == BonusType.PUSH_FIXED) {
             try {
                 gameManager.handleUsePushFixedTile(
-                    decision.getPushDirection(),
-                    decision.getPushRowOrCol(),
-                    currentSessionId
-                );
+                        decision.getPushDirection(),
+                        decision.getPushRowOrCol(),
+                        currentSessionId);
                 System.out.println("🎁 AI used PUSH_FIXED bonus");
                 // Push Fixed does rotation + push in one call, then move to MOVE phase
                 executeMovePhaseAfterPush(identifierToken);
@@ -212,7 +220,8 @@ public class ServerAIManager {
 
         // Execute rotations
         for (int i = 0; i < decision.getRotations(); i++) {
-            if (!isAIActive(identifierToken)) return; // Check reconnection
+            if (!isAIActive(identifierToken))
+                return; // Check reconnection
             try {
                 gameManager.handleRotateTile(currentSessionId);
                 System.out.println("🔄 AI rotated spare tile (" + (i + 1) + "/" + decision.getRotations() + ")");
@@ -224,12 +233,13 @@ public class ServerAIManager {
         // Execute push
         try {
             gameManager.handlePushTile(
-                decision.getPushRowOrCol(),
-                decision.getPushDirection(),
-                currentSessionId,
-                false // not using push fixed
+                    decision.getPushRowOrCol(),
+                    decision.getPushDirection(),
+                    currentSessionId,
+                    false // not using push fixed
             );
-            System.out.println("⬆️ AI pushed: Index=" + decision.getPushRowOrCol() + ", Dir=" + decision.getPushDirection());
+            System.out.println(
+                    "⬆️ AI pushed: Index=" + decision.getPushRowOrCol() + ", Dir=" + decision.getPushDirection());
         } catch (PushNotValidException | NotPlayersTurnException e) {
             System.err.println("⚠️ Push failed: " + e.getMessage());
             throw e;
@@ -277,10 +287,12 @@ public class ServerAIManager {
 
     /**
      * Executes MOVE phase of AI decision
-     * @param identifierToken Der fixe Token (für AI-Status-Check)
+     * 
+     * @param identifierToken  Der fixe Token (für AI-Status-Check)
      * @param currentSessionId Die aktuelle Session ID (für GameManager calls)
      */
-    private void executeMovePhase(String identifierToken, String currentSessionId, AIDecision decision, GameState gameState) throws Exception {
+    private void executeMovePhase(String identifierToken, String currentSessionId, AIDecision decision,
+            GameState gameState) throws Exception {
         // Check if player reconnected
         if (!isAIActive(identifierToken)) {
             System.out.println("🔄 Player reconnected during MOVE phase, aborting AI execution");
@@ -291,9 +303,8 @@ public class ServerAIManager {
         if (decision.getUseBonus() == BonusType.BEAM) {
             try {
                 gameManager.handleUseBeam(
-                    decision.getBeamTarget(),
-                    currentSessionId
-                );
+                        decision.getBeamTarget(),
+                        currentSessionId);
                 System.out.println("🎁 AI used BEAM bonus to " + decision.getBeamTarget());
                 return; // GameManager handles turn transition
             } catch (Exception e) {
@@ -304,9 +315,8 @@ public class ServerAIManager {
         if (decision.getUseBonus() == BonusType.SWAP) {
             try {
                 gameManager.handleUseSwap(
-                    decision.getSwapTargetPlayerId(),
-                    currentSessionId
-                );
+                        decision.getSwapTargetPlayerId(),
+                        currentSessionId);
                 System.out.println("🎁 AI used SWAP bonus with player " + decision.getSwapTargetPlayerId());
                 return; // GameManager handles turn transition
             } catch (Exception e) {
@@ -317,11 +327,12 @@ public class ServerAIManager {
         // Normal move
         try {
             gameManager.handleMovePawn(
-                decision.getMoveTarget(),
-                currentSessionId,
-                false // not using beam
+                    decision.getMoveTarget(),
+                    currentSessionId,
+                    false // not using beam
             );
-            System.out.println("🚶 AI moved to: (" + decision.getMoveTarget().getColumn() + "," + decision.getMoveTarget().getRow() + ")");
+            System.out.println("🚶 AI moved to: (" + decision.getMoveTarget().getColumn() + ","
+                    + decision.getMoveTarget().getRow() + ")");
 
             // GameManager automatically:
             // - Switches to next player
@@ -335,6 +346,7 @@ public class ServerAIManager {
 
     /**
      * Fallback: execute random valid move when AI fails
+     * 
      * @param identifierToken Der fixe Token des Spielers
      */
     private void executeRandomFallback(String identifierToken) {
