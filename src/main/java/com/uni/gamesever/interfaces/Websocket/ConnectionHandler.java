@@ -65,7 +65,8 @@ public class ConnectionHandler {
                 }
 
                 // DEACTIVATE AI WHEN PLAYER RECONNECTS
-                // WICHTIG: Deaktiviere AI für die ALTE Player ID (identifierToken), nicht die neue Session ID!
+                // WICHTIG: Deaktiviere AI für die ALTE Player ID (identifierToken), nicht die
+                // neue Session ID!
                 serverAIManager.deactivateAI(request.getIdentifierToken());
 
                 // Setze isAIControlled Flag auf false
@@ -91,7 +92,7 @@ public class ConnectionHandler {
                 return true;
             }
         }
-        if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+        if (gameManager.getTurnInfo().getState() != TurnState.NOT_STARTED) {
             throw new GameAlreadyStartedException(
                     "Das Spiel hat bereits begonnen. Ein Beitritt ist nicht mehr möglich.");
         }
@@ -119,7 +120,7 @@ public class ConnectionHandler {
         if (userId == null || userId.isEmpty()) {
             throw new UserNotFoundException("Die Benutzer-ID darf nicht null oder leer sein.");
         }
-        if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+        if (gameManager.getTurnInfo().getState() != TurnState.NOT_STARTED) {
             if (playerManager.getCurrentPlayer().getId().equals(userId)) {
                 playerManager.setNextPlayerAsCurrent();
                 playerManager.removePlayer(userId);
@@ -128,7 +129,7 @@ public class ConnectionHandler {
                     return true;
                 }
 
-                gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+                gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
                 gameManager.getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
 
                 gameManager.resetAllVariablesForNextTurn();

@@ -213,8 +213,8 @@ public class MessageHandler {
                 }
 
             case "PUSH_TILE":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     log.error(userId, "Das Spiel hat noch nicht begonnen. Es kann keine Kachel geschoben werden.");
                     return;
@@ -272,8 +272,8 @@ public class MessageHandler {
                     return;
                 }
             case "ROTATE_TILE":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     return;
                 }
@@ -306,8 +306,8 @@ public class MessageHandler {
                     return;
                 }
             case "MOVE_PAWN":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     return;
                 }
@@ -351,8 +351,8 @@ public class MessageHandler {
                     return;
                 }
             case "USE_BEAM":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     return;
                 }
@@ -404,8 +404,8 @@ public class MessageHandler {
                     return;
                 }
             case "USE_SWAP":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     return;
                 }
@@ -444,8 +444,8 @@ public class MessageHandler {
                     return;
                 }
             case "USE_PUSH_FIXED":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     log.error(userId, "Das Spiel hat noch nicht begonnen. Es kann kein fester Push verwendet werden.");
                     return;
@@ -507,8 +507,8 @@ public class MessageHandler {
                     return;
                 }
             case "USE_PUSH_TWICE":
-                if (gameManager.getTurnInfo().getTurnState() == null
-                        || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
+                if (gameManager.getTurnInfo().getState() == null
+                        || gameManager.getTurnInfo().getState() == TurnState.NOT_STARTED) {
                     sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     return;
                 }

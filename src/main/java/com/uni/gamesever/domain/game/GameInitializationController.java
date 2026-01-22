@@ -65,7 +65,7 @@ public class GameInitializationController {
             throws JsonProcessingException, PlayerNotAdminException, NotEnoughPlayerException, NoExtraTileException,
             GameAlreadyStartedException, IllegalArgumentException {
 
-        if (gameManager.getTurnInfo().getTurnState() != TurnState.NOT_STARTED) {
+        if (gameManager.getTurnInfo().getState() != TurnState.NOT_STARTED) {
             throw new GameAlreadyStartedException("Das Spiel hat bereits begonnen.");
         }
 

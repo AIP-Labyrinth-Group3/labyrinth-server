@@ -84,7 +84,7 @@ public class GameInitialitationTest {
 
         when(playerManager.getAdminID()).thenReturn("adminUser");
         when(gameManager.getTurnInfo()).thenReturn(turnInfo);
-        when(turnInfo.getTurnState()).thenReturn(TurnState.NOT_STARTED);
+        when(turnInfo.getState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(PlayerNotAdminException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24, 0, 1);
@@ -99,7 +99,7 @@ public class GameInitialitationTest {
         when(playerManager.getAdminID()).thenReturn("adminUser");
         when(playerManager.getAmountOfPlayers()).thenReturn(1);
         when(gameManager.getTurnInfo()).thenReturn(turnInfo);
-        when(turnInfo.getTurnState()).thenReturn(TurnState.NOT_STARTED);
+        when(turnInfo.getState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
             gameInitialitionController.handleStartGameMessage(userId, size, 24, 0, 1);

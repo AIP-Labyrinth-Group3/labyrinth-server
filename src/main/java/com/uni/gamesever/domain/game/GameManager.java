@@ -24,7 +24,6 @@ import com.uni.gamesever.domain.exceptions.NoValidActionException;
 import com.uni.gamesever.domain.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.domain.exceptions.PushNotValidException;
 import com.uni.gamesever.domain.exceptions.TargetCoordinateNullException;
-import com.uni.gamesever.domain.model.AchievementContext;
 import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerInfo;
@@ -40,7 +39,6 @@ import com.uni.gamesever.interfaces.Websocket.messages.server.GameOverEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
 import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
 import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
-import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.services.SocketMessageService;
 import org.springframework.context.event.EventListener;
 
@@ -140,7 +138,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um eine Kachel zu schieben.");
         }
-        if (getTurnInfo().getTurnState() != TurnState.WAITING_FOR_PUSH) {
+        if (getTurnInfo().getState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotStartedException("Spiel ist nicht im Zustand, um eine Kachel zu schieben.");
         }
         if (direction == null) {
@@ -165,7 +163,7 @@ public class GameManager {
         if (pushTwiceUsedInCurrentTurn) {
             pushTwiceUsedInCurrentTurn = false;
         } else {
-            getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+            getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
         }
         informAllPlayersAboutCurrentGameState();
 
@@ -186,7 +184,6 @@ public class GameManager {
                         rowOfPlayer -= 1;
                         if (rowOfPlayer < 0) {
                             rowOfPlayer = rows - 1;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -196,7 +193,6 @@ public class GameManager {
                         rowOfPlayer += 1;
                         if (rowOfPlayer >= rows) {
                             rowOfPlayer = 0;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -206,7 +202,6 @@ public class GameManager {
                         colOfPlayer -= 1;
                         if (colOfPlayer < 0) {
                             colOfPlayer = cols - 1;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -216,7 +211,6 @@ public class GameManager {
                         colOfPlayer += 1;
                         if (colOfPlayer >= cols) {
                             colOfPlayer = 0;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -234,7 +228,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um die Spielfigur zu bewegen.");
         }
-        if (getTurnInfo().getTurnState() != TurnState.WAITING_FOR_MOVE && !useBeamBonus) {
+        if (getTurnInfo().getState() != TurnState.WAITING_FOR_MOVE && !useBeamBonus) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um die Spielfigur zu bewegen.");
         }
@@ -303,14 +297,7 @@ public class GameManager {
     }
 
     public void endTurnForCurrentPlayer() throws JsonProcessingException {
-        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         playerManager.setNextPlayerAsCurrent();
-
-        AchievementContext ctx = new AchievementContext(currentPlayerState.getStepsTakenThisTurn(),
-                currentPlayerState.getWasPushedOutLastRound(),
-                currentPlayerState.getHasCollectedTreasureThisTurn());
-
-        achievementManager.check(currentPlayerState, ctx);
 
         resetAllVariablesForNextTurn();
 
@@ -321,13 +308,8 @@ public class GameManager {
     }
 
     public void resetAllVariablesForNextTurn() throws JsonProcessingException {
-        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
 
-        currentPlayerState.setStepsTakenThisTurn(0);
-        currentPlayerState.consumePushedOutFlag();
-        currentPlayerState.consumeCollectedTreasureFlag();
-
-        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
         getTurnInfo().updateTurnEndTime();
         turnTimer.resetTurnTimer();
@@ -376,7 +358,7 @@ public class GameManager {
                     "Es ist nicht dein Zug, um eine Kachel zu drehen.");
         }
 
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um Kacheln zu drehen.");
         }
@@ -385,7 +367,7 @@ public class GameManager {
         spareTile.rotateClockwise();
         currentBoard.setSpareTile(spareTile);
 
-        getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         informAllPlayersAboutCurrentGameState();
 
@@ -417,7 +399,6 @@ public class GameManager {
         int boardRows = board.getRows();
         int boardCols = board.getCols();
         Map<Coordinates, Integer> stepsMap = new java.util.HashMap<>();
-        playerManager.getCurrentPlayerState().setStepsTakenThisTurn(0);
 
         boolean[][] visited = new boolean[boardRows][boardCols];
         Queue<Coordinates> queue = new java.util.LinkedList<>();
@@ -457,7 +438,6 @@ public class GameManager {
                 if (neighbor.getColumn() == target.getColumn() && neighbor.getRow() == target.getRow()) {
                     gameStatsManager.increaseStepsTaken(stepsMap.get(current) + 1,
                             playerManager.getCurrentPlayer().getId());
-                    playerManager.getCurrentPlayerState().setStepsTakenThisTurn(stepsMap.get(current) + 1);
                     return true;
                 }
                 queue.add(neighbor);
@@ -471,7 +451,7 @@ public class GameManager {
     public boolean handleUseBeam(Coordinates targetCoordinates, String playerIdWhoUsedBeam)
             throws GameNotValidException, NotPlayersTurnException, NoValidActionException,
             TargetCoordinateNullException, JsonProcessingException, BonusNotAvailable {
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getState() != TurnState.WAITING_FOR_PUSH) {
             if (!playerIdWhoUsedBeam.equals(playerManager.getCurrentPlayer().getId())) {
                 throw new NotPlayersTurnException(
                         "Es ist nicht dein Zug, um den Strahl zu benutzen.");
@@ -497,7 +477,7 @@ public class GameManager {
 
         boolean result = handleMovePawn(targetCoordinates, playerIdWhoUsedBeam, true);
 
-        getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
         informAllPlayersAboutCurrentGameState();
 
         return result;
@@ -510,7 +490,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um den Tausch-Bonus zu benutzen.");
         }
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um den Tausch-Bonus zu benutzen.");
         }
@@ -544,7 +524,7 @@ public class GameManager {
             reduceTotalBonusCountsOnBoard(1);
         }
 
-        getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
 
         informAllPlayersAboutCurrentGameState();
 
@@ -558,7 +538,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um eine feste Kachel zu schieben.");
         }
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um eine feste Kachel zu schieben.");
         }
@@ -601,7 +581,7 @@ public class GameManager {
             throw new NotPlayersTurnException(
                     "Es ist nicht dein Zug, um zweimal zu schieben.");
         }
-        if (turnInfo.getTurnState() != TurnState.WAITING_FOR_PUSH) {
+        if (turnInfo.getState() != TurnState.WAITING_FOR_PUSH) {
             throw new GameNotValidException(
                     "Es ist nicht die Phase, um zweimal zu schieben.");
         }
@@ -647,17 +627,15 @@ public class GameManager {
         GameStateUpdate finalGameState = new GameStateUpdate(currentBoard,
                 playerManager.getNonNullPlayerStates(), getTurnInfo(), getGameEndTime());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(finalGameState));
+        achievementManager.unlockAllAchievements();
         GameOverEvent gameOver = new GameOverEvent(gameStatsManager.getSortedRankings());
         if (gameOver.getWinnerId() != null) {
             socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(gameOver));
-            getTurnInfo().setTurnState(TurnState.NOT_STARTED);
+            getTurnInfo().setState(TurnState.NOT_STARTED);
             setLobbyState(LobbyStateEnum.LOBBY);
             gameStatsManager.removeAllScoresAndRanks();
         } else {
             throw new IllegalStateException("Die Gewinner-ID ist null, obwohl alle Schätze gesammelt wurden.");
-        }
-        for (PlayerInfo player : playerManager.getNonNullPlayers()) {
-            achievementManager.broadCastAchievementsFromPlayerWithId(player.getId());
         }
         playerManager.removeNotConnectedPlayers();
         LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());

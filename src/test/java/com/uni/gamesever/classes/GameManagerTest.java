@@ -103,7 +103,7 @@ public class GameManagerTest {
     void GameManagerTest_handlePushTile_shouldUpdateBoardAndSetLastPush() throws Exception {
         int rowOrColIndex = 1;
         DirectionType direction = DirectionType.UP;
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
         state1.setCurrentPosition(new Coordinates(0, 0));
         state2.setCurrentPosition(new Coordinates(1, 1));
@@ -121,7 +121,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfGameInactive() {
-        gameManager.getTurnInfo().setTurnState(TurnState.NOT_STARTED);
+        gameManager.getTurnInfo().setState(TurnState.NOT_STARTED);
 
         assertThrows(GameNotValidException.class, () -> {
             gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
@@ -130,7 +130,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfNotPlayersTurn() {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         assertThrows(NotPlayersTurnException.class, () -> {
             gameManager.handlePushTile(1, DirectionType.UP, "otherPlayer", false);
         });
@@ -138,7 +138,7 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_handlePushTile_shouldThrowIfOppositeDirectionRepeated() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         int index = 1;
         gameManager.getCurrentBoard().setLastPush(new PushActionInfo(index));
         gameManager.getCurrentBoard().getLastPush().setDirections("UP");
@@ -287,7 +287,7 @@ public class GameManagerTest {
 
         gameManager.setCurrentBoard(board);
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
@@ -307,7 +307,7 @@ public class GameManagerTest {
 
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
@@ -325,7 +325,7 @@ public class GameManagerTest {
 
         board.setSpareTile(new Tile(List.of(DirectionType.DOWN), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         gameManager.handlePushTile(3, DirectionType.DOWN, player1.getId(), false);
 
@@ -343,7 +343,7 @@ public class GameManagerTest {
 
         board.setSpareTile(new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         gameManager.handlePushTile(1, DirectionType.RIGHT, player1.getId(), false);
 
@@ -361,7 +361,7 @@ public class GameManagerTest {
 
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
@@ -371,7 +371,7 @@ public class GameManagerTest {
 
     @Test
     void handleMovePawn_shouldEndGameOnlyAfterReturningHomeWithNoTreasure() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
 
         gameManager.setCurrentBoard(board);
 
@@ -419,7 +419,7 @@ public class GameManagerTest {
                 .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
         reset(socketBroadcastService);
 
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
 
         boolean movedHome = gameManager.handleMovePawn(home, player1.getId(), false);
@@ -433,12 +433,12 @@ public class GameManagerTest {
         verify(socketBroadcastService, atLeastOnce())
                 .broadcastMessage(argThat(msg -> msg.contains("LOBBY_STATE")));
 
-        assertEquals(TurnState.NOT_STARTED, gameManager.getTurnInfo().getTurnState());
+        assertEquals(TurnState.NOT_STARTED, gameManager.getTurnInfo().getState());
     }
 
     @Test
     void handleUsePushTwice_shouldConsumeBonusAndAllowSecondPush() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         Bonus pushTwiceBonus = new Bonus();
         pushTwiceBonus.setType(BonusType.PUSH_TWICE);
@@ -453,14 +453,14 @@ public class GameManagerTest {
 
     @Test
     void handleUsePushTwice_shouldThrowIfNoBonus() {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         assertThrows(BonusNotAvailable.class, () -> gameManager.handleUsePushTwice(player1.getId()));
     }
 
     @Test
     void handleUsePushFixedTile_shouldConsumeBonusAndPushFixedTile() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         state1.setCurrentPosition(new Coordinates(1, 1));
         state2.setCurrentPosition(new Coordinates(3, 3));
@@ -479,7 +479,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseSwap_shouldSwapPlayerPositions() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         Bonus swapBonus = new Bonus();
         swapBonus.setType(BonusType.SWAP);
         state1.collectBonus(swapBonus);
@@ -500,7 +500,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseSwap_shouldThrowIfSwapWithSelf() {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         Bonus swapBonus = new Bonus();
         swapBonus.setType(BonusType.SWAP);
         state1.collectBonus(swapBonus);
@@ -510,7 +510,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseBeam_shouldConsumeBonusAndMovePawn() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         Bonus beamBonus = new Bonus();
         beamBonus.setType(BonusType.BEAM);
         state1.collectBonus(beamBonus);
@@ -533,7 +533,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseBeam_shouldThrowIfNoBeamBonus() {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
         assertThrows(BonusNotAvailable.class,
                 () -> gameManager.handleUseBeam(new Coordinates(1, 1), player1.getId()));
@@ -541,7 +541,7 @@ public class GameManagerTest {
 
     @Test
     void handleMovePawn_shouldNotCollectBonusIfPlayerAlreadyHasFive() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
 
         for (int i = 0; i < 5; i++) {
             Bonus bonus1 = new Bonus();
