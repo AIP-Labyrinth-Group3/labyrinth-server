@@ -77,9 +77,8 @@ public class AIServiceSafe {
      * Evaluiert ob ein Bonus genutzt werden soll (aggressiv)
      * Gibt AIDecision mit Bonus zurück oder null wenn kein Bonus sinnvoll
      *
-     * WICHTIG: Boni können nur in bestimmten Phasen genutzt werden!
-     * - BEAM, SWAP: Nur während WAITING_FOR_MOVE
-     * - PUSH_FIXED, PUSH_TWICE: Nur während WAITING_FOR_PUSH
+     * WICHTIG: Boni können NUR in der Push-Phase eingesetzt werden!
+     * Alle Bonus-Typen (BEAM, SWAP, PUSH_FIXED, PUSH_TWICE) sind nur während WAITING_FOR_PUSH erlaubt.
      */
     private AIDecision evaluateBonusUsage(GameState gameState, SafeMoveStrategy.TargetInfo target) {
         // Convert String[] to List<BonusType>
@@ -101,14 +100,19 @@ public class AIServiceSafe {
             return null;
         }
 
-        // WICHTIG: Prüfe aktuelle Spielphase!
+        // WICHTIG: Prüfe aktuelle Spielphase - Boni nur in Push-Phase!
         TurnState currentPhase = gameState.getCurrentTurnState();
         boolean isInPushPhase = (currentPhase == TurnState.WAITING_FOR_PUSH);
-        boolean isInMovePhase = (currentPhase == TurnState.WAITING_FOR_MOVE);
 
         System.out.println("🔍 Bonus-Evaluation:");
         System.out.println("   Aktuelle Phase: " + currentPhase);
         System.out.println("   Verfügbare Boni: " + bonuses);
+
+        // Boni dürfen nur in der Push-Phase eingesetzt werden!
+        if (!isInPushPhase) {
+            System.out.println("   → Nicht in Push-Phase - keine Boni erlaubt");
+            return null;
+        }
 
         Coordinates myPos = gameState.getMyPlayerState().getCurrentPosition();
         Coordinates currentPos = new Coordinates(myPos.getColumn(), myPos.getRow());
@@ -125,56 +129,75 @@ public class AIServiceSafe {
         System.out.println("   Ziel erreichbar: " + targetReachable);
         System.out.println("   Distanz zum Ziel: " + distanceToTarget);
 
-        // === PUSH-PHASE BONI (nur während WAITING_FOR_PUSH) ===
-        if (isInPushPhase) {
-            // PUSH_TWICE - Wenn sehr weit entfernt (Distanz > 4)
-            if (bonuses.contains(BonusType.PUSH_TWICE) && distanceToTarget > 4) {
-                System.out.println("   → PUSH_TWICE ausgewählt: Große Distanz (" + distanceToTarget + ")");
-                AIDecision decision = new AIDecision();
-                decision.setUseBonus(BonusType.PUSH_TWICE);
-                decision.setGoingHome(target.isHome);
-                decision.setReasoning("PUSH_TWICE für bessere Board-Positionierung bei Distanz " + distanceToTarget);
+        // === ALLE BONI (nur während WAITING_FOR_PUSH) ===
 
+        // BEAM - Wenn Ziel nicht erreichbar
+        if (bonuses.contains(BonusType.BEAM) && !targetReachable) {
+            System.out.println("   → BEAM ausgewählt: Ziel nicht erreichbar, teleportiere direkt!");
+            AIDecision decision = new AIDecision();
+            decision.setUseBonus(BonusType.BEAM);
+            decision.setBeamTarget(target.position);
+            decision.setGoingHome(target.isHome);
+            decision.setReasoning("BEAM zum " + (target.isHome ? "Heimfeld" : "Schatz") +
+                " - Ziel war nicht erreichbar");
+
+            // Auch bei Bonus muss Push-Info gesetzt werden
+            SafeMoveStrategy.PushInfo safePush = strategy.findSafePush(gameState);
+            decision.setRotations(random.nextInt(3));
+            decision.setPushRowOrCol(safePush.index);
+            decision.setPushDirection(safePush.direction);
+
+            // MoveTarget als Fallback (wird bei BEAM nicht verwendet)
+            decision.setMoveTarget(new Coordinates(currentPos.getColumn(), currentPos.getRow()));
+
+            return decision;
+        }
+
+        // SWAP - Wenn Gegner auf Zielfeld steht
+        if (bonuses.contains(BonusType.SWAP)) {
+            String playerOnTarget = findPlayerAtPosition(gameState, target.position);
+            if (playerOnTarget != null) {
+                System.out.println("   → SWAP ausgewählt: Gegner " + playerOnTarget + " steht auf Zielfeld!");
+                AIDecision decision = new AIDecision();
+                decision.setUseBonus(BonusType.SWAP);
+                decision.setSwapTargetPlayerId(playerOnTarget);
+                decision.setGoingHome(target.isHome);
+                decision.setReasoning("SWAP mit Gegner auf " + (target.isHome ? "Heimfeld" : "Schatzfeld"));
+
+                // Auch bei Bonus muss Push-Info gesetzt werden
                 SafeMoveStrategy.PushInfo safePush = strategy.findSafePush(gameState);
                 decision.setRotations(random.nextInt(3));
                 decision.setPushRowOrCol(safePush.index);
                 decision.setPushDirection(safePush.direction);
 
+                // MoveTarget als Fallback (wird bei SWAP nicht verwendet)
+                decision.setMoveTarget(new Coordinates(currentPos.getColumn(), currentPos.getRow()));
+
                 return decision;
             }
-
-            // PUSH_FIXED - Könnte nützlich sein (für späteren Ausbau)
-            // TODO: Intelligentere Logik für PUSH_FIXED
         }
 
-        // === MOVE-PHASE BONI (nur während WAITING_FOR_MOVE) ===
-        if (isInMovePhase) {
-            // BEAM - Wenn Ziel nicht erreichbar
-            if (bonuses.contains(BonusType.BEAM) && !targetReachable) {
-                System.out.println("   → BEAM ausgewählt: Ziel nicht erreichbar, teleportiere direkt!");
-                AIDecision decision = new AIDecision();
-                decision.setUseBonus(BonusType.BEAM);
-                decision.setBeamTarget(target.position);
-                decision.setGoingHome(target.isHome);
-                decision.setReasoning("BEAM zum " + (target.isHome ? "Heimfeld" : "Schatz") +
-                    " - Ziel war nicht erreichbar");
-                return decision;
-            }
+        // PUSH_TWICE - Wenn sehr weit entfernt (Distanz > 4)
+        if (bonuses.contains(BonusType.PUSH_TWICE) && distanceToTarget > 4) {
+            System.out.println("   → PUSH_TWICE ausgewählt: Große Distanz (" + distanceToTarget + ")");
+            AIDecision decision = new AIDecision();
+            decision.setUseBonus(BonusType.PUSH_TWICE);
+            decision.setGoingHome(target.isHome);
+            decision.setReasoning("PUSH_TWICE für bessere Board-Positionierung bei Distanz " + distanceToTarget);
 
-            // SWAP - Wenn Gegner auf Zielfeld steht
-            if (bonuses.contains(BonusType.SWAP)) {
-                String playerOnTarget = findPlayerAtPosition(gameState, target.position);
-                if (playerOnTarget != null) {
-                    System.out.println("   → SWAP ausgewählt: Gegner " + playerOnTarget + " steht auf Zielfeld!");
-                    AIDecision decision = new AIDecision();
-                    decision.setUseBonus(BonusType.SWAP);
-                    decision.setSwapTargetPlayerId(playerOnTarget);
-                    decision.setGoingHome(target.isHome);
-                    decision.setReasoning("SWAP mit Gegner auf " + (target.isHome ? "Heimfeld" : "Schatzfeld"));
-                    return decision;
-                }
-            }
+            SafeMoveStrategy.PushInfo safePush = strategy.findSafePush(gameState);
+            decision.setRotations(random.nextInt(3));
+            decision.setPushRowOrCol(safePush.index);
+            decision.setPushDirection(safePush.direction);
+
+            // MoveTarget wird nach den zwei Pushes berechnet (erstmal aktuelle Position)
+            decision.setMoveTarget(new Coordinates(currentPos.getColumn(), currentPos.getRow()));
+
+            return decision;
         }
+
+        // PUSH_FIXED - Könnte nützlich sein (für späteren Ausbau)
+        // TODO: Intelligentere Logik für PUSH_FIXED
 
         System.out.println("   → Kein Bonus in dieser Phase sinnvoll");
         return null; // Kein Bonus sinnvoll
@@ -249,14 +272,18 @@ public class AIServiceSafe {
                 return bestOption;
             }
         } else {
-            // SCHATZ-MODUS: Wenn Schatz direkt erreichbar, nimm ihn!
+            // SCHATZ-MODUS: Wenn Schatz nah ist, nimm kürzesten Weg!
             if (bestOption.distanceToTarget == 0) {
                 System.out.println("💎 SCHATZ DIREKT ERREICHBAR! Gehe sofort hin.");
                 return bestOption;
             }
+            if (bestOption.distanceToTarget <= 2) {
+                System.out.println("💎 SCHATZ NAHE (Distanz=" + bestOption.distanceToTarget + ") - nehme kürzesten Weg.");
+                return bestOption;
+            }
         }
 
-        // Für komplexere Situationen: Frage AI
+        // Für komplexere Situationen: Frage AI (nur bei Distanz > 2)
         String prompt = buildPrompt(options, gameState);
 
         List<ChatMessage> messages = new ArrayList<>();

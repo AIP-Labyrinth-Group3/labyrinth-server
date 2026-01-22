@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.ai.ServerAIManager;
 import com.uni.gamesever.domain.exceptions.GameAlreadyStartedException;
+import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.domain.exceptions.GameFullException;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.exceptions.UsernameAlreadyTakenException;
@@ -31,15 +32,18 @@ public class ConnectionHandler {
     private final GameManager gameManager;
     private final SocketMessageService socketMessageService;
     private final ServerAIManager serverAIManager;
+    private final ReconnectTimerManager reconnectTimerManager;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public ConnectionHandler(PlayerManager playerManager, GameManager gameManager,
-            SocketMessageService socketMessageService, ServerAIManager serverAIManager) {
+            SocketMessageService socketMessageService, ServerAIManager serverAIManager,
+            ReconnectTimerManager reconnectTimerManager) {
         this.playerManager = playerManager;
         this.gameManager = gameManager;
         this.socketMessageService = socketMessageService;
         this.serverAIManager = serverAIManager;
+        this.reconnectTimerManager = reconnectTimerManager;
     }
 
     public boolean handleConnectMessage(ConnectRequest request, String userId)
@@ -49,13 +53,29 @@ public class ConnectionHandler {
             throw new UsernameNullOrEmptyException("Der Benutzername darf nicht leer sein.");
         }
         if (request.getIdentifierToken() != null && !request.getIdentifierToken().isEmpty()) {
+            // WICHTIG: Hole die ALTE Session ID BEVOR reconnectPlayer() sie ändert!
+            PlayerInfo existingPlayer = playerManager.getPlayerByIdentifierToken(request.getIdentifierToken());
+            String oldSessionId = existingPlayer != null ? existingPlayer.getId() : null;
+
             if (playerManager.reconnectPlayer(request.getIdentifierToken(), userId)) {
+                // STOP RECONNECT TIMER mit der ALTEN Session ID!
+                if (oldSessionId != null) {
+                    reconnectTimerManager.stop(oldSessionId);
+                    System.out.println("⏱️  Stopped reconnect timer for old session: " + oldSessionId);
+                }
+
                 // DEACTIVATE AI WHEN PLAYER RECONNECTS
                 // WICHTIG: Deaktiviere AI für die ALTE Player ID (identifierToken), nicht die
                 // neue Session ID!
                 serverAIManager.deactivateAI(request.getIdentifierToken());
-                System.out.println("🤖 AI deactivated for reconnected player: " + request.getIdentifierToken()
-                        + " (new session: " + userId + ")");
+
+                // Setze isAIControlled Flag auf false
+                PlayerInfo reconnectedPlayer = playerManager.getPlayerById(userId);
+                if (reconnectedPlayer != null) {
+                    reconnectedPlayer.setIsAiControlled(false);
+                }
+
+                System.out.println("🤖 AI deactivated for reconnected player: " + request.getIdentifierToken() + " (new session: " + userId + ")");
 
                 System.out.println("User " + userId + " reconnected as " + request.getUsername());
                 log.info("User {} hat sich als {} wiederverbunden", userId, request.getUsername());
