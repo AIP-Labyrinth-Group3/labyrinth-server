@@ -42,8 +42,8 @@ public class MessageHandler {
         this.gameManager = gameManager;
     }
 
-    public boolean handleClientMessage(String message, String userId)
-            throws JsonMappingException, JsonProcessingException {
+    public void handleClientMessage(String message, String userId)
+            throws ConnectionRejectedException, JsonProcessingException {
         // parsing the client message into a connectRequest object
         System.out.println("Received message from user " + userId + ": " + message);
 
@@ -55,7 +55,7 @@ public class MessageHandler {
             ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                     "Ungültiges Nachrichtenformat");
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-            return false;
+            return;
         }
 
         if (request.getType() == null || request.getType().isBlank()) {
@@ -65,86 +65,78 @@ public class MessageHandler {
             socketMessageService.sendMessageToSession(
                     userId,
                     objectMapper.writeValueAsString(errorEvent));
-            return false;
+            return;
         }
 
         switch (request.getType()) {
-            // connect action from client
             case "CONNECT":
                 try {
                     ConnectRequest connectReq = objectMapper.readValue(message, ConnectRequest.class);
-                    return connectionHandler.handleConnectMessage(connectReq, userId);
+                    connectionHandler.handleConnectMessage(connectReq, userId);
+                    return;
                 } catch (GameFullException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.LOBBY_FULL, "Spiel ist bereits voll!");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.LOBBY_FULL,
+                            "Das Spiel ist bereits voll. Es kann keine weitere Person mehr beitreten!");
                     log.error("Spiel ist bereits voll, Verbindung von Benutzer {} abgelehnt", userId);
-                    return false;
+                    throw new ConnectionRejectedException("Lobby voll");
                 } catch (UsernameNullOrEmptyException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                    sendError(userId, ErrorCode.INVALID_COMMAND,
                             e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Ungültiger Benutzername von Benutzer {}: {}", userId, e.getMessage());
-                    return false;
+                    throw new ConnectionRejectedException("Ungültiger Benutzername");
                 } catch (IllegalArgumentException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                    sendError(userId, ErrorCode.INVALID_COMMAND,
                             e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Der Benutzername von Benutzer {} ist ungültig: {}", userId, e.getMessage());
-                    return false;
+                    throw new ConnectionRejectedException("Ungültiger Benutzername");
                 } catch (UsernameAlreadyTakenException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.USERNAME_TAKEN,
+                    sendError(userId, ErrorCode.USERNAME_TAKEN,
                             e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Der Benutzername von Benutzer {} ist bereits vergeben: {}", userId, e.getMessage());
-                    return false;
+                    throw new ConnectionRejectedException("Benutzername bereits vergeben");
                 } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
+                    sendError(userId, ErrorCode.GAME_ALREADY_STARTED,
                             e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Das Spiel wurde bereits gestartet, Benutzer {} kann nicht beitreten: {}", userId,
                             e.getMessage());
-                    return false;
+                    throw new ConnectionRejectedException("Spiel bereits gestartet");
                 } catch (UserNotFoundException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.PLAYER_NOT_FOUND,
+                    sendError(userId, ErrorCode.PLAYER_NOT_FOUND,
                             e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Benutzer {} nicht gefunden: {}", userId, e.getMessage());
-                    return false;
+                    throw new ConnectionRejectedException("Benutzer nicht gefunden");
                 } catch (JsonProcessingException e) {
                     System.err.println(
                             "Failed to process connect request from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                    sendError(userId, ErrorCode.INVALID_COMMAND,
                             "Ungültiges Nachrichtenformat");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Fehler beim Verarbeiten der Verbindungsanfrage von Benutzer {}: {}", userId,
                             e.getMessage());
-                    return false;
+                    throw new ConnectionRejectedException("Ungültiges Nachrichtenformat");
                 }
             case "DISCONNECT":
                 try {
-                    return connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(userId);
+                    connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(userId);
+                    return;
                 } catch (UserNotFoundException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.PLAYER_NOT_FOUND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.PLAYER_NOT_FOUND, e.getMessage());
                     log.error("Benutzer {} nicht gefunden: {}", userId, e.getMessage());
-                    return false;
+                    return;
                 } catch (JsonProcessingException e) {
                     System.err.println(
                             "Failed to process disconnect request from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                    sendError(userId, ErrorCode.INVALID_COMMAND,
                             "Ungültiges Nachrichtenformat");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
                     log.error("Fehler beim Verarbeiten der Trennungsanfrage von Benutzer {}: {}", userId,
                             e.getMessage());
-                    return false;
+                    return;
                 }
             case "START_GAME":
                 try {
@@ -163,75 +155,61 @@ public class MessageHandler {
                         throw new IllegalArgumentException(
                                 "Die Anzahl der Bonusse darf nicht negativ oder größer als 20 sein.");
                     }
-                    return gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(),
+                    gameInitialitionController.handleStartGameMessage(userId, startGameReq.getBoardSize(),
                             startGameReq.getTreasureCardCount(), startGameReq.getGameDurationInSeconds(),
                             startGameReq.getTotalBonusCount());
+                    return;
                 } catch (GameAlreadyStartedException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GAME_ALREADY_STARTED,
-                            "Das Spiel hat bereits begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.GAME_ALREADY_STARTED, "Das Spiel hat bereits begonnen.");
                     log.error(userId, "Das Spiel hat bereits begonnen: {}", e.getMessage());
-                    return false;
+                    return;
                 } catch (PlayerNotAdminException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_ADMIN,
-                            "Nur der Admin-Spieler kann das Spiel starten.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.NOT_ADMIN,
+                            "Nur der Admin-Spieler kann das Spiel starten. Bitte warte bis zum Spielstart.");
                     log.error(userId, "Nur der Admin-Spieler kann das Spiel starten: {}", e.getMessage());
-                    return false;
+                    return;
                 } catch (NotEnoughPlayerException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Nicht genügend Spieler, um das Spiel zu starten.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.GENERAL, "Nicht genügend Spieler, um das Spiel zu starten.");
                     log.error(userId, "Nicht genügend Spieler, um das Spiel zu starten: {}", e.getMessage());
-                    return false;
+                    return;
                 } catch (NoExtraTileException e) {
                     System.err.println(e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Es gab ein Problem mit der Extra-Kachel");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.GENERAL, "Es gab ein Problem mit der Extra-Kachel");
                     log.error(userId, "Es gab ein Problem mit der Extra-Kachel: {}", e.getMessage());
-                    return false;
+                    return;
                 } catch (IllegalArgumentException e) {
                     System.err.println("Invalid start game request from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
                     log.error(userId, "Ungültige Startspiel-Anfrage: {}", e.getMessage());
-                    return false;
+                    return;
                 } catch (JsonProcessingException e) {
                     System.err.println(
                             "Failed to process start game request from user " + userId + ": " + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
                     log.error(userId, "Fehler beim Verarbeiten der Startspiel-Anfrage von Benutzer {}: {}", userId,
                             e.getMessage());
-                    return false;
+                    return;
                 } catch (Exception e) {
                     System.err.println(
                             "Unexpected error processing start game request from user " + userId + ": "
                                     + e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Ein unerwarteter Fehler ist aufgetreten.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.GENERAL, "Ein unerwarteter Fehler ist aufgetreten.");
                     log.error(userId,
                             "Unerwarteter Fehler bei der Verarbeitung der Startspiel-Anfrage von Benutzer {}: {}",
                             userId,
                             e.getMessage());
-                    return false;
+                    return;
                 }
 
             case "PUSH_TILE":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     log.error(userId, "Das Spiel hat noch nicht begonnen. Es kann keine Kachel geschoben werden.");
-                    return false;
+                    return;
                 }
                 try {
                     PushTileRequest pushTileCommand = objectMapper.readValue(message, PushTileRequest.class);
@@ -244,113 +222,86 @@ public class MessageHandler {
                         log.error(userId, "Keine gültige Richtung für Push angegeben");
                         throw new IllegalArgumentException("Keine gültige Richtung für Push angegeben");
                     }
-                    return gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(),
+                    gameManager.handlePushTile(pushTileCommand.getRowOrColIndex(),
                             pushTileCommand.getDirection(), userId, false);
+                    return;
                 } catch (PushNotValidException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_PUSH,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_PUSH, e.getMessage());
+                    return;
                 } catch (NoDirectionForPush e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
+                    return;
                 } catch (NoExtraTileException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (GameNotStartedException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (IllegalArgumentException e) {
                     System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (JsonMappingException e) {
                     System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Fehler beim Zuordnen des Push-Kachel-Befehls von Benutzer {}: {}", userId,
                             e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
+                    sendError(userId, ErrorCode.INVALID_COMMAND,
                             "Ungültiges Nachrichtenformat");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    return;
                 }
             case "ROTATE_TILE":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
+                    return;
                 }
                 try {
-                    return gameManager.handleRotateTile(userId);
+                    gameManager.handleRotateTile(userId);
+                    return;
                 } catch (NotPlayersRotateTileExeption e) {
                     log.error(userId, "Ungültiger Rotate-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (NotPlayersTurnException e) {
                     log.error(userId, "Ungültiger Rotate-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
+                    return;
                 } catch (GameNotValidException e) {
                     log.error(userId, "Ungültiger Rotate-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (NoValidActionException e) {
                     log.error(userId, "Ungültiger Rotate-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (IllegalArgumentException e) {
                     log.error(userId, "Ungültiger Rotate-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (JsonMappingException e) {
                     log.error(userId, "Ungültiger Move-Pawn-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 }
             case "MOVE_PAWN":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
+                    return;
                 }
                 try {
                     MovePawnRequest movePawnRequest = objectMapper.readValue(message, MovePawnRequest.class);
@@ -362,53 +313,40 @@ public class MessageHandler {
                         log.error(userId, "Die Anzahl der Reihen darf nicht negativ sein");
                         throw new IllegalArgumentException("Die Anzahl der Reihen darf nicht negativ sein");
                     }
-                    return gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId, false);
+                    gameManager.handleMovePawn(movePawnRequest.getTargetCoordinates(), userId, false);
+                    return;
                 } catch (TargetCoordinateNullException e) {
                     log.error(userId, "Ungültiger Move-Pawn-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (NotPlayersTurnException e) {
                     log.error(userId, "Ungültiger Move-Pawn-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
+                    return;
                 } catch (GameNotValidException e) {
                     log.error(userId, "Ungültiger Move-Pawn-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (NoValidActionException e) {
                     log.error(userId, "Ungültiger Move-Pawn-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_MOVE,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_MOVE, e.getMessage());
+                    return;
                 } catch (IllegalArgumentException e) {
                     log.error(userId, "Ungültiger Move-Pawn-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (JsonMappingException e) {
                     System.err.println("Failed to map move pawn command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Fehler beim Zuordnen des Move-Pawn-Befehls von Benutzer {}: {}", userId,
                             e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 }
             case "USE_BEAM":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
+                    return;
                 }
                 try {
                     UseBeamRequest useBeamCommand = objectMapper.readValue(message, UseBeamRequest.class);
@@ -420,57 +358,48 @@ public class MessageHandler {
                         log.error(userId, "Die Anzahl der Reihen darf nicht negativ sein.");
                         throw new IllegalArgumentException("Die Anzahl der Reihen darf nicht negativ sein");
                     }
-                    return gameManager.handleUseBeam(useBeamCommand.getTargetCoordinates(), userId);
+                    gameManager.handleUseBeam(useBeamCommand.getTargetCoordinates(), userId);
+                    return;
                 } catch (TargetCoordinateNullException e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    return;
                 } catch (NotPlayersTurnException e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
                             e.getMessage());
                     socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    return;
                 } catch (GameNotValidException e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (NoValidActionException e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (BonusNotAvailable e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.BONUS_NOT_AVAILABLE, e.getMessage());
+                    e.getMessage();
+                    return;
                 } catch (IllegalArgumentException e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (JsonMappingException e) {
                     log.error(userId, "Ungültiger Use-Beam-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    e.getMessage();
+                    return;
                 }
             case "USE_SWAP":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
+                    return;
                 }
                 try {
                     UseSwapRequest useSwapCommand = objectMapper.readValue(message, UseSwapRequest.class);
@@ -478,53 +407,40 @@ public class MessageHandler {
                         log.error(userId, "Keine gültige Zielspieler-ID für Swap angegeben");
                         throw new IllegalArgumentException("Keine gültige Zielspieler-ID für Swap angegeben");
                     }
-                    return gameManager.handleUseSwap(useSwapCommand.getTargetPlayerId(), userId);
+                    gameManager.handleUseSwap(useSwapCommand.getTargetPlayerId(), userId);
+                    return;
                 } catch (NotPlayersTurnException e) {
                     System.err.println("Invalid use swap command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Use-Swap-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
+                    return;
                 } catch (NoValidActionException e) {
                     log.error(userId, "Ungültiger Use-Swap-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (BonusNotAvailable e) {
                     log.error(userId, "Ungültiger Use-Swap-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.BONUS_NOT_AVAILABLE, e.getMessage());
+                    return;
                 } catch (GameNotValidException e) {
                     log.error(userId, "Ungültiger Use-Swap-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (IllegalArgumentException e) {
                     log.error(userId, "Ungültiger Use-Swap-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (JsonMappingException e) {
                     log.error(userId, "Ungültiger Use-Swap-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 }
             case "USE_PUSH_FIXED":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
                     log.error(userId, "Das Spiel hat noch nicht begonnen. Es kann kein fester Push verwendet werden.");
-                    return false;
+                    return;
                 }
                 try {
                     UsePushFixedTileRequest pushFixedTileCommand = objectMapper.readValue(message,
@@ -538,101 +454,81 @@ public class MessageHandler {
                         log.error(userId, "Keine gültige Richtung für Push angegeben");
                         throw new IllegalArgumentException("Keine gültige Richtung für Push angegeben");
                     }
-                    return gameManager.handleUsePushFixedTile(pushFixedTileCommand.getDirection(),
+                    gameManager.handleUsePushFixedTile(pushFixedTileCommand.getDirection(),
                             pushFixedTileCommand.getRowOrColIndex(), userId);
+                    return;
                 } catch (PushNotValidException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_PUSH,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_PUSH, e.getMessage());
+                    return;
                 } catch (NoDirectionForPush e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (NotPlayersTurnException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
+                    return;
                 } catch (NoExtraTileException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (GameNotStartedException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (GameNotValidException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, e.getMessage());
+                    return;
                 } catch (NoValidActionException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (BonusNotAvailable e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.BONUS_NOT_AVAILABLE, e.getMessage());
+                    return;
                 } catch (IllegalArgumentException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
+                    return;
                 } catch (JsonMappingException e) {
                     log.error(userId, "Ungültiger Use-Push-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
-                            "Ungültiges Nachrichtenformat");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.INVALID_COMMAND, "Ungültiges Nachrichtenformat");
+                    return;
                 }
             case "USE_PUSH_TWICE":
                 if (gameManager.getTurnInfo().getTurnState() == null
                         || gameManager.getTurnInfo().getTurnState() == TurnState.NOT_STARTED) {
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
-                            "Das Spiel hat noch nicht begonnen.");
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.GENERAL, "Das Spiel hat noch nicht begonnen.");
+                    return;
                 }
                 try {
-                    return gameManager.handleUsePushTwice(userId);
+                    gameManager.handleUsePushTwice(userId);
+                    return;
                 } catch (NotPlayersTurnException e) {
                     log.error(userId, "Ungültiger Use-Push-Twice-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.NOT_YOUR_TURN,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
+                    return;
                 } catch (BonusNotAvailable e) {
                     log.error(userId, "Ungültiger Use-Push-Twice-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.BONUS_NOT_AVAILABLE,
-                            e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    sendError(userId, ErrorCode.BONUS_NOT_AVAILABLE, e.getMessage());
+                    return;
                 } catch (GameNotValidException e) {
                     log.error(userId, "Ungültiger Use-Push-Twice-Befehl von Benutzer {}: {}", userId, e.getMessage());
-                    ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.GENERAL,
+                    sendError(userId, ErrorCode.GENERAL,
                             e.getMessage());
-                    socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
-                    return false;
+                    return;
                 }
             default:
-                return false;
+                return;
         }
+    }
+
+    private void sendError(String userId, ErrorCode code, String msg) throws JsonProcessingException {
+        ActionErrorEvent errorEvent = new ActionErrorEvent(code, msg);
+        socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
     }
 
 }
