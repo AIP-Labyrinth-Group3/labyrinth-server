@@ -107,12 +107,20 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                         ? player.getIdentifierToken()
                         : session.getId();
 
+                // Setze isAIControlled Flag
+                if (player != null) {
+                    player.setIsAiControlled(true);
+                }
+
                 serverAIManager.activateAI(identifierToken);
                 System.out.println("🤖 AI activated for disconnected player: " + identifierToken + " (session: "
                         + session.getId() + ")");
 
                 reconnectTimerManager.start(session.getId(), playerReconnectionTimeout, () -> {
-                    if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
+                    // WICHTIG: Verwende identifierToken statt session.getId() weil Session ID sich bei Reconnect ändert!
+                    PlayerInfo playerInfo = playerManager.getPlayerByIdentifierToken(identifierToken);
+                    if (playerInfo != null && playerInfo.getIsConnected()) {
+                        System.out.println("✓ Player " + identifierToken + " reconnected in time - timer aborted");
                         return;
                     }
 
@@ -124,6 +132,29 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                     if (serverAIManager.isAIActive(identifierToken)) {
                         System.out.println("🤖 AI bleibt aktiv - Spieler kann sich jederzeit wieder verbinden");
                         log.info("AI bleibt aktiv für Spieler: {}", identifierToken);
+
+                        // WICHTIG: Wenn es der Zug des Spielers ist, führe SOFORT AI-Zug aus!
+                        // Nicht erst beim Turn Timer Timeout warten
+                        if (playerInfo != null && gameManager.getTurnInfo().getCurrentPlayerId().equals(playerInfo.getId())) {
+                            System.out.println("🤖 Es ist der Zug des Spielers - führe SOFORT AI-Zug aus!");
+                            try {
+                                // Führe AI-Zug in separatem Thread aus um Timer nicht zu blockieren
+                                new Thread(() -> {
+                                    try {
+                                        serverAIManager.executeAITurn(identifierToken);
+                                        System.out.println("✓ AI-Zug erfolgreich ausgeführt nach Reconnect Timeout");
+                                    } catch (Exception e) {
+                                        System.err.println("❌ AI-Zug nach Reconnect Timeout fehlgeschlagen: " + e.getMessage());
+                                        e.printStackTrace();
+                                    }
+                                }, "AI-Turn-After-Reconnect-Timeout").start();
+                            } catch (Exception e) {
+                                System.err.println("❌ Fehler beim Starten des AI-Zugs: " + e.getMessage());
+                            }
+                        } else {
+                            System.out.println("ℹ️  Nicht der Zug des Spielers - AI wartet auf ihren Zug");
+                        }
+
                         // Spieler bleibt im Spiel, AI spielt weiter
                         return;
                     }
