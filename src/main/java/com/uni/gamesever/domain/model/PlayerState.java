@@ -19,14 +19,6 @@ public class PlayerState {
     private String[] availableBonuses;
     @JsonIgnore
     private List<Treasure> assignedTreasures;
-    @JsonIgnore
-    private int runnerCounter = 0;
-    @JsonIgnore
-    private boolean wasPushedOutLastRound = false;
-    @JsonIgnore
-    private boolean hasCollectedTreasureThisTurn = false;
-    @JsonIgnore
-    private int stepsTakenThisTurn = 0;
 
     public PlayerState(PlayerInfo player, Coordinates currentPosition, Coordinates homePosition,
             Treasure currentTreasure, int remainingTreasureCount) {
@@ -127,7 +119,6 @@ public class PlayerState {
         }
         treasuresFound.add(currentTreasure);
         remainingTreasureCount--;
-        markCollectedTreasureThisTurn();
 
         if (assignedTreasures != null && !assignedTreasures.isEmpty()) {
             assignedTreasures.remove(currentTreasure);
@@ -180,48 +171,6 @@ public class PlayerState {
         this.availableBonuses = bonusesList.toArray(new String[0]);
     }
 
-    public void countRunner(int amountOfPlayerMovesThisTurn) {
-        if (amountOfPlayerMovesThisTurn >= 7) {
-            runnerCounter++;
-        }
-    }
-
-    public int getRunnerCounter() {
-        return runnerCounter;
-    }
-
-    public void markPushedOut() {
-        this.wasPushedOutLastRound = true;
-    }
-
-    public void consumePushedOutFlag() {
-        this.wasPushedOutLastRound = false;
-    }
-
-    public boolean getWasPushedOutLastRound() {
-        return wasPushedOutLastRound;
-    }
-
-    public void markCollectedTreasureThisTurn() {
-        this.hasCollectedTreasureThisTurn = true;
-    }
-
-    public void consumeCollectedTreasureFlag() {
-        this.hasCollectedTreasureThisTurn = false;
-    }
-
-    public boolean getHasCollectedTreasureThisTurn() {
-        return hasCollectedTreasureThisTurn;
-    }
-
-    public void setStepsTakenThisTurn(int steps) {
-        this.stepsTakenThisTurn = steps;
-    }
-
-    public int getStepsTakenThisTurn() {
-        return stepsTakenThisTurn;
-    }
-
     public boolean hasAchievementOfType(AchievementType type) {
         if (achievements != null) {
             for (String achievement : achievements) {
@@ -243,6 +192,5 @@ public class PlayerState {
         achievementList.add(type.name());
         this.achievements = achievementList.toArray(new String[0]);
     }
-
 
 }

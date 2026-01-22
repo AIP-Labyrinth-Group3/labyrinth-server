@@ -1,7 +1,7 @@
 package com.uni.gamesever.classes;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,8 +11,7 @@ import org.mockito.MockitoAnnotations;
 
 import com.uni.gamesever.domain.enums.AchievementType;
 import com.uni.gamesever.domain.game.AchievementManager;
-import com.uni.gamesever.domain.game.PlayerManager;
-import com.uni.gamesever.domain.model.AchievementContext;
+import com.uni.gamesever.domain.game.GameStatsManager;
 import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.PlayerState;
 import com.uni.gamesever.services.SocketMessageService;
@@ -25,110 +24,102 @@ public class AchievementManagerTest {
         private SocketMessageService socketMessageService;
 
         @Mock
-        PlayerManager playerManager;
+        GameStatsManager gameStatsManager;
 
         private PlayerState player;
 
         @BeforeEach
         void setUp() {
                 MockitoAnnotations.openMocks(this);
-                achievementManager = new AchievementManager(socketMessageService, playerManager);
+                achievementManager = new AchievementManager(socketMessageService, gameStatsManager);
 
                 PlayerInfo info = new PlayerInfo("player1");
                 player = new PlayerState(info, null, null, null, 0);
         }
 
         @Test
-        void AchievementManagerTest_Runner_shouldNotUnlock_ifMovedLessThan7Tiles() {
-                AchievementContext ctx = new AchievementContext(
-                                6,
-                                false,
-                                false);
+        void AchievementManagerTest_playerWithMostSteps_shouldUnlockRunnerAchievement() throws Exception {
+                when(gameStatsManager.getPlayerWithHighestAmountOfSteps()).thenReturn(player.getPlayerInfo());
 
-                achievementManager.check(player, ctx);
+                achievementManager.unlockAllAchievements();
 
-                assertFalse(player.hasAchievementOfType(AchievementType.RUNNER));
+                verify(socketMessageService, times(1)).broadcastMessage(contains(AchievementType.RUNNER.name()));
         }
 
         @Test
-        void AchievementManagerTest_Runner_shouldUnlock_onThirdValidRun() {
-                AchievementContext validRun = new AchievementContext(
-                                7,
-                                false,
-                                false);
+        void AchievementManagerTest_playerWithMostTilesPushed_shouldUnlockPusherAchievement() throws Exception {
+                when(gameStatsManager.getPlayerWithHighestAmountOfTilesPushed()).thenReturn(player.getPlayerInfo());
 
-                achievementManager.check(player, validRun);
-                achievementManager.check(player, validRun);
-                assertFalse(player.hasAchievementOfType(AchievementType.RUNNER));
+                achievementManager.unlockAllAchievements();
 
-                achievementManager.check(player, validRun);
-                assertTrue(player.hasAchievementOfType(AchievementType.RUNNER));
-
-                verifyNoInteractions(socketMessageService);
+                verify(socketMessageService, times(1)).broadcastMessage(contains(AchievementType.PUSHER.name()));
         }
 
         @Test
-        void AchievementManagerTest_Runner_shouldNotUnlockTwice() {
-                AchievementContext validRun = new AchievementContext(
-                                7,
-                                false,
-                                false);
+        void unlockAllAchievements_twoPlayersWithSameSteps_shouldSendRunnerOnlyOnce() throws Exception {
+                PlayerInfo player1 = new PlayerInfo("player1");
+                PlayerInfo player2 = new PlayerInfo("player2");
 
-                achievementManager.check(player, validRun);
-                achievementManager.check(player, validRun);
-                achievementManager.check(player, validRun);
-                achievementManager.check(player, validRun);
+                when(gameStatsManager.getPlayerWithHighestAmountOfSteps())
+                                .thenReturn(player1);
+                when(gameStatsManager.getPlayerWithHighestAmountOfTilesPushed())
+                                .thenReturn(null);
 
-                verifyNoInteractions(socketMessageService);
+                achievementManager.unlockAllAchievements();
+
+                verify(socketMessageService, times(1))
+                                .broadcastMessage(contains(AchievementType.RUNNER.name()));
         }
 
         @Test
-        void AchievementManagerTest_Pusher_shouldNotUnlock_withoutBeingPushedOut() {
-                AchievementContext ctx = new AchievementContext(
-                                0,
-                                false,
-                                true);
+        void unlockAllAchievements_twoDifferentPlayers_shouldStillSendOnlyTwoAchievements() throws Exception {
+                PlayerInfo runner = new PlayerInfo("runner");
+                PlayerInfo pusher = new PlayerInfo("pusher");
 
-                achievementManager.check(player, ctx);
+                when(gameStatsManager.getPlayerWithHighestAmountOfSteps()).thenReturn(runner);
+                when(gameStatsManager.getPlayerWithHighestAmountOfTilesPushed()).thenReturn(pusher);
 
-                assertFalse(player.hasAchievementOfType(AchievementType.PUSHER));
+                achievementManager.unlockAllAchievements();
+
+                verify(socketMessageService, times(2)).broadcastMessage(anyString());
         }
 
         @Test
-        void AchievementManagerTest_Pusher_shouldNotUnlock_withoutCollectingTreasure() {
-                AchievementContext ctx = new AchievementContext(
-                                0,
-                                true,
-                                false);
+        void unlockAllAchievements_noStatsAvailable_shouldSendNothing() throws Exception {
+                when(gameStatsManager.getPlayerWithHighestAmountOfSteps()).thenReturn(null);
+                when(gameStatsManager.getPlayerWithHighestAmountOfTilesPushed()).thenReturn(null);
 
-                achievementManager.check(player, ctx);
+                achievementManager.unlockAllAchievements();
 
-                assertFalse(player.hasAchievementOfType(AchievementType.PUSHER));
+                verify(socketMessageService, never()).broadcastMessage(anyString());
         }
 
         @Test
-        void AchievementManagerTest_Pusher_shouldUnlock_whenPushedOutAndCollectsTreasure() {
-                AchievementContext ctx = new AchievementContext(
-                                0,
-                                true,
-                                true);
+        void unlockAllAchievements_calledTwice_shouldNotDuplicateAchievements() throws Exception {
+                when(gameStatsManager.getPlayerWithHighestAmountOfSteps())
+                                .thenReturn(player.getPlayerInfo());
 
-                achievementManager.check(player, ctx);
+                achievementManager.unlockAllAchievements();
+                achievementManager.unlockAllAchievements();
 
-                assertTrue(player.hasAchievementOfType(AchievementType.PUSHER));
+                verify(socketMessageService, times(1))
+                                .broadcastMessage(contains(AchievementType.RUNNER.name()));
         }
 
         @Test
-        void AchievementManagerTest_Pusher_shouldNotUnlockTwice() {
-                AchievementContext ctx = new AchievementContext(
-                                0,
-                                true,
-                                true);
+        void unlockAllAchievements_mixedTieSituations_shouldStillSendExactlyTwo() throws Exception {
+                PlayerInfo p1 = new PlayerInfo("p1");
+                PlayerInfo p2 = new PlayerInfo("p2");
 
-                achievementManager.check(player, ctx);
-                achievementManager.check(player, ctx);
+                when(gameStatsManager.getPlayerWithHighestAmountOfSteps()).thenReturn(p1);
+                when(gameStatsManager.getPlayerWithHighestAmountOfTilesPushed()).thenReturn(p2);
 
-                assertTrue(player.hasAchievementOfType(AchievementType.PUSHER));
-                verifyNoInteractions(socketMessageService);
+                achievementManager.unlockAllAchievements();
+
+                verify(socketMessageService, times(1))
+                                .broadcastMessage(contains(AchievementType.RUNNER.name()));
+                verify(socketMessageService, times(1))
+                                .broadcastMessage(contains(AchievementType.PUSHER.name()));
         }
+
 }
