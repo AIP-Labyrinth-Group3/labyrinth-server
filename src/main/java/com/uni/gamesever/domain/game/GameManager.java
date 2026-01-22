@@ -24,7 +24,6 @@ import com.uni.gamesever.domain.exceptions.NoValidActionException;
 import com.uni.gamesever.domain.exceptions.NotPlayersTurnException;
 import com.uni.gamesever.domain.exceptions.PushNotValidException;
 import com.uni.gamesever.domain.exceptions.TargetCoordinateNullException;
-import com.uni.gamesever.domain.model.AchievementContext;
 import com.uni.gamesever.domain.model.Coordinates;
 import com.uni.gamesever.domain.model.GameBoard;
 import com.uni.gamesever.domain.model.PlayerInfo;
@@ -40,7 +39,6 @@ import com.uni.gamesever.interfaces.Websocket.messages.server.GameOverEvent;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
 import com.uni.gamesever.interfaces.Websocket.messages.server.LobbyState;
 import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
-import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.services.SocketMessageService;
 import org.springframework.context.event.EventListener;
 
@@ -186,7 +184,6 @@ public class GameManager {
                         rowOfPlayer -= 1;
                         if (rowOfPlayer < 0) {
                             rowOfPlayer = rows - 1;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -196,7 +193,6 @@ public class GameManager {
                         rowOfPlayer += 1;
                         if (rowOfPlayer >= rows) {
                             rowOfPlayer = 0;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -206,7 +202,6 @@ public class GameManager {
                         colOfPlayer -= 1;
                         if (colOfPlayer < 0) {
                             colOfPlayer = cols - 1;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -216,7 +211,6 @@ public class GameManager {
                         colOfPlayer += 1;
                         if (colOfPlayer >= cols) {
                             colOfPlayer = 0;
-                            player.markPushedOut();
                         }
                         player.setCurrentPosition(new Coordinates(colOfPlayer, rowOfPlayer));
                     }
@@ -303,14 +297,7 @@ public class GameManager {
     }
 
     public void endTurnForCurrentPlayer() throws JsonProcessingException {
-        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
         playerManager.setNextPlayerAsCurrent();
-
-        AchievementContext ctx = new AchievementContext(currentPlayerState.getStepsTakenThisTurn(),
-                currentPlayerState.getWasPushedOutLastRound(),
-                currentPlayerState.getHasCollectedTreasureThisTurn());
-
-        achievementManager.check(currentPlayerState, ctx);
 
         resetAllVariablesForNextTurn();
 
@@ -321,11 +308,6 @@ public class GameManager {
     }
 
     public void resetAllVariablesForNextTurn() throws JsonProcessingException {
-        PlayerState currentPlayerState = playerManager.getCurrentPlayerState();
-
-        currentPlayerState.setStepsTakenThisTurn(0);
-        currentPlayerState.consumePushedOutFlag();
-        currentPlayerState.consumeCollectedTreasureFlag();
 
         getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         getTurnInfo().setCurrentPlayerId(playerManager.getCurrentPlayer().getId());
@@ -417,7 +399,6 @@ public class GameManager {
         int boardRows = board.getRows();
         int boardCols = board.getCols();
         Map<Coordinates, Integer> stepsMap = new java.util.HashMap<>();
-        playerManager.getCurrentPlayerState().setStepsTakenThisTurn(0);
 
         boolean[][] visited = new boolean[boardRows][boardCols];
         Queue<Coordinates> queue = new java.util.LinkedList<>();
@@ -457,7 +438,6 @@ public class GameManager {
                 if (neighbor.getColumn() == target.getColumn() && neighbor.getRow() == target.getRow()) {
                     gameStatsManager.increaseStepsTaken(stepsMap.get(current) + 1,
                             playerManager.getCurrentPlayer().getId());
-                    playerManager.getCurrentPlayerState().setStepsTakenThisTurn(stepsMap.get(current) + 1);
                     return true;
                 }
                 queue.add(neighbor);
@@ -656,9 +636,7 @@ public class GameManager {
         } else {
             throw new IllegalStateException("Die Gewinner-ID ist null, obwohl alle Schätze gesammelt wurden.");
         }
-        for (PlayerInfo player : playerManager.getNonNullPlayers()) {
-            achievementManager.broadCastAchievementsFromPlayerWithId(player.getId());
-        }
+        achievementManager.unlockAllAchievements();
         playerManager.removeNotConnectedPlayers();
         LobbyState lobbyState = new LobbyState(playerManager.getNonNullPlayers());
         socketBroadcastService.broadcastMessage(objectMapper.writeValueAsString(lobbyState));

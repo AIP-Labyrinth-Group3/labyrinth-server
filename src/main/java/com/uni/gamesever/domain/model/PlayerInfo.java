@@ -1,9 +1,11 @@
 package com.uni.gamesever.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uni.gamesever.domain.enums.Color;
 
 public class PlayerInfo {
     private String id;
+    @JsonIgnore
     private String identifierToken; // Bleibt fix beim Reconnect, für AI und Reconnect-Logik
     private String name;
     private Color color;

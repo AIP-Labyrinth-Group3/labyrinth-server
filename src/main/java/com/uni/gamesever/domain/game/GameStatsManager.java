@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.uni.gamesever.domain.model.PlayerGameStats;
+import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.domain.model.RankingEntry;
 
 @Service
@@ -94,7 +95,8 @@ public class GameStatsManager {
 
     /**
      * Helper method to find RankingEntry by playerId or identifierToken.
-     * Tries playerId first, then falls back to identifierToken (for reconnected players).
+     * Tries playerId first, then falls back to identifierToken (for reconnected
+     * players).
      */
     private RankingEntry findRankingEntry(String playerId) {
         // First try to find by current playerId
@@ -156,5 +158,31 @@ public class GameStatsManager {
         rankings.sort(
                 (a, b) -> Integer.compare(b.getStats().getTreasuresCollected(), a.getStats().getTreasuresCollected()));
         return rankings;
+    }
+
+    public PlayerInfo getPlayerWithHighestAmountOfSteps() {
+        RankingEntry topEntry = null;
+        for (var entry : rankings) {
+            if (topEntry == null || entry.getStats().getStepsTaken() > topEntry.getStats().getStepsTaken()) {
+                topEntry = entry;
+            }
+        }
+        if (topEntry != null) {
+            return playerManager.getPlayerById(topEntry.getPlayerId());
+        }
+        return null;
+    }
+
+    public PlayerInfo getPlayerWithHighestAmountOfTilesPushed() {
+        RankingEntry topEntry = null;
+        for (var entry : rankings) {
+            if (topEntry == null || entry.getStats().getTilesPushed() > topEntry.getStats().getTilesPushed()) {
+                topEntry = entry;
+            }
+        }
+        if (topEntry != null) {
+            return playerManager.getPlayerById(topEntry.getPlayerId());
+        }
+        return null;
     }
 }
