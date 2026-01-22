@@ -33,6 +33,7 @@ import com.uni.gamesever.domain.model.Tile;
 import com.uni.gamesever.domain.model.Treasure;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
+import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.services.SocketMessageService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +64,9 @@ public class GameManagerTest {
 
     @Mock
     TurnTimer turnTimer;
+
+    @Mock
+    ReconnectTimerManager reconnectTimerManager;
 
     @InjectMocks
     GameManager gameManager;
@@ -475,7 +479,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseSwap_shouldSwapPlayerPositions() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         Bonus swapBonus = new Bonus();
         swapBonus.setType(BonusType.SWAP);
         state1.collectBonus(swapBonus);
@@ -496,7 +500,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseSwap_shouldThrowIfSwapWithSelf() {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         Bonus swapBonus = new Bonus();
         swapBonus.setType(BonusType.SWAP);
         state1.collectBonus(swapBonus);
@@ -506,7 +510,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseBeam_shouldConsumeBonusAndMovePawn() throws Exception {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
         Bonus beamBonus = new Bonus();
         beamBonus.setType(BonusType.BEAM);
         state1.collectBonus(beamBonus);
@@ -529,7 +533,7 @@ public class GameManagerTest {
 
     @Test
     void handleUseBeam_shouldThrowIfNoBeamBonus() {
-        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_MOVE);
+        gameManager.getTurnInfo().setTurnState(TurnState.WAITING_FOR_PUSH);
 
         assertThrows(BonusNotAvailable.class,
                 () -> gameManager.handleUseBeam(new Coordinates(1, 1), player1.getId()));

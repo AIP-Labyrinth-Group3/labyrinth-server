@@ -17,8 +17,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.uni.gamesever.domain.exceptions.ConnectionRejectedException;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.model.TurnInfo;
 import com.uni.gamesever.interfaces.Websocket.MessageHandler;
@@ -55,6 +59,8 @@ class SocketConnectionHandlerTest {
 
         // System.out Umleitung
         System.setOut(new PrintStream(OUTPUT_STREAM));
+        when(mockSession.isOpen()).thenReturn(true);
+
     }
 
     @AfterEach
@@ -134,17 +140,16 @@ class SocketConnectionHandlerTest {
         }
 
         @Test
-        void handleMessage_shouldThrowExceptionAndPrint() throws Exception {
-            // GIVEN
-            doThrow(new IllegalStateException("Simulated Error")).when(messageHandler).handleClientMessage(anyString(),
-                    anyString());
-            String expectedLogPart = "Message Received from user " + SESSION_ID;
+        void handleMessage_shouldCloseSession_onConnectionRejected() throws Exception {
+            doThrow(new ConnectionRejectedException("Rejected"))
+                    .when(messageHandler)
+                    .handleClientMessage(anyString(), anyString());
 
-            // WHEN / THEN
-            assertThrows(IllegalStateException.class,
-                    () -> socketConnectionHandler.handleMessage(mockSession, mockTextMessage));
-            assertTrue(OUTPUT_STREAM.toString().contains(expectedLogPart),
-                    "Der 'Message Received' Log sollte trotz der Ausnahme des Handlers gedruckt werden.");
+            socketConnectionHandler.handleMessage(mockSession, mockTextMessage);
+
+            verify(mockSession).close(CloseStatus.POLICY_VIOLATION);
+
         }
+
     }
 }

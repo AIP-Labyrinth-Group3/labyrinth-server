@@ -14,6 +14,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uni.gamesever.domain.ai.ServerAIManager;
+import com.uni.gamesever.domain.exceptions.ConnectionRejectedException;
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.game.GameManager;
 import com.uni.gamesever.domain.game.PlayerManager;
@@ -103,11 +104,12 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                 // Verwende identifierToken (bleibt fix) statt Session ID
                 PlayerInfo player = playerManager.getPlayerById(session.getId());
                 String identifierToken = player != null && player.getIdentifierToken() != null
-                    ? player.getIdentifierToken()
-                    : session.getId();
+                        ? player.getIdentifierToken()
+                        : session.getId();
 
                 serverAIManager.activateAI(identifierToken);
-                System.out.println("🤖 AI activated for disconnected player: " + identifierToken + " (session: " + session.getId() + ")");
+                System.out.println("🤖 AI activated for disconnected player: " + identifierToken + " (session: "
+                        + session.getId() + ")");
 
                 reconnectTimerManager.start(session.getId(), playerReconnectionTimeout, () -> {
                     if (playerManager.getPlayerById(session.getId()).getIsConnected()) {
@@ -166,10 +168,28 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         System.out.println("Message Received from user " + session.getId() + ": " + message.getPayload());
         log.info("Nachricht von Benutzer {} empfangen: {}", session.getId(), message.getPayload());
 
-        // the whole game logic goes here
-        if (!messageHandler.handleClientMessage(message.getPayload().toString(), session.getId())) {
-            // we return a error message to the client
-
+        try {
+            messageHandler.handleClientMessage(message.getPayload().toString(), session.getId());
+        } catch (ConnectionRejectedException e) {
+            log.warn("Websocket-Verbindung von {} wird wieder geschlossen: {}", session.getId(), e.getMessage());
+            closeSession(session);
+        } catch (JsonProcessingException e) {
+            log.error("Fehler beim Verarbeiten der JSON-Nachricht von Benutzer {}: {}", session.getId(),
+                    e.getMessage());
+        } catch (Exception e) {
+            log.error("Unerwarteter Fehler beim Verarbeiten der Nachricht von Benutzer {}: {}", session.getId(),
+                    e.getMessage());
         }
     }
+
+    private void closeSession(WebSocketSession session) {
+        try {
+            if (session.isOpen()) {
+                session.close(CloseStatus.POLICY_VIOLATION);
+            }
+        } catch (Exception e) {
+            log.error("Failed to close session {}", session.getId(), e);
+        }
+    }
+
 }

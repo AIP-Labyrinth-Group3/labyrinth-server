@@ -17,6 +17,8 @@ public class AchievementManager {
     SocketMessageService socketMessageService;
     private final ObjectMapper objectMapper = ObjectMapperSingleton.getInstance();
     private final PlayerManager playerManager;
+    private boolean runnerAchievementUnlocked = false;
+    private boolean pusherAchievementUnlocked = false;
 
     public AchievementManager(SocketMessageService socketMessageService, PlayerManager playerManager) {
         this.socketMessageService = socketMessageService;
@@ -29,7 +31,7 @@ public class AchievementManager {
     }
 
     private void checkRunner(PlayerState player, AchievementContext ctx) {
-        if (player.hasAchievementOfType(AchievementType.RUNNER))
+        if (runnerAchievementUnlocked)
             return;
 
         if (ctx.amountOfTilesPlayerMovedOverThisTurn() >= 7) {
@@ -46,7 +48,7 @@ public class AchievementManager {
     }
 
     private void checkPusher(PlayerState player, AchievementContext ctx) {
-        if (player.hasAchievementOfType(AchievementType.PUSHER))
+        if (pusherAchievementUnlocked)
             return;
 
         if (ctx.wasPushedOutLastRound()
@@ -61,6 +63,11 @@ public class AchievementManager {
 
     private void unlock(PlayerState player, AchievementType achievement) throws JsonProcessingException {
         player.unlockAchievement(achievement);
+        if (achievement == AchievementType.RUNNER) {
+            runnerAchievementUnlocked = true;
+        } else if (achievement == AchievementType.PUSHER) {
+            pusherAchievementUnlocked = true;
+        }
     }
 
     public void broadCastAchievementsFromPlayerWithId(String playerId) throws JsonProcessingException {
