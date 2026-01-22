@@ -4,15 +4,15 @@ import com.uni.gamesever.domain.model.PlayerInfo;
 import com.uni.gamesever.interfaces.Websocket.messages.client.Message;
 
 public class PlayerUpdateEvent extends Message {
-    private final PlayerInfo playerInfo;
+    private final PlayerInfo player;
 
-    public PlayerUpdateEvent(PlayerInfo playerInfo) {
+    public PlayerUpdateEvent(PlayerInfo player) {
         super("PLAYER_UPDATED");
-        this.playerInfo = playerInfo;
+        this.player = player;
     }
 
-    public PlayerInfo getPlayerInfo() {
-        return playerInfo;
+    public PlayerInfo getPlayer() {
+        return player;
     }
 
 }
