@@ -296,4 +296,25 @@ public class PlayerManager {
             }
         }
     }
+
+    /**
+     * Prüft ob alle Spieler disconnected sind
+     * @return true wenn alle Spieler disconnected sind, false sonst
+     */
+    public boolean areAllPlayersDisconnected() {
+        int connectedPlayers = 0;
+        int totalPlayers = 0;
+
+        for (PlayerInfo player : players) {
+            if (player != null) {
+                totalPlayers++;
+                if (player.getIsConnected()) {
+                    connectedPlayers++;
+                }
+            }
+        }
+
+        // Wenn mindestens ein Spieler existiert und ALLE disconnected sind
+        return totalPlayers > 0 && connectedPlayers == 0;
+    }
 }
