@@ -83,8 +83,6 @@ public class GameInitializationController {
             throw new IllegalArgumentException(
                     "Die Anzahl der Schätze muss mindestens so groß sein wie die Anzahl der Spieler.");
         }
-
-        System.out.println("Starting game with board size: " + size.getRows() + "x" + size.getCols());
         log.info("Spiel wurde gestartet mit Brettgröße: {}x{}", size.getRows(), size.getCols());
 
         gameManager.setTotalBonusCountsOnBoard(totalBonusCount);

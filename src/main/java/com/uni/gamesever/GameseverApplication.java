@@ -61,6 +61,7 @@ public class GameseverApplication {
             int min = env.getProperty("game-server.port.min", Integer.class, 8000);
             int max = env.getProperty("game-server.port.max", Integer.class, 8500);
 
+
             int port = findFreePortInRange(min, max);
 
             // Höchste Priorität: überschreibt server.port aus Dateien/Args

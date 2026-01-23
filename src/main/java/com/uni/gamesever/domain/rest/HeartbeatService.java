@@ -43,7 +43,7 @@ public class HeartbeatService {
         this.uriPrefix = uriPrefix;
         this.host = host;
         this.maxPlayers = maxPlayers;
-        System.out.println("[HeartbeatService] Initialized with uriPrefix=" + this.uriPrefix);
+        log.info("[HeartbeatService] Initialized with uriPrefix=" + this.uriPrefix);
     }
 
     private String fullUri() {
@@ -65,9 +65,7 @@ public class HeartbeatService {
                 var created = registryClient.createServer(
                         new GameServerRegistration(name, fullUri(), maxPlayers));
                 serverId.set(created.id());
-                System.out.println("[Heartbeat] Registered serverId=" + created.id());
                 log.info("Server registriert mit ID {}", created.id());
-                System.out.println("[Heartbeat] Server URI: " + fullUri());
                 log.info("Server URI: {}", fullUri());
                 return;
             }
@@ -75,7 +73,6 @@ public class HeartbeatService {
             registryClient.updateServer(id, new GameServerUpdate(players, status));
 
         } catch (Exception e) {
-            System.out.println("[Heartbeat] " + e.getMessage());
             log.error("Fehler im Heartbeat: {}", e.getMessage());
         }
     }

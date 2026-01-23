@@ -70,8 +70,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
         super.afterConnectionEstablished(session);
         try {
             socketBroadcastService.addIncomingSession(session);
-            System.out.println(session.getId() + " Connected");
-            log.info("Session {} verbunden", session.getId());
+            log.info("Gamer Session {} verbunden", session.getId());
             ServerInfoEvent serverInfoEvent = new ServerInfoEvent(OffsetDateTime.now().toString(), serverVersion,
                     protocolVersion, serverMotd);
             socketBroadcastService.sendMessageToSession(session.getId(),
@@ -196,7 +195,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
 
         super.handleMessage(session, message);
 
-        System.out.println("Message Received from user " + session.getId() + ": " + message.getPayload());
+        //System.out.println("Message Received from user " + session.getId() + ": " + message.getPayload());
         log.info("Nachricht von Benutzer {} empfangen: {}", session.getId(), message.getPayload());
 
         try {

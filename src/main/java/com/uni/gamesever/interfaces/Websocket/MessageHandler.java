@@ -53,8 +53,7 @@ public class MessageHandler {
     public void handleClientMessage(String message, String userId)
             throws ConnectionRejectedException, JsonProcessingException {
         // parsing the client message into a connectRequest object
-        System.out.println("Received message from user " + userId + ": " + message);
-
+        log.info("Nachricht von Benutzer {} empfangen: {}", userId, message);
         Message request;
         try {
             request = objectMapper.readValue(message, Message.class);

@@ -45,6 +45,7 @@
 
     <logger name="GAME_LOG" level="INFO" additivity="false">
         <appender-ref ref="GAME_FILE"/>
+        <appender-ref ref="CONSOLE"/>
     </logger>
 
 </configuration>
