@@ -76,8 +76,6 @@ public class ConnectionHandler {
                 }
 
                 System.out.println("🤖 AI deactivated for reconnected player: " + request.getIdentifierToken() + " (new session: " + userId + ")");
-
-                System.out.println("User " + userId + " reconnected as " + request.getUsername());
                 log.info("User {} hat sich als {} wiederverbunden", userId, request.getUsername());
                 ConnectAck connectionAck = new ConnectAck(userId, request.getIdentifierToken());
                 socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));
@@ -100,7 +98,6 @@ public class ConnectionHandler {
         newPlayer.setName(request.getUsername());
         newPlayer.setIdentifierToken(userId); // Setze identifierToken beim ersten Connect
         if (playerManager.addPlayer(newPlayer)) {
-            System.out.println("User " + userId + " connected as " + request.getUsername());
             log.info("User {} hat sich als {} verbunden", userId, request.getUsername());
             ConnectAck connectionAck = new ConnectAck(newPlayer.getId(), newPlayer.getIdentifierToken());
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(connectionAck));

@@ -9,14 +9,11 @@ public class TurnTimerManager extends AbstractTimerManager {
     private static final Logger log = LoggerFactory.getLogger("GAME_LOG");
 
     public void start(long durationInSeconds, Runnable onTimeout) {
-
-        System.out.println("Starting Turn Timer for " + durationInSeconds + " seconds");
         log.info("Starte Zugtimer für {} Sekunden", durationInSeconds);
         startInternal(durationInSeconds, onTimeout);
     }
 
     public void stop() {
-        System.out.println("Stopping Turn Timer");
         log.info("Stoppe Zugtimer");
         stopInternal();
     }
