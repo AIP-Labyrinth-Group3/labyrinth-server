@@ -122,7 +122,7 @@ labyrinth-server/
 - **CD Pipeline**: Läuft bei Push auf `main`
 
 ## Codestyle
-- Codestyle: `CODESTYLE.md`
+Siehe [CODESTYLE.md](CODESTYLE.md) für Codestyle Guidelines.
 
 ## Team
 
