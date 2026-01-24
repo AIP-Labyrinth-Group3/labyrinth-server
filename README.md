@@ -124,7 +124,7 @@ labyrinth-server/
 
 
 ## Klassendiagram&#x20;
-![image](Klassendiagram.png)
+![image](images/Klassendiagram.png)
 ## Team
 Gruppe 3 — Clemens Siebers, Rene Stockinger, Andreas Rofner, Mario Gottwald, Simon Raass, Manuel Kirchebner, David Strauß
 
