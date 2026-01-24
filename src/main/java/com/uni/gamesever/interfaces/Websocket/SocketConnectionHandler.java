@@ -115,6 +115,20 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                 System.out.println("🤖 AI activated for disconnected player: " + identifierToken + " (session: "
                         + session.getId() + ")");
 
+                // Prüfe ob alle Spieler disconnected sind
+                if (playerManager.areAllPlayersDisconnected()) {
+                    System.out.println("⚠️ ALLE Spieler sind disconnected - beende Spiel automatisch");
+                    log.warn("Alle Spieler sind disconnected - Spiel wird beendet");
+                    try {
+                        gameManager.endGameByTimeoutOrAfterCollectingAllTreasures();
+                        System.out.println("✓ Spiel wurde erfolgreich beendet (alle Spieler disconnected)");
+                    } catch (Exception e) {
+                        System.err.println("❌ Fehler beim Beenden des Spiels: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    return; // Wichtig: Keine weiteren Timer starten
+                }
+
                 reconnectTimerManager.start(session.getId(), playerReconnectionTimeout, () -> {
                     // WICHTIG: Verwende identifierToken statt session.getId() weil Session ID sich bei Reconnect ändert!
                     PlayerInfo playerInfo = playerManager.getPlayerByIdentifierToken(identifierToken);
