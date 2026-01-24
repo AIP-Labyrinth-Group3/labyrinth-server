@@ -94,6 +94,9 @@ java -jar target/labyrinth-server-0.1.0-SNAPSHOT.jar \
 - **URL:** `ws://localhost:<PORT>/game`
 - `<PORT>` = dynamisch **8397–8405** oder fixer `server.port`
 
+## Klassendiagram&#x20;
+![image](images/Klassendiagram.png)
+
 ## Projektstruktur (Server)
 
 ```text
@@ -118,13 +121,25 @@ labyrinth-server/
 - **CI Pipeline**: Build/Validation bei Push/PR auf `main` und `develop`
 - **CD Pipeline**: Läuft bei Push auf `main`
 
-## Development Workflow
-- Guidelines: `CONTRIBUTING.md`
+## Codestyle
 - Codestyle: `CODESTYLE.md`
 
-
-## Klassendiagram&#x20;
-![image](images/Klassendiagram.png)
 ## Team
-Gruppe 3 — Clemens Siebers, Rene Stockinger, Andreas Rofner, Mario Gottwald, Simon Raass, Manuel Kirchebner, David Strauß
 
+**Gruppe 3**
+- Clemens Siebers
+- Rene Stockinger
+- Andreas Rofner
+- Mario Gottwald
+- Simon Raass
+- Manuel Kirchebner
+- David Strauß
+
+## Related Repositories
+
+- [Client Repository](https://github.com/AIP-Labyrinth-Group3/labyrinth-client)
+- [API Specification](https://github.com/thomasklammer/labyrinth-interface)
+
+## License
+
+Educational project for Advanced Integrative Project at MCI Innsbruck.
