@@ -209,7 +209,6 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
 
         super.handleMessage(session, message);
 
-        //System.out.println("Message Received from user " + session.getId() + ": " + message.getPayload());
         log.info("Nachricht von Benutzer {} empfangen: {}", session.getId(), message.getPayload());
 
         try {
@@ -235,5 +234,4 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
             log.error("Failed to close session {}", session.getId(), e);
         }
     }
-
 }

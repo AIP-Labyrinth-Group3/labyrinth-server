@@ -7,10 +7,6 @@ public class ServerPortHolder {
 
     private volatile Integer port;
 
-    //public int getPort() {
-    //    return port;
-    //}
-
     public void setPort(int port) {
         this.port = port;
     }
@@ -20,5 +16,4 @@ public class ServerPortHolder {
         if (p == null || p <= 0) throw new IllegalStateException("Server port not set yet");
         return p;
     }
-
 }

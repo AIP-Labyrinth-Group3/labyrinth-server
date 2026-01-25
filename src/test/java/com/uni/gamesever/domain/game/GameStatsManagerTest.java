@@ -1,22 +1,19 @@
-package com.uni.gamesever.classes;
+package com.uni.gamesever.domain.game;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-
+import com.uni.gamesever.domain.model.PlayerInfo;
+import com.uni.gamesever.domain.model.RankingEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.uni.gamesever.domain.game.GameStatsManager;
-import com.uni.gamesever.domain.game.PlayerManager;
-import com.uni.gamesever.domain.model.PlayerInfo;
-import com.uni.gamesever.domain.model.RankingEntry;
+import java.util.List;
 
-public class GameStatsTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+public class GameStatsManagerTest {
 
     @Mock
     private PlayerManager playerManager;
@@ -34,8 +31,8 @@ public class GameStatsTest {
         player1 = new PlayerInfo("player1");
         player2 = new PlayerInfo("player2");
 
-        when(playerManager.getNonNullPlayers()).thenReturn(new PlayerInfo[] { player1, player2 });
-        when(playerManager.getPlayers()).thenReturn(new PlayerInfo[] { player1, player2 });
+        when(playerManager.getNonNullPlayers()).thenReturn(new PlayerInfo[]{player1, player2});
+        when(playerManager.getPlayers()).thenReturn(new PlayerInfo[]{player1, player2});
 
         gameStatsManager.initAllRankingStats(playerManager);
     }
@@ -47,10 +44,7 @@ public class GameStatsTest {
         gameStatsManager.increaseStepsTaken(5, p1Id);
         gameStatsManager.increaseStepsTaken(3, p1Id);
 
-        RankingEntry entry = gameStatsManager.getSortedRankings().stream()
-                .filter(e -> e.getPlayerId().equals(p1Id))
-                .findFirst()
-                .orElseThrow();
+        RankingEntry entry = gameStatsManager.getSortedRankings().stream().filter(e -> e.getPlayerId().equals(p1Id)).findFirst().orElseThrow();
 
         assertEquals(8, entry.getStats().getStepsTaken(), "Steps taken should be 8");
     }
@@ -61,10 +55,7 @@ public class GameStatsTest {
 
         gameStatsManager.increaseTilesPushed(2, p2Id);
 
-        RankingEntry entry = gameStatsManager.getSortedRankings().stream()
-                .filter(e -> e.getPlayerId().equals(p2Id))
-                .findFirst()
-                .orElseThrow();
+        RankingEntry entry = gameStatsManager.getSortedRankings().stream().filter(e -> e.getPlayerId().equals(p2Id)).findFirst().orElseThrow();
 
         assertEquals(2, entry.getStats().getTilesPushed(), "Tiles pushed should be 2");
     }
@@ -79,10 +70,7 @@ public class GameStatsTest {
 
         gameStatsManager.updateScoreForEndGameForASinglePlayer(p1Id);
 
-        RankingEntry entry = gameStatsManager.getSortedRankings().stream()
-                .filter(e -> e.getPlayerId().equals(p1Id))
-                .findFirst()
-                .orElseThrow();
+        RankingEntry entry = gameStatsManager.getSortedRankings().stream().filter(e -> e.getPlayerId().equals(p1Id)).findFirst().orElseThrow();
 
         assertEquals(40, entry.getScore(), "Score should be 40 from treasures collected (4 treasures * 10 points)");
     }
@@ -125,8 +113,7 @@ public class GameStatsTest {
         RankingEntry entry = gameStatsManager.getSortedRankings().get(0);
 
         assertEquals(p1Id, entry.getPlayerId());
-        assertEquals(10, entry.getScore(),
-                "Total score should be 10 from treasures collected (1 treasure * 10 points)");
+        assertEquals(10, entry.getScore(), "Total score should be 10 from treasures collected (1 treasure * 10 points)");
         assertEquals(1, entry.getStats().getTreasuresCollected());
         assertEquals(1, entry.getRank());
     }

@@ -1,12 +1,10 @@
-package com.uni.gamesever.models;
+package com.uni.gamesever.domain.model;
 
+import com.uni.gamesever.domain.enums.Color;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import com.uni.gamesever.domain.enums.Color;
-import com.uni.gamesever.domain.model.PlayerInfo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,7 +15,6 @@ class PlayerInfoTest {
 
     @BeforeEach
     void setUp() {
-        // Für Tests, die eine initialisierte Instanz benötigen
         playerInfo = new PlayerInfo(TEST_ID);
         playerInfo.setName(TEST_NAME);
     }
@@ -77,7 +74,6 @@ class PlayerInfoTest {
             String expectedMessage = "Der Benutzername muss zwischen 1 und 50 Zeichen lang sein.";
             String actualMessage = exception.getMessage();
             assertEquals(expectedMessage, actualMessage, "Die Exception-Nachricht sollte korrekt sein.");
-
         }
 
         @Test

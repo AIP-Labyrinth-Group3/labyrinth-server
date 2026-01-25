@@ -1,15 +1,9 @@
-package com.uni.gamesever.classes;
+package com.uni.gamesever.domain.game;
 
 import com.uni.gamesever.domain.exceptions.UserNotFoundException;
 import com.uni.gamesever.domain.exceptions.UsernameAlreadyTakenException;
-import com.uni.gamesever.domain.game.PlayerManager;
-import com.uni.gamesever.domain.model.BoardSize;
-import com.uni.gamesever.domain.model.Coordinates;
-import com.uni.gamesever.domain.model.GameBoard;
-import com.uni.gamesever.domain.model.PlayerInfo;
-import com.uni.gamesever.domain.model.PlayerState;
+import com.uni.gamesever.domain.model.*;
 import com.uni.gamesever.services.SocketMessageService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,27 +22,19 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PlayerManagerTest {
-    // Die zu testende Klasse
+    private final PlayerInfo player1 = new PlayerInfo("id1");
+    private final PlayerInfo player2 = new PlayerInfo("id2");
+    private final PlayerInfo player3 = new PlayerInfo("id3");
+    private final PlayerInfo player4 = new PlayerInfo("id4");
+    private final PlayerInfo player5 = new PlayerInfo("id5");
+    @Mock
+    SocketMessageService mockSocketMessageService;
     private PlayerManager playerManager;
-
-    // Gemockte PlayerInfo Objekte zur Simulation von Spielern
     @Mock
     private PlayerInfo mockPlayer1;
     @Mock
-    private PlayerInfo mockPlayer2;
-    @Mock
-    private PlayerInfo mockPlayer3;
-    @Mock
-    private PlayerInfo mockPlayer4;
-    @Mock
-    private PlayerInfo mockPlayer5; // Für den Test der Kapazitätsgrenze
+    private GameBoard mockBoard;
 
-    // non Mock Players
-    private PlayerInfo player1 = new PlayerInfo("id1");
-    private PlayerInfo player2 = new PlayerInfo("id2");
-    private PlayerInfo player3 = new PlayerInfo("id3");
-    private PlayerInfo player4 = new PlayerInfo("id4");
-    private PlayerInfo player5 = new PlayerInfo("id5");
     {
         player1.setName("Player1");
         player2.setName("Player2");
@@ -57,18 +43,6 @@ class PlayerManagerTest {
         player5.setName("Player5");
     }
 
-    // Gemocktes GameBoard Objekt für initializePlayerStates
-    @Mock
-    private GameBoard mockBoard;
-    @Mock
-    private BoardSize mockSize;
-
-    @Mock
-    SocketMessageService mockSocketMessageService;
-
-    // Setzt den Manager vor jedem Test in einen sauberen Zustand zurück.
-    // Da @InjectMocks eine neue Instanz pro Test erstellt, sind die internen Arrays
-    // leer (null-initialisiert).
     @BeforeEach
     void setUp() {
         playerManager = new PlayerManager(mockSocketMessageService);
@@ -176,11 +150,9 @@ class PlayerManagerTest {
             playerManager.addPlayer(adminPlayer);
 
             // THEN
-            assertTrue(playerManager.getPlayers()[0].getIsAdmin(),
-                    "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
+            assertTrue(playerManager.getPlayers()[0].getIsAdmin(), "Nach dem Hinzufügen des ersten Spielers sollte dieser Admin sein.");
         }
 
-        // add a test to check if a player can not gave the same username - exception
         @Test
         void addPlayer_shouldFailWhenUsernameAlreadyExists() throws UsernameAlreadyTakenException {
             // GIVEN
@@ -215,8 +187,7 @@ class PlayerManagerTest {
         }
 
         @Test
-        void removePlayer_shouldThrowAnExceptionWhenRemovingPlayerTwice()
-                throws UsernameAlreadyTakenException, UserNotFoundException {
+        void removePlayer_shouldThrowAnExceptionWhenRemovingPlayerTwice() throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
             playerManager.removePlayer(player1.getId());
@@ -224,13 +195,11 @@ class PlayerManagerTest {
             assertThrows(UserNotFoundException.class, () -> {
                 playerManager.removePlayer(player1.getId());
             }, "Das zweite Entfernen des gleichen Spielers sollte eine UserNotFoundException werfen.");
-            assertEquals(0, playerManager.getAmountOfPlayers(),
-                    "Nach dem zweimaligen Entfernen sollte die Anzahl 0 sein.");
+            assertEquals(0, playerManager.getAmountOfPlayers(), "Nach dem zweimaligen Entfernen sollte die Anzahl 0 sein.");
         }
 
         @Test
-        void removePlayer_shouldFailWhenRemovePlayerWithNull()
-                throws UsernameAlreadyTakenException, UserNotFoundException {
+        void removePlayer_shouldFailWhenRemovePlayerWithNull() throws UsernameAlreadyTakenException, UserNotFoundException {
             // GIVEN
             playerManager.addPlayer(player1);
 
@@ -258,8 +227,7 @@ class PlayerManagerTest {
             // THEN
             assertTrue(result, "Das Entfernen des Spielers sollte erfolgreich sein.");
             assertEquals(1, playerManager.getAmountOfPlayers(), "Nach dem Entfernen sollte die Anzahl 1 sein.");
-            assertTrue(playerManager.getPlayers()[0].getIsAdmin(),
-                    "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein und auf der ersten Stelle im Array stehen.");
+            assertTrue(playerManager.getPlayers()[0].getIsAdmin(), "Nach dem Entfernen von Spieler 1 sollte Spieler 2 Admin sein und auf der ersten Stelle im Array stehen.");
         }
     }
 
@@ -274,10 +242,8 @@ class PlayerManagerTest {
             // THEN
             assertNotNull(players, "Das zurückgegebene Array sollte nicht null sein.");
             assertEquals(4, players.length, "Das Array sollte die maximale Größe von 4 haben.");
-            // Standardmäßig sollte das Array mit null initialisiert sein, bevor
-            // initializePlayerStates aufgerufen wird.
-            assertTrue(Arrays.stream(players).allMatch(playerInfo -> playerInfo == null),
-                    "Alle Spieler sollten anfangs null sein.");
+
+            assertTrue(Arrays.stream(players).allMatch(playerInfo -> playerInfo == null), "Alle Spieler sollten anfangs null sein.");
         }
 
         @Test
@@ -307,10 +273,8 @@ class PlayerManagerTest {
             // THEN
             assertNotNull(playerStates, "Das zurückgegebene Array sollte nicht null sein.");
             assertEquals(4, playerStates.length, "Das Array sollte die maximale Größe von 4 haben.");
-            // Standardmäßig sollte das Array mit null initialisiert sein, bevor
-            // initializePlayerStates aufgerufen wird.
-            assertTrue(Arrays.stream(playerStates).allMatch(state -> state == null),
-                    "Alle Zustände sollten anfangs null sein.");
+
+            assertTrue(Arrays.stream(playerStates).allMatch(state -> state == null), "Alle Zustände sollten anfangs null sein.");
         }
     }
 
@@ -323,7 +287,6 @@ class PlayerManagerTest {
             playerManager.addPlayer(player1); // Index 0 (0, 0)
             playerManager.addPlayer(player3); // Index 1 (0, cols-1)
 
-            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
             Coordinates expectedPos2 = new Coordinates(6, 0); // Oben rechts (0, 6)
 
@@ -336,23 +299,16 @@ class PlayerManagerTest {
             // THEN
             PlayerState[] states = playerManager.getPlayerStates();
 
-            // Überprüfung von Spieler 1 (Index 0)
             assertNotNull(states[0], "Der Zustand für Spieler 1 sollte initialisiert sein.");
             assertEquals(player1, states[0].getPlayerInfo(), "Die PlayerInfo des Zustands sollte Spieler 1 sein.");
-            assertEquals(expectedPos1.getColumn(), states[0].getCurrentPosition().getColumn(),
-                    "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos1.getRow(), states[0].getCurrentPosition().getRow(),
-                    "Die Y Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getColumn(), states[0].getCurrentPosition().getColumn(), "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos1.getRow(), states[0].getCurrentPosition().getRow(), "Die Y Koordinate sollte 0 sein.");
 
-            // Überprüfung von Spieler 3 (Index 1)
             assertNotNull(states[1], "Der Zustand für Spieler 3 sollte initialisiert sein.");
             assertEquals(player3, states[1].getPlayerInfo(), "Die PlayerInfo des Zustands sollte Spieler 3 sein.");
-            assertEquals(expectedPos2.getColumn(), states[1].getCurrentPosition().getColumn(),
-                    "Die X Koordinate sollte 0 sein.");
-            assertEquals(expectedPos2.getRow(), states[1].getCurrentPosition().getRow(),
-                    "Die Y Koordinate sollte 6 sein.");
+            assertEquals(expectedPos2.getColumn(), states[1].getCurrentPosition().getColumn(), "Die X Koordinate sollte 0 sein.");
+            assertEquals(expectedPos2.getRow(), states[1].getCurrentPosition().getRow(), "Die Y Koordinate sollte 6 sein.");
 
-            // Überprüfung von leeren Plätzen
             assertNull(states[2], "Der leere Platz 2 sollte null bleiben.");
             assertNull(states[3], "Der leere Platz 3 sollte null bleiben.");
         }
@@ -365,7 +321,6 @@ class PlayerManagerTest {
             playerManager.addPlayer(player3); // Index 2 (rows-1, 0)
             playerManager.addPlayer(player4); // Index 3 (rows-1, cols-1)
 
-            // Erwartete Koordinaten basierend auf setUp(): Reihen=7, Spalten=7
             Coordinates expectedPos1 = new Coordinates(0, 0); // Oben links
             Coordinates expectedPos2 = new Coordinates(6, 0); // Oben rechts (0, 6)
             Coordinates expectedPos3 = new Coordinates(6, 6); // Unten rechts (6, 6)
@@ -381,7 +336,6 @@ class PlayerManagerTest {
             // THEN
             PlayerState[] states = playerManager.getNonNullPlayerStates();
 
-            // Überprüfung der erwarteten Startpositionen
             assertEquals(expectedPos1.getColumn(), states[0].getCurrentPosition().getColumn());
             assertEquals(expectedPos1.getRow(), states[0].getCurrentPosition().getRow());
 
@@ -412,7 +366,6 @@ class PlayerManagerTest {
 
             assertNotNull(state.getAchievements(), "Die Achievements sollten nicht null sein.");
             assertEquals(0, state.getAchievements().length, "Die Achievements sollten leer sein.");
-
         }
     }
 }

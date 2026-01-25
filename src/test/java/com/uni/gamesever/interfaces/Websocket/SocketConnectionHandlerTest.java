@@ -1,6 +1,6 @@
-package com.uni.gamesever.controller;
+package com.uni.gamesever.interfaces.Websocket;
 
-import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
+import com.uni.gamesever.domain.exceptions.ConnectionRejectedException;
 import com.uni.gamesever.services.SocketMessageService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,16 +16,10 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
-import com.uni.gamesever.domain.exceptions.ConnectionRejectedException;
-import com.uni.gamesever.domain.game.GameManager;
-import com.uni.gamesever.domain.model.TurnInfo;
-import com.uni.gamesever.interfaces.Websocket.MessageHandler;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -34,11 +28,9 @@ class SocketConnectionHandlerTest {
     private final ByteArrayOutputStream OUTPUT_STREAM = new ByteArrayOutputStream();
     private final String SESSION_ID = "SESSION_XYZ";
 
-    // Die zu testende Klasse
     @InjectMocks
     private SocketConnectionHandler socketConnectionHandler;
 
-    // Abhängigkeiten, die gemockt werden
     @Mock
     private SocketMessageService socketMessageService;
     @Mock
@@ -46,26 +38,16 @@ class SocketConnectionHandlerTest {
     @Mock
     private WebSocketSession mockSession;
 
-    @Mock
-    private GameManager gameManager;
-
-    @Mock
-    private TurnInfo turnInfo;
-
     @BeforeEach
     void setUp() {
-        // Allgemeine Mock-Setup für die Session (z.B. die ID, falls benötigt)
         when(mockSession.getId()).thenReturn(SESSION_ID);
 
-        // System.out Umleitung
         System.setOut(new PrintStream(OUTPUT_STREAM));
         when(mockSession.isOpen()).thenReturn(true);
-
     }
 
     @AfterEach
     void tearDown() {
-        // Stellt den ursprünglichen System.out Stream wieder her
         System.setOut(STANDARD_OUT);
     }
 
@@ -84,13 +66,11 @@ class SocketConnectionHandlerTest {
         @Test
         void afterConnectionEstablished_shouldThrowException() {
             // GIVEN
-            doThrow(new RuntimeException("Simulated Service Error")).when(socketMessageService)
-                    .addIncomingSession(any());
+            doThrow(new RuntimeException("Simulated Service Error")).when(socketMessageService).addIncomingSession(any());
 
             // WHEN / THEN
             assertThrows(RuntimeException.class, () -> socketConnectionHandler.afterConnectionEstablished(mockSession));
-            assertEquals("", OUTPUT_STREAM.toString(),
-                    "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
+            assertEquals("", OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
         }
     }
 
@@ -103,14 +83,11 @@ class SocketConnectionHandlerTest {
         @Test
         void afterConnectionClosed_shouldThrowException() {
             // GIVEN
-            doThrow(new RuntimeException("Simulated Removal Error")).when(socketMessageService)
-                    .removeDisconnectedSession(any());
+            doThrow(new RuntimeException("Simulated Removal Error")).when(socketMessageService).removeDisconnectedSession(any());
 
             // WHEN / THEN
-            assertThrows(RuntimeException.class,
-                    () -> socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus));
-            assertEquals("", OUTPUT_STREAM.toString(),
-                    "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
+            assertThrows(RuntimeException.class, () -> socketConnectionHandler.afterConnectionClosed(mockSession, mockStatus));
+            assertEquals("", OUTPUT_STREAM.toString(), "Die Konsolenausgabe sollte leer sein, da die Exception davor geworfen werden sollte.");
         }
     }
 
@@ -128,10 +105,6 @@ class SocketConnectionHandlerTest {
 
         @Test
         void handleMessage_shouldSuccessAndPrint() throws Exception {
-            // GIVEN
-            String expectedLog = "Message Received from user " + SESSION_ID + ": " + RAW_PAYLOAD
-                    + System.lineSeparator();
-
             // WHEN
             socketConnectionHandler.handleMessage(mockSession, mockTextMessage);
 
@@ -141,15 +114,11 @@ class SocketConnectionHandlerTest {
 
         @Test
         void handleMessage_shouldCloseSession_onConnectionRejected() throws Exception {
-            doThrow(new ConnectionRejectedException("Rejected"))
-                    .when(messageHandler)
-                    .handleClientMessage(anyString(), anyString());
+            doThrow(new ConnectionRejectedException("Rejected")).when(messageHandler).handleClientMessage(anyString(), anyString());
 
             socketConnectionHandler.handleMessage(mockSession, mockTextMessage);
 
             verify(mockSession).close(CloseStatus.POLICY_VIOLATION);
-
         }
-
     }
 }
