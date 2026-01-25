@@ -1,23 +1,17 @@
-package com.uni.gamesever.services;
-
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+package com.uni.gamesever.domain.game;
 
 import com.uni.gamesever.domain.enums.BonusType;
 import com.uni.gamesever.domain.exceptions.NoExtraTileException;
-import com.uni.gamesever.domain.game.BoardItemPlacementService;
-import com.uni.gamesever.domain.model.BoardSize;
-import com.uni.gamesever.domain.model.Bonus;
-import com.uni.gamesever.domain.model.Coordinates;
-import com.uni.gamesever.domain.model.GameBoard;
-import com.uni.gamesever.domain.model.Tile;
-import com.uni.gamesever.domain.model.Treasure;
+import com.uni.gamesever.domain.model.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class BoardItemPlacementTest {
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class BoardItemPlacementServiceTest {
 
     private BoardItemPlacementService boardItemPlacementService;
 
@@ -59,11 +53,7 @@ public class BoardItemPlacementTest {
 
         int placedCount = 0;
         Tile[][] tiles = board.getTiles();
-        List<Coordinates> forbidden = List.of(
-                new Coordinates(0, 0),
-                new Coordinates(0, size.getCols() - 1),
-                new Coordinates(size.getRows() - 1, 0),
-                new Coordinates(size.getRows() - 1, size.getCols() - 1));
+        List<Coordinates> forbidden = List.of(new Coordinates(0, 0), new Coordinates(0, size.getCols() - 1), new Coordinates(size.getRows() - 1, 0), new Coordinates(size.getRows() - 1, size.getCols() - 1));
 
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles[i].length; j++) {
@@ -92,8 +82,7 @@ public class BoardItemPlacementTest {
         for (int i = 1; i <= 10; i++)
             treasures.add(new Treasure(i, "Treasure " + i));
 
-        assertThrows(IllegalArgumentException.class,
-                () -> boardItemPlacementService.placeTreasures(board, treasures));
+        assertThrows(IllegalArgumentException.class, () -> boardItemPlacementService.placeTreasures(board, treasures));
     }
 
     @Test
@@ -114,5 +103,4 @@ public class BoardItemPlacementTest {
             assertTrue(List.of(BonusType.values()).contains(bonus.getType()));
         }
     }
-
 }

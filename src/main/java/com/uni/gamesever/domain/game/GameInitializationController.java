@@ -23,11 +23,9 @@ import com.uni.gamesever.domain.model.Treasure;
 import com.uni.gamesever.domain.model.TurnState;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.ObjectMapperSingleton;
-import com.uni.gamesever.interfaces.Websocket.SocketConnectionHandler;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStarted;
 import com.uni.gamesever.interfaces.Websocket.messages.server.GameStateUpdate;
 import com.uni.gamesever.interfaces.Websocket.messages.server.NextTreasureCardEvent;
-import com.uni.gamesever.interfaces.Websocket.messages.server.PlayerTurnEvent;
 import com.uni.gamesever.services.SocketMessageService;
 
 import org.slf4j.Logger;

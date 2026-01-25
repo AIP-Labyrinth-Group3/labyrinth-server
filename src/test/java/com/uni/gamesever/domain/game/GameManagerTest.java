@@ -1,46 +1,24 @@
-package com.uni.gamesever.classes;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
+package com.uni.gamesever.domain.game;
 
 import com.uni.gamesever.domain.enums.BonusType;
 import com.uni.gamesever.domain.enums.DirectionType;
 import com.uni.gamesever.domain.enums.TileType;
-import com.uni.gamesever.domain.exceptions.BonusNotAvailable;
-import com.uni.gamesever.domain.exceptions.GameNotValidException;
-import com.uni.gamesever.domain.exceptions.NoValidActionException;
-import com.uni.gamesever.domain.exceptions.NotPlayersTurnException;
-import com.uni.gamesever.domain.exceptions.PushNotValidException;
-import com.uni.gamesever.domain.game.AchievementManager;
-import com.uni.gamesever.domain.game.BoardItemPlacementService;
-import com.uni.gamesever.domain.game.GameManager;
-import com.uni.gamesever.domain.game.GameStatsManager;
-import com.uni.gamesever.domain.game.PlayerManager;
-import com.uni.gamesever.domain.game.TurnTimer;
-import com.uni.gamesever.domain.model.BoardSize;
-import com.uni.gamesever.domain.model.Bonus;
-import com.uni.gamesever.domain.model.Coordinates;
-import com.uni.gamesever.domain.model.GameBoard;
-import com.uni.gamesever.domain.model.PlayerGameStats;
-import com.uni.gamesever.domain.model.PlayerInfo;
-import com.uni.gamesever.domain.model.PlayerState;
-import com.uni.gamesever.domain.model.PushActionInfo;
-import com.uni.gamesever.domain.model.RankingEntry;
-import com.uni.gamesever.domain.model.Tile;
-import com.uni.gamesever.domain.model.Treasure;
-import com.uni.gamesever.domain.model.TurnState;
+import com.uni.gamesever.domain.exceptions.*;
+import com.uni.gamesever.domain.model.*;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.infrastructure.ReconnectTimerManager;
 import com.uni.gamesever.services.SocketMessageService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 
 public class GameManagerTest {
 
@@ -88,15 +66,14 @@ public class GameManagerTest {
         state2 = new PlayerState(player2, null, null, null, 0);
 
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{state1, state2});
 
         board = GameBoard.generateBoard(new BoardSize());
         gameManager.setCurrentBoard(board);
 
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
         when(playerManager.getCurrentPlayerState()).thenReturn(state1);
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
-
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{state1, state2});
     }
 
     @Test
@@ -107,7 +84,7 @@ public class GameManagerTest {
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
         state1.setCurrentPosition(new Coordinates(0, 0));
         state2.setCurrentPosition(new Coordinates(1, 1));
-        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
+        when(playerManager.getPlayerStates()).thenReturn(new PlayerState[]{state1, state2});
 
         boolean result = gameManager.handlePushTile(rowOrColIndex, direction, player1.getId(), false);
 
@@ -137,7 +114,7 @@ public class GameManagerTest {
     }
 
     @Test
-    void GameManagerTest_handlePushTile_shouldThrowIfOppositeDirectionRepeated() throws Exception {
+    void GameManagerTest_handlePushTile_shouldThrowIfOppositeDirectionRepeated() {
         gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
         int index = 1;
         gameManager.getCurrentBoard().setLastPush(new PushActionInfo(index));
@@ -203,10 +180,9 @@ public class GameManagerTest {
     void GameManagerTest_canPlayerMove_shouldReturnTrueIfStartEqualsTarget() {
         Coordinates pos = new Coordinates(0, 0);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
-        assertTrue(gameManager.canPlayerMove(board, pos, pos),
-                "It should return true when start and target are the same");
+        assertTrue(gameManager.canPlayerMove(board, pos, pos), "It should return true when start and target are the same");
     }
 
     @Test
@@ -219,7 +195,7 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 0);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
         assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
@@ -240,10 +216,9 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 0);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
-        assertFalse(gameManager.canPlayerMove(board, start, target),
-                "It should return false when no valid path exists");
+        assertFalse(gameManager.canPlayerMove(board, start, target), "It should return false when no valid path exists");
     }
 
     @Test
@@ -259,23 +234,21 @@ public class GameManagerTest {
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(1, 1);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
         assertTrue(gameManager.canPlayerMove(board, start, target), "It should return true when a valid path exists");
     }
 
     @Test
     void GameManagerTest_canPlayerMove_shouldReturnFalseIfTileNull() {
-
         board.setTile(0, 0, null);
 
         Coordinates start = new Coordinates(0, 0);
         Coordinates target = new Coordinates(0, 1);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
-        assertFalse(gameManager.canPlayerMove(board, start, target),
-                "It should return false when no valid path exists");
+        assertFalse(gameManager.canPlayerMove(board, start, target), "It should return false when no valid path exists");
     }
 
     @Test
@@ -283,7 +256,7 @@ public class GameManagerTest {
         PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 1));
 
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{p});
 
         gameManager.setCurrentBoard(board);
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
@@ -291,8 +264,7 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
-        assertEquals(0, p.getCurrentPosition().getRow(),
-                "Player should move up by 1");
+        assertEquals(0, p.getCurrentPosition().getRow(), "Player should move up by 1");
         assertEquals(1, p.getCurrentPosition().getColumn());
     }
 
@@ -303,7 +275,7 @@ public class GameManagerTest {
         PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(1, 0));
 
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{p});
 
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
@@ -311,8 +283,7 @@ public class GameManagerTest {
 
         gameManager.handlePushTile(1, DirectionType.UP, player1.getId(), false);
 
-        assertEquals(rows - 1, p.getCurrentPosition().getRow(),
-                "Player pushed off top should reappear at bottom");
+        assertEquals(rows - 1, p.getCurrentPosition().getRow(), "Player pushed off top should reappear at bottom");
         assertEquals(1, p.getCurrentPosition().getColumn());
     }
 
@@ -321,7 +292,7 @@ public class GameManagerTest {
         PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(3, 1));
 
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{p});
 
         board.setSpareTile(new Tile(List.of(DirectionType.DOWN), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
@@ -335,11 +306,10 @@ public class GameManagerTest {
 
     @Test
     void GameManagerTest_updatePlayerPositionsAfterPush_shouldWrapWhenPushedRight() throws Exception {
-
         PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(6, 1));
 
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{p});
 
         board.setSpareTile(new Tile(List.of(DirectionType.LEFT), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
@@ -348,8 +318,7 @@ public class GameManagerTest {
         gameManager.handlePushTile(1, DirectionType.RIGHT, player1.getId(), false);
 
         assertEquals(1, p.getCurrentPosition().getRow());
-        assertEquals(0, p.getCurrentPosition().getColumn(),
-                "Player pushed off right should reappear at left edge");
+        assertEquals(0, p.getCurrentPosition().getColumn(), "Player pushed off right should reappear at left edge");
     }
 
     @Test
@@ -357,7 +326,7 @@ public class GameManagerTest {
         PlayerState p = new PlayerState(player1, null, null, null, 0);
         p.setCurrentPosition(new Coordinates(4, 4));
 
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { p });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{p});
 
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
         gameManager.setCurrentBoard(board);
@@ -384,13 +353,9 @@ public class GameManagerTest {
         Treasure treasure = new Treasure(1, "Last Treasure");
         state1.setCurrentTreasure(treasure);
 
-        Tile homeTile = new Tile(
-                List.of(DirectionType.DOWN, DirectionType.RIGHT),
-                TileType.CORNER);
+        Tile homeTile = new Tile(List.of(DirectionType.DOWN, DirectionType.RIGHT), TileType.CORNER);
 
-        Tile treasureTile = new Tile(
-                List.of(DirectionType.UP, DirectionType.DOWN),
-                TileType.STRAIGHT);
+        Tile treasureTile = new Tile(List.of(DirectionType.UP, DirectionType.DOWN), TileType.STRAIGHT);
         treasureTile.setTreasure(treasure);
 
         board.setTile(0, 0, homeTile);
@@ -398,12 +363,9 @@ public class GameManagerTest {
 
         when(playerManager.getCurrentPlayerState()).thenReturn(state1);
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
-        when(playerManager.getNonNullPlayerStates())
-                .thenReturn(new PlayerState[] { state1 });
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn())
-                .thenReturn(new PlayerState[] {});
-        when(playerManager.getNonNullPlayers())
-                .thenReturn(new PlayerInfo[] { player1 });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{state1});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
+        when(playerManager.getNonNullPlayers()).thenReturn(new PlayerInfo[]{player1});
 
         PlayerGameStats endStats = new PlayerGameStats(2, 0, 1);
         RankingEntry finalRanking = new RankingEntry(player1, 1, 100, endStats);
@@ -412,11 +374,9 @@ public class GameManagerTest {
         boolean movedToTreasure = gameManager.handleMovePawn(treasurePos, player1.getId(), false);
 
         assertTrue(movedToTreasure);
-        verify(gameStatsManager)
-                .increaseTreasuresCollected(1, player1.getId());
+        verify(gameStatsManager).increaseTreasuresCollected(1, player1.getId());
 
-        verify(socketBroadcastService, never())
-                .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
+        verify(socketBroadcastService, never()).broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
         reset(socketBroadcastService);
 
         gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_MOVE);
@@ -426,12 +386,9 @@ public class GameManagerTest {
 
         assertTrue(movedHome);
 
-        verify(socketBroadcastService, atLeastOnce())
-                .broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
-        verify(socketBroadcastService, atLeastOnce())
-                .broadcastMessage(argThat(msg -> msg.contains("GAME_STATE_UPDATE")));
-        verify(socketBroadcastService, atLeastOnce())
-                .broadcastMessage(argThat(msg -> msg.contains("LOBBY_STATE")));
+        verify(socketBroadcastService, atLeastOnce()).broadcastMessage(argThat(msg -> msg.contains("GAME_OVER")));
+        verify(socketBroadcastService, atLeastOnce()).broadcastMessage(argThat(msg -> msg.contains("GAME_STATE_UPDATE")));
+        verify(socketBroadcastService, atLeastOnce()).broadcastMessage(argThat(msg -> msg.contains("LOBBY_STATE")));
 
         assertEquals(TurnState.NOT_STARTED, gameManager.getTurnInfo().getState());
     }
@@ -447,8 +404,7 @@ public class GameManagerTest {
         boolean result = gameManager.handleUsePushTwice(player1.getId());
 
         assertTrue(result);
-        assertFalse(state1.hasBonusOfType(BonusType.PUSH_TWICE),
-                "Bonus should be consumed");
+        assertFalse(state1.hasBonusOfType(BonusType.PUSH_TWICE), "Bonus should be consumed");
     }
 
     @Test
@@ -470,8 +426,7 @@ public class GameManagerTest {
         state1.collectBonus(pushFixedBonus);
         board.setSpareTile(new Tile(List.of(DirectionType.UP), TileType.STRAIGHT));
 
-        boolean result = gameManager.handleUsePushFixedTile(
-                DirectionType.UP, 1, player1.getId());
+        boolean result = gameManager.handleUsePushFixedTile(DirectionType.UP, 1, player1.getId());
 
         assertTrue(result);
         assertFalse(state1.hasBonusOfType(BonusType.PUSH_FIXED));
@@ -492,10 +447,10 @@ public class GameManagerTest {
         boolean result = gameManager.handleUseSwap(player2.getId(), player1.getId());
 
         assertTrue(result);
-        assertEquals(state1.getCurrentPosition().getColumn(), 3);
-        assertEquals(state1.getCurrentPosition().getRow(), 3);
-        assertEquals(state2.getCurrentPosition().getColumn(), 1);
-        assertEquals(state2.getCurrentPosition().getRow(), 1);
+        assertEquals(3, state1.getCurrentPosition().getColumn());
+        assertEquals(3, state1.getCurrentPosition().getRow());
+        assertEquals(1, state2.getCurrentPosition().getColumn());
+        assertEquals(1, state2.getCurrentPosition().getRow());
     }
 
     @Test
@@ -523,7 +478,7 @@ public class GameManagerTest {
         board.setTile(0, 0, start);
         board.setTile(0, 1, target);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
         boolean result = gameManager.handleUseBeam(new Coordinates(1, 0), player1.getId());
 
@@ -535,8 +490,7 @@ public class GameManagerTest {
     void handleUseBeam_shouldThrowIfNoBeamBonus() {
         gameManager.getTurnInfo().setState(TurnState.WAITING_FOR_PUSH);
 
-        assertThrows(BonusNotAvailable.class,
-                () -> gameManager.handleUseBeam(new Coordinates(1, 1), player1.getId()));
+        assertThrows(BonusNotAvailable.class, () -> gameManager.handleUseBeam(new Coordinates(1, 1), player1.getId()));
     }
 
     @Test
@@ -561,12 +515,10 @@ public class GameManagerTest {
         board.setTile(0, 0, start);
         board.setTile(0, 1, target);
 
-        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[] {});
+        when(playerManager.getPlayerStatesOfPlayersNotOnTurn()).thenReturn(new PlayerState[]{});
 
         gameManager.handleMovePawn(new Coordinates(1, 0), player1.getId(), false);
 
-        assertEquals(5, state1.getAvailableBonuses().length,
-                "Player should not collect more than 5 bonuses");
+        assertEquals(5, state1.getAvailableBonuses().length, "Player should not collect more than 5 bonuses");
     }
-
 }
