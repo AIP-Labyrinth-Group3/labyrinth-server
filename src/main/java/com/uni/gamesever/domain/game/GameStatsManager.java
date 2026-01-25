@@ -73,7 +73,7 @@ public class GameStatsManager {
             int newScore = entry.getScore() + amount;
             entry.setScore(newScore);
         } else {
-            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
+            log.info("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
@@ -83,7 +83,7 @@ public class GameStatsManager {
             int score = entry.getStats().getTreasuresCollected() * 10;
             entry.setScore(entry.getScore() + score);
         } else {
-            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
+            log.info("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
@@ -111,7 +111,7 @@ public class GameStatsManager {
         if (player != null && player.getIdentifierToken() != null) {
             for (var entry : rankings) {
                 if (player.getIdentifierToken().equals(entry.getIdentifierToken())) {
-                    System.out.println("📊 Found ranking by identifierToken for reconnected player: " +
+                    log.info("📊 Found ranking by identifierToken for reconnected player: " +
                             player.getName() + " (old ID: " + entry.getPlayerId() + " → new ID: " + playerId + ")");
                     // Update the playerId in ranking to current one
                     entry.setPlayerId(playerId);
@@ -127,10 +127,9 @@ public class GameStatsManager {
         RankingEntry entry = findRankingEntry(playerId);
         if (entry != null) {
             entry.getStats().increaseStepsTaken(steps);
-            System.out.println("Increased steps for player " + playerId + " by " + steps);
             log.info("Schritte für Spieler {} um {} erhöht", playerId, steps);
         } else {
-            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
+            log.info("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
@@ -138,10 +137,9 @@ public class GameStatsManager {
         RankingEntry entry = findRankingEntry(playerId);
         if (entry != null) {
             entry.getStats().increaseTilesPushed(tiles);
-            System.out.println("Increased tiles pushed for player " + playerId + " by " + tiles);
             log.info("Geschobene Kacheln für Spieler {} um {} erhöht", playerId, tiles);
         } else {
-            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
+            log.info("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 
@@ -150,7 +148,7 @@ public class GameStatsManager {
         if (entry != null) {
             entry.getStats().increaseTreasuresCollected(treasures);
         } else {
-            System.out.println("⚠️  Could not find ranking entry for player " + playerId);
+            log.info("⚠️  Could not find ranking entry for player " + playerId);
         }
     }
 

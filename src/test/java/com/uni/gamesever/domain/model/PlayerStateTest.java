@@ -1,35 +1,23 @@
-package com.uni.gamesever.classes;
+package com.uni.gamesever.domain.model;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.uni.gamesever.domain.game.GameManager;
+import com.uni.gamesever.domain.game.PlayerManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.uni.gamesever.domain.game.GameManager;
-import com.uni.gamesever.domain.game.PlayerManager;
-import com.uni.gamesever.domain.model.BoardSize;
-import com.uni.gamesever.domain.model.GameBoard;
-import com.uni.gamesever.domain.model.PlayerInfo;
-import com.uni.gamesever.domain.model.PlayerState;
-import com.uni.gamesever.domain.model.Treasure;
-import com.uni.gamesever.services.SocketMessageService;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 public class PlayerStateTest {
 
     @Mock
     PlayerManager playerManager;
-
-    @Mock
-    SocketMessageService socketBroadcastService;
 
     @InjectMocks
     GameManager gameManager;
@@ -51,7 +39,7 @@ public class PlayerStateTest {
         state2 = new PlayerState(player2, null, null, null, 0);
 
         when(playerManager.getCurrentPlayer()).thenReturn(player1);
-        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[] { state1, state2 });
+        when(playerManager.getNonNullPlayerStates()).thenReturn(new PlayerState[]{state1, state2});
 
         board = GameBoard.generateBoard(new BoardSize());
         gameManager.setCurrentBoard(board);

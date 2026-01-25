@@ -58,7 +58,7 @@ public class MessageHandler {
         try {
             request = objectMapper.readValue(message, Message.class);
         } catch (JsonProcessingException e) {
-            System.err.println("Failed to parse message from user " + userId + ": " + e.getMessage());
+            log.error("Failed to parse message from user " + userId + ": " + e.getMessage());
             ActionErrorEvent errorEvent = new ActionErrorEvent(ErrorCode.INVALID_COMMAND,
                     "Ungültiges Nachrichtenformat");
             socketMessageService.sendMessageToSession(userId, objectMapper.writeValueAsString(errorEvent));
@@ -82,45 +82,37 @@ public class MessageHandler {
                     connectionHandler.handleConnectMessage(connectReq, userId);
                     return;
                 } catch (GameFullException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.LOBBY_FULL,
                             "Das Spiel ist bereits voll. Es kann keine weitere Person mehr beitreten!");
                     log.error("Spiel ist bereits voll, Verbindung von Benutzer {} abgelehnt", userId);
                     throw new ConnectionRejectedException("Lobby voll");
                 } catch (UsernameNullOrEmptyException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND,
                             e.getMessage());
                     log.error("Ungültiger Benutzername von Benutzer {}: {}", userId, e.getMessage());
                     throw new ConnectionRejectedException("Ungültiger Benutzername");
                 } catch (IllegalArgumentException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND,
                             e.getMessage());
                     log.error("Der Benutzername von Benutzer {} ist ungültig: {}", userId, e.getMessage());
                     throw new ConnectionRejectedException("Ungültiger Benutzername");
                 } catch (UsernameAlreadyTakenException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.USERNAME_TAKEN,
                             e.getMessage());
                     log.error("Der Benutzername von Benutzer {} ist bereits vergeben: {}", userId, e.getMessage());
                     throw new ConnectionRejectedException("Benutzername bereits vergeben");
                 } catch (GameAlreadyStartedException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.GAME_ALREADY_STARTED,
                             e.getMessage());
                     log.error("Das Spiel wurde bereits gestartet, Benutzer {} kann nicht beitreten: {}", userId,
                             e.getMessage());
                     throw new ConnectionRejectedException("Spiel bereits gestartet");
                 } catch (UserNotFoundException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.PLAYER_NOT_FOUND,
                             e.getMessage());
                     log.error("Benutzer {} nicht gefunden: {}", userId, e.getMessage());
                     throw new ConnectionRejectedException("Benutzer nicht gefunden");
                 } catch (JsonProcessingException e) {
-                    System.err.println(
-                            "Failed to process connect request from user " + userId + ": " + e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND,
                             "Ungültiges Nachrichtenformat");
                     log.error("Fehler beim Verarbeiten der Verbindungsanfrage von Benutzer {}: {}", userId,
@@ -132,13 +124,10 @@ public class MessageHandler {
                     connectionHandler.handleIntentionalDisconnectOrAfterTimeOut(userId);
                     return;
                 } catch (UserNotFoundException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.PLAYER_NOT_FOUND, e.getMessage());
                     log.error("Benutzer {} nicht gefunden: {}", userId, e.getMessage());
                     return;
                 } catch (JsonProcessingException e) {
-                    System.err.println(
-                            "Failed to process disconnect request from user " + userId + ": " + e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND,
                             "Ungültiges Nachrichtenformat");
                     log.error("Fehler beim Verarbeiten der Trennungsanfrage von Benutzer {}: {}", userId,
@@ -167,42 +156,32 @@ public class MessageHandler {
                             startGameReq.getTotalBonusCount());
                     return;
                 } catch (GameAlreadyStartedException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.GAME_ALREADY_STARTED, "Das Spiel hat bereits begonnen.");
                     log.error(userId, "Das Spiel hat bereits begonnen: {}", e.getMessage());
                     return;
                 } catch (PlayerNotAdminException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.NOT_ADMIN,
                             "Nur der Admin-Spieler kann das Spiel starten. Bitte warte bis zum Spielstart.");
                     log.error(userId, "Nur der Admin-Spieler kann das Spiel starten: {}", e.getMessage());
                     return;
                 } catch (NotEnoughPlayerException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.GENERAL, "Nicht genügend Spieler, um das Spiel zu starten.");
                     log.error(userId, "Nicht genügend Spieler, um das Spiel zu starten: {}", e.getMessage());
                     return;
                 } catch (NoExtraTileException e) {
-                    System.err.println(e.getMessage());
                     sendError(userId, ErrorCode.GENERAL, "Es gab ein Problem mit der Extra-Kachel");
                     log.error(userId, "Es gab ein Problem mit der Extra-Kachel: {}", e.getMessage());
                     return;
                 } catch (IllegalArgumentException e) {
-                    System.err.println("Invalid start game request from user " + userId + ": " + e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
                     log.error(userId, "Ungültige Startspiel-Anfrage: {}", e.getMessage());
                     return;
                 } catch (JsonProcessingException e) {
-                    System.err.println(
-                            "Failed to process start game request from user " + userId + ": " + e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
                     log.error(userId, "Fehler beim Verarbeiten der Startspiel-Anfrage von Benutzer {}: {}", userId,
                             e.getMessage());
                     return;
                 } catch (Exception e) {
-                    System.err.println(
-                            "Unexpected error processing start game request from user " + userId + ": "
-                                    + e.getMessage());
                     sendError(userId, ErrorCode.GENERAL, "Ein unerwarteter Fehler ist aufgetreten.");
                     log.error(userId,
                             "Unerwarteter Fehler bei der Verarbeitung der Startspiel-Anfrage von Benutzer {}: {}",
@@ -233,37 +212,30 @@ public class MessageHandler {
                             pushTileCommand.getDirection(), userId, false);
                     return;
                 } catch (PushNotValidException e) {
-                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.INVALID_PUSH, e.getMessage());
                     return;
                 } catch (NoDirectionForPush e) {
-                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
                     return;
                 } catch (NotPlayersTurnException e) {
-                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.NOT_YOUR_TURN, e.getMessage());
                     return;
                 } catch (NoExtraTileException e) {
-                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.GENERAL, e.getMessage());
                     return;
                 } catch (GameNotStartedException e) {
-                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.GENERAL, e.getMessage());
                     return;
                 } catch (IllegalArgumentException e) {
-                    System.err.println("Invalid push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Ungültiger Push-Kachel-Befehl von Benutzer {}: {}", userId, e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND, e.getMessage());
                     return;
                 } catch (JsonMappingException e) {
-                    System.err.println("Failed to map push tile command from user " + userId + ": " + e.getMessage());
                     log.error(userId, "Fehler beim Zuordnen des Push-Kachel-Befehls von Benutzer {}: {}", userId,
                             e.getMessage());
                     sendError(userId, ErrorCode.INVALID_COMMAND,

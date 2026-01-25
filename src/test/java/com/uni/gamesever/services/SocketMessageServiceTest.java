@@ -19,14 +19,12 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class SocketBroadcastServiceTest {
+class SocketMessageServiceTest {
     private final String TEST_MESSAGE = "Test Message";
 
-    // Die zu testende Klasse
     @InjectMocks
     private SocketMessageService service;
 
-    // Hilfsmethode zur Erstellung einer gemockten Session
     private WebSocketSession mockSession(boolean isOpen) {
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.isOpen()).thenReturn(isOpen);
@@ -52,7 +50,6 @@ class SocketBroadcastServiceTest {
             service.broadcastMessage(TEST_MESSAGE);
 
             // THEN
-            // Indirekte Überprüfung: Die Session sollte die Nachricht empfangen haben
             verify(session, times(1)).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
         }
 
@@ -90,9 +87,7 @@ class SocketBroadcastServiceTest {
             service.broadcastMessage(TEST_MESSAGE);
 
             // THEN
-            // Die entfernte Session sollte KEINE Nachricht empfangen
             verify(sessionToRemove, never()).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
-            // Die behaltene Session sollte die Nachricht empfangen
             verify(sessionToKeep, times(1)).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
         }
 
@@ -142,9 +137,7 @@ class SocketBroadcastServiceTest {
             service.broadcastMessage(TEST_MESSAGE);
 
             // THEN
-            // Offene Session erhält Nachricht
             verify(openSession, times(1)).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
-            // Geschlossene Session erhält KEINE Nachricht
             verify(closedSession, never()).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
         }
 
@@ -154,18 +147,14 @@ class SocketBroadcastServiceTest {
             WebSocketSession throwingSession = mockSession(true);
             WebSocketSession goodSession = mockSession(true);
 
-            // Simuliere, dass diese Session beim Senden eine IOException wirft
             doThrow(new IOException("Simulierter Sendefehler")).when(throwingSession).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
 
             service.addIncomingSession(throwingSession);
             service.addIncomingSession(goodSession);
 
             // WHEN / THEN
-            // Die Methode sollte KEINE Exception nach außen werfen (dank try-catch)
             assertDoesNotThrow(() -> service.broadcastMessage(TEST_MESSAGE));
-            // Die gute Session muss ihre Nachricht dennoch erhalten
             verify(goodSession, times(1)).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
-            // Die fehlerhafte Session wurde versucht aufzurufen
             verify(throwingSession, times(1)).sendMessage(eq(new TextMessage(TEST_MESSAGE)));
         }
     }

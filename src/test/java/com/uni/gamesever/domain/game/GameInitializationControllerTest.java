@@ -1,20 +1,4 @@
-package com.uni.gamesever.classes;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+package com.uni.gamesever.domain.game;
 
 import com.uni.gamesever.domain.enums.AchievementType;
 import com.uni.gamesever.domain.enums.BonusType;
@@ -23,29 +7,25 @@ import com.uni.gamesever.domain.enums.TileType;
 import com.uni.gamesever.domain.exceptions.NoExtraTileException;
 import com.uni.gamesever.domain.exceptions.NotEnoughPlayerException;
 import com.uni.gamesever.domain.exceptions.PlayerNotAdminException;
-import com.uni.gamesever.domain.game.BoardItemPlacementService;
-import com.uni.gamesever.domain.game.GameInitializationController;
-import com.uni.gamesever.domain.game.GameManager;
-import com.uni.gamesever.domain.game.GameStatsManager;
-import com.uni.gamesever.domain.game.PlayerManager;
-import com.uni.gamesever.domain.model.BoardSize;
-import com.uni.gamesever.domain.model.GameBoard;
-import com.uni.gamesever.domain.model.PlayerInfo;
-import com.uni.gamesever.domain.model.PlayerState;
-import com.uni.gamesever.domain.model.Tile;
-import com.uni.gamesever.domain.model.Treasure;
-import com.uni.gamesever.domain.model.TurnInfo;
-import com.uni.gamesever.domain.model.TurnState;
+import com.uni.gamesever.domain.model.*;
 import com.uni.gamesever.infrastructure.GameTimerManager;
 import com.uni.gamesever.interfaces.Websocket.messages.client.StartGameRequest;
-import com.uni.gamesever.services.SocketMessageService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-public class GameInitialitationTest {
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+public class GameInitializationControllerTest {
 
     @Mock
     PlayerManager playerManager;
-    @Mock
-    SocketMessageService socketBroadcastService;
     @Mock
     GameManager gameManager;
     @Mock
@@ -58,7 +38,7 @@ public class GameInitialitationTest {
     TurnInfo turnInfo;
 
     @InjectMocks
-    GameInitializationController gameInitialitionController;
+    GameInitializationController gameInitializationController;
 
     @BeforeEach
     void setUp() {
@@ -87,7 +67,7 @@ public class GameInitialitationTest {
         when(turnInfo.getState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(PlayerNotAdminException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size, 24, 0, 1);
+            gameInitializationController.handleStartGameMessage(userId, size, 24, 0, 1);
         });
     }
 
@@ -102,7 +82,7 @@ public class GameInitialitationTest {
         when(turnInfo.getState()).thenReturn(TurnState.NOT_STARTED);
 
         assertThrows(NotEnoughPlayerException.class, () -> {
-            gameInitialitionController.handleStartGameMessage(userId, size, 24, 0, 1);
+            gameInitializationController.handleStartGameMessage(userId, size, 24, 0, 1);
         });
     }
 
@@ -134,22 +114,17 @@ public class GameInitialitationTest {
                 assertNotNull(t, "Tile at (" + i + "," + j + ") should not be null");
 
                 for (DirectionType e : t.getEntrances()) {
-                    assertTrue(
-                            List.of(DirectionType.UP, DirectionType.DOWN, DirectionType.LEFT, DirectionType.RIGHT)
-                                    .contains(e),
-                            "Invalid entrance '" + e + "' at (" + i + "," + j + ")");
+                    assertTrue(List.of(DirectionType.UP, DirectionType.DOWN, DirectionType.LEFT, DirectionType.RIGHT).contains(e), "Invalid entrance '" + e + "' at (" + i + "," + j + ")");
                 }
 
-                if ((i == 0 && j == 0) || (i == 0 && j == cols - 1) ||
-                        (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1)) {
+                if ((i == 0 && j == 0) || (i == 0 && j == cols - 1) || (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1)) {
                     assertEquals(TileType.CORNER, t.getType(), "Corner type expected at (" + i + "," + j + ")");
                 } else if (i % 2 == 0 && j % 2 == 0 && (i == 0 || j == 0 || i == rows - 1 || j == cols - 1)) {
                     assertEquals(TileType.CROSS, t.getType(), "Edge cross expected at (" + i + "," + j + ")");
                 } else if (i % 2 == 0 && j % 2 == 0) {
                     assertEquals(TileType.CROSS, t.getType(), "Inner cross expected at (" + i + "," + j + ")");
                 } else {
-                    assertTrue(List.of(TileType.STRAIGHT, TileType.CROSS, TileType.CORNER).contains(t.getType()),
-                            "Valid type expected at (" + i + "," + j + ")");
+                    assertTrue(List.of(TileType.STRAIGHT, TileType.CROSS, TileType.CORNER).contains(t.getType()), "Valid type expected at (" + i + "," + j + ")");
                 }
             }
         }
@@ -207,19 +182,14 @@ public class GameInitialitationTest {
                 Tile t = tiles[i][j];
                 assertNotNull(t, "Tile should not be null at (" + i + "," + j + ")");
 
-                boolean isCorner = (i == 0 && j == 0) ||
-                        (i == 0 && j == cols - 1) ||
-                        (i == rows - 1 && j == 0) ||
-                        (i == rows - 1 && j == cols - 1);
+                boolean isCorner = (i == 0 && j == 0) || (i == 0 && j == cols - 1) || (i == rows - 1 && j == 0) || (i == rows - 1 && j == cols - 1);
 
                 boolean isEvenEven = (i % 2 == 0 && j % 2 == 0);
 
                 if (isCorner || isEvenEven) {
-                    assertTrue(t.getIsFixed(),
-                            "Tile at (" + i + "," + j + ") should be fixed");
+                    assertTrue(t.getIsFixed(), "Tile at (" + i + "," + j + ") should be fixed");
                 } else {
-                    assertFalse(t.getIsFixed(),
-                            "Tile at (" + i + "," + j + ") should not be fixed");
+                    assertFalse(t.getIsFixed(), "Tile at (" + i + "," + j + ") should not be fixed");
                 }
 
             }
@@ -268,24 +238,21 @@ public class GameInitialitationTest {
 
         PlayerState player1 = new PlayerState(playerInfo1, null, null, null, 0);
         PlayerState player2 = new PlayerState(playerInfo2, null, null, null, 0);
-        PlayerState players[] = new PlayerState[] { player1, player2 };
+        PlayerState[] players = new PlayerState[]{player1, player2};
 
         PlayerManager mockManager = mock(PlayerManager.class);
         when(mockManager.getAmountOfPlayers()).thenReturn(players.length);
         when(mockManager.getNonNullPlayerStates()).thenReturn(players);
 
-        GameInitializationController controller = new GameInitializationController(mockManager, null, null,
-                gameStatsManager, boardItemPlacementService, gameTimerManager, null);
+        GameInitializationController controller = new GameInitializationController(mockManager, null, null, gameStatsManager, boardItemPlacementService, gameTimerManager, null);
 
         List<Treasure> treasures = boardItemPlacementService.createTreasures(24);
         controller.distributeTreasuresOnPlayers(treasures);
 
         for (PlayerState p : players) {
             assertNotNull(p.getCurrentTreasure(), "Current treasure should not be null");
-            assertEquals(treasures.size() / players.length, p.getRemainingTreasureCount(),
-                    "Each player should have equal number of treasures");
-            assertEquals(treasures.size() / players.length, p.getAssignedTreasures().size(),
-                    "Each player should have correct number of remaining treasure cards");
+            assertEquals(treasures.size() / players.length, p.getRemainingTreasureCount(), "Each player should have equal number of treasures");
+            assertEquals(treasures.size() / players.length, p.getAssignedTreasures().size(), "Each player should have correct number of remaining treasure cards");
         }
     }
 
@@ -322,5 +289,4 @@ public class GameInitialitationTest {
         }
         assertFalse(isOnBoard, "Extra tile should not be on the board");
     }
-
 }
