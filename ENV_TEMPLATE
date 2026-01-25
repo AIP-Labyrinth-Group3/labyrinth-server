@@ -1,0 +1,13 @@
+# Environment Variables Template
+# ================================
+# Kopiere diese Datei zu .env und füge deine echten Werte ein
+# Oder setze die Variablen direkt im Terminal
+
+OPENAI_API_KEY=sk-your-openai-api-key-here
+
+
+# Verwendung:
+# 1. Kopiere diese Datei: cp ENV_TEMPLATE .env
+# 2. Bearbeite .env und füge deinen echten Key ein
+# 3. Lade vor dem Start: export $(cat .env | xargs)
+# 4. Starte: mvn javafx:run
