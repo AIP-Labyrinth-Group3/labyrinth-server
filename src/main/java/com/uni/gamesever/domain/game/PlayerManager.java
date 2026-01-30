@@ -160,7 +160,6 @@ public class PlayerManager {
     }
 
     public void removeNotConnectedPlayers() {
-        // alle spieler durchgehen
         for (int i = 0; i < players.length; i++) {
             if (players[i] != null && !players[i].getIsConnected()) {
                 try {

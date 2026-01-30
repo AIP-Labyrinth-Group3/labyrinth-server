@@ -109,6 +109,7 @@ public class SocketConnectionHandler extends TextWebSocketHandler {
                 // Setze isAIControlled Flag
                 if (player != null) {
                     player.setIsAiControlled(true);
+                    player.setIsConnected(false);
                 }
 
                 serverAIManager.activateAI(identifierToken);

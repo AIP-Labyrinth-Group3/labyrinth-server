@@ -72,6 +72,7 @@ public class ConnectionHandler {
                 PlayerInfo reconnectedPlayer = playerManager.getPlayerById(userId);
                 if (reconnectedPlayer != null) {
                     reconnectedPlayer.setIsAiControlled(false);
+                    reconnectedPlayer.setIsConnected(true);
                 }
 
                 System.out.println("🤖 AI deactivated for reconnected player: " + request.getIdentifierToken() + " (new session: " + userId + ")");
