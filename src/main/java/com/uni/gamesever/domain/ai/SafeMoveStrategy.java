@@ -18,9 +18,9 @@ public class SafeMoveStrategy {
 
     public static class SafeMoveOption {
         public Coordinates targetPosition;
-        public int distanceToTarget;  // Distanz zu Schatz ODER Home
+        public int distanceToTarget; // Distanz zu Schatz ODER Home
         public boolean isCurrentPosition;
-        public boolean isGoingHome;   // True wenn Ziel die Heimatposition ist
+        public boolean isGoingHome; // True wenn Ziel die Heimatposition ist
 
         // Getter für Kompatibilität
         public int getDistanceToTreasure() {
@@ -31,8 +31,8 @@ public class SafeMoveStrategy {
         public String toString() {
             String targetType = isGoingHome ? "HOME" : "SCHATZ";
             return String.format("Go to (%d,%d), distance to %s: %d%s",
-                targetPosition.getColumn(), targetPosition.getRow(), targetType, distanceToTarget,
-                isCurrentPosition ? " (STAY)" : "");
+                    targetPosition.getColumn(), targetPosition.getRow(), targetType, distanceToTarget,
+                    isCurrentPosition ? " (STAY)" : "");
         }
     }
 
@@ -53,6 +53,11 @@ public class SafeMoveStrategy {
     public TargetInfo determineTarget(GameState gameState) {
         PlayerState myPlayer = gameState.getMyPlayerState();
         Tile[][] board = gameState.getBoard();
+
+        if (myPlayer == null) {
+            System.out.println("⚠️ WARNUNG: MyPlayerState ist null!");
+            return new TargetInfo(null, false);
+        }
 
         // WICHTIG: Prüfe ob alle Schätze gesammelt wurden
         // Wenn remainingTreasureCount == 0, dann SOFORT nach Hause!
@@ -103,7 +108,7 @@ public class SafeMoveStrategy {
             SafeMoveOption option = new SafeMoveOption();
             option.targetPosition = reachablePos;
             option.isCurrentPosition = (reachablePos.getColumn() == currentPos.getColumn() &&
-                                       reachablePos.getRow() == currentPos.getRow());
+                    reachablePos.getRow() == currentPos.getRow());
             option.isGoingHome = target.isHome;
 
             if (target.position != null) {
@@ -118,7 +123,8 @@ public class SafeMoveStrategy {
         // Sortiere: Nächste zum Ziel zuerst
         options.sort(Comparator.comparingInt(o -> o.distanceToTarget));
 
-        // WICHTIG: Entferne die aktuelle Position, WENN es mindestens eine andere Option gibt
+        // WICHTIG: Entferne die aktuelle Position, WENN es mindestens eine andere
+        // Option gibt
         // Die AI soll sich immer bewegen, außer wenn es absolut keine andere Wahl gibt!
         if (options.size() > 1) {
             List<SafeMoveOption> movingOptions = new ArrayList<>();
@@ -153,7 +159,8 @@ public class SafeMoveStrategy {
 
         System.out.println("\n🔍 === PUSH-BACK DETECTION ===");
         if (lastPush != null) {
-            System.out.println("LastPush: Index=" + lastPush.getRowOrColumnIndex() + ", Direction=" + lastPush.getDirection());
+            System.out.println(
+                    "LastPush: Index=" + lastPush.getRowOrColumnIndex() + ", Direction=" + lastPush.getDirection());
         } else {
             System.out.println("LastPush: null (erster Zug)");
         }
@@ -164,7 +171,7 @@ public class SafeMoveStrategy {
             validIndices.add(i);
         }
 
-        DirectionType[] directions = {DirectionType.UP, DirectionType.DOWN, DirectionType.LEFT, DirectionType.RIGHT};
+        DirectionType[] directions = { DirectionType.UP, DirectionType.DOWN, DirectionType.LEFT, DirectionType.RIGHT };
 
         // Sammle alle gültigen Optionen
         List<PushInfo> validPushes = new ArrayList<>();
@@ -217,12 +224,13 @@ public class SafeMoveStrategy {
 
         // Gleicher Index - prüfe ob entgegengesetzte Richtung (PUSH-BACK!)
         boolean isOpposite = (lastDirection == DirectionType.UP && direction == DirectionType.DOWN) ||
-                            (lastDirection == DirectionType.DOWN && direction == DirectionType.UP) ||
-                            (lastDirection == DirectionType.LEFT && direction == DirectionType.RIGHT) ||
-                            (lastDirection == DirectionType.RIGHT && direction == DirectionType.LEFT);
+                (lastDirection == DirectionType.DOWN && direction == DirectionType.UP) ||
+                (lastDirection == DirectionType.LEFT && direction == DirectionType.RIGHT) ||
+                (lastDirection == DirectionType.RIGHT && direction == DirectionType.LEFT);
 
         if (isOpposite) {
-            System.out.println("    → ⚠️  PUSH-BACK ERKANNT: Index=" + index + ", Last=" + lastDirection + ", Neu=" + direction);
+            System.out.println(
+                    "    → ⚠️  PUSH-BACK ERKANNT: Index=" + index + ", Last=" + lastDirection + ", Neu=" + direction);
         }
 
         return isOpposite;
@@ -234,7 +242,7 @@ public class SafeMoveStrategy {
 
         for (PlayerState player : gameState.getPlayers()) {
             if (player.getPlayerInfo() != null &&
-                !player.getPlayerInfo().getId().equals(myPlayerId)) {
+                    !player.getPlayerInfo().getId().equals(myPlayerId)) {
                 Coordinates pos = player.getCurrentPosition();
                 if (pos != null) {
                     occupied.add(new Coordinates(pos.getColumn(), pos.getRow()));
@@ -246,13 +254,14 @@ public class SafeMoveStrategy {
     }
 
     private Coordinates findTreasurePosition(Tile[][] board, int treasureId) {
-        if (treasureId < 0) return null;
+        if (treasureId < 0)
+            return null;
 
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[0].length; col++) {
                 Tile tile = board[row][col];
                 if (tile != null && tile.getTreasure() != null &&
-                    tile.getTreasure().getId() == treasureId) {
+                        tile.getTreasure().getId() == treasureId) {
                     return new Coordinates(col, row);
                 }
             }

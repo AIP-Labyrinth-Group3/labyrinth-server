@@ -160,6 +160,9 @@ public class PlayerManager {
     }
 
     public void removeNotConnectedPlayers() {
+        if (players == null) {
+            return;
+        }
         for (int i = 0; i < players.length; i++) {
             if (players[i] != null && !players[i].getIsConnected()) {
                 try {
@@ -298,6 +301,7 @@ public class PlayerManager {
 
     /**
      * Prüft ob alle Spieler disconnected sind
+     * 
      * @return true wenn alle Spieler disconnected sind, false sonst
      */
     public boolean areAllPlayersDisconnected() {
